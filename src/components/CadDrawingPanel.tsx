@@ -1048,12 +1048,10 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         );
       })}
 
-      {/* User annotations */}
+      {/* User annotations — draggable */}
       {annotations.map((a) => (
-        <g key={a.id}>
-          <rect x={a.x - 2} y={a.y - 11} width={Math.max(a.text.length * 5.5, 30)} height={14} rx={2} fill="#fefce8" stroke="#d4a574" strokeWidth={0.5} />
-          <EditableText x={a.x} y={a.y} text={a.text} fontSize={9} fill={LINE_COLOR} fontFamily="monospace" onUpdate={(t) => { if (t.trim() === "") onDeleteAnnotation(a.id); else onUpdateAnnotation(a.id, t); }} />
-        </g>
+        <DraggableAnnotation key={a.id} annotation={a} svgWidth={svgWidth} svgHeight={svgHeight}
+          onMove={onMoveAnnotation} onUpdate={onUpdateAnnotation} onDelete={onDeleteAnnotation} />
       ))}
     </svg>
   );
