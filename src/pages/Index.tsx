@@ -532,8 +532,9 @@ export default function Index() {
                 </button>
                 <button
                   onClick={(e) => {
-                    const additive = e.ctrlKey || e.metaKey || e.shiftKey;
-                    handleSelectModel(m.id, additive);
+                    const shift = e.shiftKey;
+                    const additive = e.ctrlKey || e.metaKey;
+                    handleSelectModel(m.id, additive, shift);
                   }}
                   className={`flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs font-bold transition-all border-2 flex-1 min-w-0 ${
                     selectedModelIds.has(m.id)
