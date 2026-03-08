@@ -329,18 +329,19 @@ export default function Index() {
         <ModelViewer
           ref={viewerRef}
           models={models}
-          selectedModelId={selectedModelId}
-          onSelectModel={setSelectedModelId}
+          selectedModelIds={selectedModelIds}
+          onSelectModel={handleSelectModel}
         />
       </div>
 
       {/* Properties Panel */}
       <AnimatePresence>
-        {selectedModel && !showInput && (
+        {selectedModels.length > 0 && !showInput && (
           <PropertiesPanel
-            model={selectedModel}
+            models={selectedModels}
             onUpdate={handleUpdateModel}
-            onClose={() => setSelectedModelId(null)}
+            onBatchUpdate={handleBatchUpdate}
+            onClose={() => setSelectedModelIds(new Set())}
           />
         )}
       </AnimatePresence>
