@@ -11,6 +11,20 @@ interface InputPanelProps {
   isGenerating: boolean;
 }
 
+const TEXT_EXAMPLES = [
+  "A spur gear with 20 teeth and a center hole",
+  "An L-shaped mounting bracket with bolt holes",
+  "A hollow box with 6 ventilation slots",
+  "A cylinder pipe, hollow with thin walls",
+];
+
+const IMAGE_EXAMPLES = [
+  { label: "⚙️ Gear sketch", description: "A spur gear with 12 teeth and a central bore hole, side profile view" },
+  { label: "📐 Bracket sketch", description: "An L-shaped metal bracket with mounting holes, isometric view" },
+  { label: "📦 Enclosure sketch", description: "A rectangular box enclosure with ventilation slots on the front face" },
+  { label: "🔧 Pipe sketch", description: "A hollow cylindrical pipe with thick walls, cross-section view" },
+];
+
 export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps) {
   const [mode, setMode] = useState<InputMode>("text");
   const [text, setText] = useState("");
@@ -34,12 +48,12 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
     else if (mode === "image" && imageFile) onGenerate({ mode, imageFile });
   };
 
-  const examples = [
-    "A spur gear with 20 teeth",
-    "An L-shaped bracket, 50mm x 30mm",
-    "A cylinder pipe with threaded ends",
-    "A box with ventilation slots",
-  ];
+  const handleImageExample = (description: string) => {
+    // Switch to text mode and use the description to generate via text
+    // This gives better results than trying to generate/find placeholder images
+    setMode("text");
+    setText(description);
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -83,7 +97,7 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground font-bold">Try these</p>
               <div className="flex flex-wrap gap-1.5">
-                {examples.map((ex, i) => (
+                {TEXT_EXAMPLES.map((ex, i) => (
                   <button
                     key={i}
                     onClick={() => setText(ex)}
@@ -111,7 +125,7 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
               onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
               onDragLeave={() => setDragActive(false)}
               onDrop={handleDrop}
-              className={`flex-1 min-h-[160px] flex flex-col items-center justify-center gap-3 rounded-2xl border-3 border-dashed transition-all cursor-pointer ${
+              className={`flex-1 min-h-[120px] flex flex-col items-center justify-center gap-3 rounded-2xl border-3 border-dashed transition-all cursor-pointer ${
                 dragActive
                   ? "border-primary bg-primary/5"
                   : imageFile
@@ -130,8 +144,8 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
                 </>
               ) : (
                 <>
-                  <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center">
-                    <Upload className="w-6 h-6 text-primary" />
+                  <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+                    <Upload className="w-5 h-5 text-primary" />
                   </div>
                   <p className="text-sm text-muted-foreground font-semibold">
                     Drop here or <span className="text-primary">browse</span>
@@ -141,6 +155,24 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
               )}
             </div>
             <input id="file-input" type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground font-bold">Or try these examples</p>
+              <div className="flex flex-wrap gap-1.5">
+                {IMAGE_EXAMPLES.map((ex, i) => (
+                  <button
+                    key={i}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleImageExample(ex.description);
+                    }}
+                    className="text-xs px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground hover:bg-primary/15 hover:text-primary transition-colors border-2 border-transparent hover:border-primary/30 font-semibold"
+                  >
+                    {ex.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
