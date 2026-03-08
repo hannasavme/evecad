@@ -32,6 +32,8 @@ export interface SceneModel {
   color: string;
   label: string;
   params?: ModelParams;
+  visible?: boolean;
+  group?: string; // assembly group name
 }
 
 export interface ModelViewerHandle {
@@ -260,7 +262,7 @@ function Scene({ models, selectedModelId, onSelectModel }: ModelViewerProps) {
       <pointLight position={[-5, 3, -5]} intensity={0.4} color="#f9a8d4" />
       <pointLight position={[5, 2, 3]} intensity={0.3} color="#a5f3fc" />
 
-      {models.map((m) => (
+      {models.filter(m => m.visible !== false).map((m) => (
         <SceneModelComponent
           key={m.id}
           model={m}

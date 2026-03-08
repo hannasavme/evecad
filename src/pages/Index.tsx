@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Star, X, Layers, Trash2, Wrench, Loader2, Ruler, Crosshair, Pencil } from "lucide-react";
+import { Plus, Star, X, Layers, Trash2, Wrench, Loader2, Ruler, Crosshair, Pencil, Eye, EyeOff } from "lucide-react";
 import mascotImg from "@/assets/mascot.png";
 import InputPanel from "@/components/InputPanel";
 import ModelViewer, { type SceneModel, type ModelViewerHandle } from "@/components/ModelViewer";
@@ -77,60 +77,89 @@ export default function Index() {
         }
       }, 150);
 
-      let type: SceneModel["type"] = "box";
-      let label = input.text?.slice(0, 30) || "model";
-      let params: Record<string, any> = {};
-
       try {
         const body: Record<string, any> = {};
 
         if (input.mode === "text" && input.text) {
           body.text = input.text;
         } else if (input.mode === "image" && input.imageFile) {
-          // Convert image to base64
           const base64 = await fileToBase64(input.imageFile);
           body.imageBase64 = base64;
-          label = "Image model";
         }
 
-        const { data, error } = await supabase.functions.invoke("parse-cad-text", {
-          body,
-        });
+        const { data, error } = await supabase.functions.invoke("parse-cad-text", { body });
 
-        if (!error && data?.type) {
-          type = data.type;
-          label = data.label || label;
-          params = data.params || {};
-        } else {
-          type = localInferType(input.text);
+        clearInterval(interval);
+        setProgress(100);
+        setStage(stages[stages.length - 1]);
+
+        if (error || !data?.parts?.length) {
+          // Fallback single part
+          const type = localInferType(input.text);
+          const offset = modelsRef.current.length * 2.5;
+          const newModel: SceneModel = {
+            id: `model-${++modelIdCounter}`,
+            type,
+            position: [offset, 0.5, 0],
+            scale: [1, 1, 1],
+            color: DEFAULT_COLORS[type] || "#d8b4fe",
+            label: input.text?.slice(0, 30) || "model",
+            visible: true,
+          };
+          setTimeout(() => {
+            setModelsImmediate((prev) => [...prev, newModel]);
+            setSelectedModelId(newModel.id);
+            setShowInput(false);
+            setIsGenerating(false);
+            toast.success(`${type} generated!`);
+          }, 300);
+          return;
         }
+
+        const parts: SceneModel[] = data.parts.map((p: any) => ({
+          id: `model-${++modelIdCounter}`,
+          type: p.type as SceneModel["type"],
+          position: (p.position || [0, 0.5, 0]) as [number, number, number],
+          scale: [1, 1, 1] as [number, number, number],
+          color: p.color || DEFAULT_COLORS[p.type] || "#d8b4fe",
+          label: p.label || p.type,
+          params: p.params || {},
+          visible: true,
+          group: data.assemblyName || undefined,
+        }));
+
+        setTimeout(() => {
+          setModelsImmediate((prev) => [...prev, ...parts]);
+          if (parts.length > 0) setSelectedModelId(parts[0].id);
+          setShowInput(false);
+          setIsGenerating(false);
+          if (parts.length > 1) {
+            toast.success(`${data.assemblyName || "Assembly"}: ${parts.length} parts generated!`);
+          } else {
+            toast.success(`${parts[0].type} generated!`);
+          }
+        }, 300);
       } catch {
-        type = localInferType(input.text);
-      }
-
-      clearInterval(interval);
-      setProgress(100);
-      setStage(stages[stages.length - 1]);
-
-      setTimeout(() => {
-        const offset = models.length * 2.5;
+        clearInterval(interval);
+        const type = localInferType(input.text);
+        const offset = modelsRef.current.length * 2.5;
         const newModel: SceneModel = {
           id: `model-${++modelIdCounter}`,
           type,
           position: [offset, 0.5, 0],
           scale: [1, 1, 1],
           color: DEFAULT_COLORS[type] || "#d8b4fe",
-          label,
-          params,
+          label: input.text?.slice(0, 30) || "model",
+          visible: true,
         };
         setModelsImmediate((prev) => [...prev, newModel]);
         setSelectedModelId(newModel.id);
         setShowInput(false);
         setIsGenerating(false);
-        toast.success(`${type} generated with ${Object.keys(params).length} custom parameters!`);
-      }, 300);
+        toast.success(`${type} generated!`);
+      }
     },
-    [models.length]
+    []
   );
 
   const fileToBase64 = (file: File): Promise<string> => {
@@ -343,65 +372,107 @@ export default function Index() {
 
       {/* Models list — bottom left */}
       {models.length > 0 && (
-        <div className="absolute bottom-6 left-4 z-30 flex flex-col gap-1.5 max-h-[50vh] overflow-y-auto">
+        <div className="absolute bottom-6 left-4 z-30 flex flex-col gap-1.5 max-h-[50vh] overflow-y-auto pr-1">
           <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1 mb-1">
             <Layers className="w-3 h-3" /> Models ({models.length})
           </span>
-          {models.map((m) => (
-            <div
-              key={m.id}
-              className="flex items-center gap-1"
-            >
-              <button
-                onClick={() => setSelectedModelId(m.id === selectedModelId ? null : m.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border-2 flex-1 min-w-0 ${
-                  selectedModelId === m.id
-                    ? "bg-primary/15 border-primary/40 text-primary"
-                    : "bg-card/80 backdrop-blur-sm border-border text-foreground hover:border-primary/30"
-                }`}
-              >
-                <span
-                  className="w-3 h-3 rounded-full shrink-0 border border-border"
-                  style={{ backgroundColor: m.color }}
-                />
-                <span className="capitalize shrink-0">{m.type}</span>
-                {editingLabelId === m.id ? (
-                  <input
-                    autoFocus
-                    value={editingLabelValue}
-                    onChange={(e) => setEditingLabelValue(e.target.value)}
-                    onBlur={() => {
-                      if (editingLabelValue.trim()) {
-                        setModelsImmediate((prev) => prev.map((x) => x.id === m.id ? { ...x, label: editingLabelValue.trim() } : x));
-                      }
-                      setEditingLabelId(null);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                      if (e.key === "Escape") setEditingLabelId(null);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="bg-transparent border-b border-primary outline-none text-xs font-bold max-w-[100px] text-foreground"
-                  />
-                ) : (
-                  <span className="text-muted-foreground truncate max-w-[80px]">{m.label}</span>
-                )}
-              </button>
-              {selectedModelId === m.id && editingLabelId !== m.id && (
+          {/* Group headers */}
+          {(() => {
+            const groups = new Map<string, SceneModel[]>();
+            const ungrouped: SceneModel[] = [];
+            models.forEach((m) => {
+              if (m.group) {
+                if (!groups.has(m.group)) groups.set(m.group, []);
+                groups.get(m.group)!.push(m);
+              } else {
+                ungrouped.push(m);
+              }
+            });
+
+            const renderModel = (m: SceneModel) => (
+              <div key={m.id} className="flex items-center gap-0.5">
+                {/* Visibility toggle */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setEditingLabelId(m.id);
-                    setEditingLabelValue(m.label);
+                    setModelsImmediate((prev) =>
+                      prev.map((x) => x.id === m.id ? { ...x, visible: !(x.visible !== false ? true : false) } : x)
+                    );
                   }}
-                  className="p-1 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
-                  title="Rename"
+                  className={`p-1 rounded-lg transition-colors shrink-0 ${
+                    m.visible !== false ? "text-muted-foreground hover:text-primary" : "text-muted-foreground/30 hover:text-muted-foreground"
+                  }`}
+                  title={m.visible !== false ? "Hide" : "Show"}
                 >
-                  <Pencil className="w-3 h-3" />
+                  {m.visible !== false ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                 </button>
-              )}
-            </div>
-          ))}
+                <button
+                  onClick={() => setSelectedModelId(m.id === selectedModelId ? null : m.id)}
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs font-bold transition-all border-2 flex-1 min-w-0 ${
+                    selectedModelId === m.id
+                      ? "bg-primary/15 border-primary/40 text-primary"
+                      : m.visible !== false
+                        ? "bg-card/80 backdrop-blur-sm border-border text-foreground hover:border-primary/30"
+                        : "bg-card/40 backdrop-blur-sm border-border/50 text-muted-foreground hover:border-primary/30"
+                  }`}
+                >
+                  <span
+                    className="w-3 h-3 rounded-full shrink-0 border border-border"
+                    style={{ backgroundColor: m.color, opacity: m.visible !== false ? 1 : 0.3 }}
+                  />
+                  <span className="capitalize shrink-0">{m.type}</span>
+                  {editingLabelId === m.id ? (
+                    <input
+                      autoFocus
+                      value={editingLabelValue}
+                      onChange={(e) => setEditingLabelValue(e.target.value)}
+                      onBlur={() => {
+                        if (editingLabelValue.trim()) {
+                          setModelsImmediate((prev) => prev.map((x) => x.id === m.id ? { ...x, label: editingLabelValue.trim() } : x));
+                        }
+                        setEditingLabelId(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                        if (e.key === "Escape") setEditingLabelId(null);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="bg-transparent border-b border-primary outline-none text-xs font-bold max-w-[80px] text-foreground"
+                    />
+                  ) : (
+                    <span className="text-muted-foreground truncate max-w-[70px]">{m.label}</span>
+                  )}
+                </button>
+                {selectedModelId === m.id && editingLabelId !== m.id && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingLabelId(m.id);
+                      setEditingLabelValue(m.label);
+                    }}
+                    className="p-1 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+                    title="Rename"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            );
+
+            return (
+              <>
+                {Array.from(groups.entries()).map(([groupName, groupModels]) => (
+                  <div key={groupName} className="flex flex-col gap-1">
+                    <span className="text-[9px] font-extrabold text-primary uppercase tracking-wider px-1 mt-1">
+                      {groupName} ({groupModels.length})
+                    </span>
+                    {groupModels.map(renderModel)}
+                  </div>
+                ))}
+                {ungrouped.map(renderModel)}
+              </>
+            );
+          })()}
           {selectedModelId && (
             <button
               onClick={handleDeleteSelected}
