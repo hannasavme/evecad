@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Box, Layers, Zap, Github } from "lucide-react";
+import { Box, Layers, Zap, Heart, Star, Sparkles } from "lucide-react";
 import InputPanel from "@/components/InputPanel";
 import ModelViewer from "@/components/ModelViewer";
 import ExportPanel from "@/components/ExportPanel";
@@ -9,11 +9,11 @@ import GenerationProgress from "@/components/GenerationProgress";
 type ModelType = "gear" | "bracket" | "box" | "cylinder" | "default";
 
 const stages = [
-  "Parsing input…",
-  "Analyzing geometry…",
-  "Generating mesh…",
-  "Optimizing topology…",
-  "Finalizing model…",
+  "Reading your wishes~ ✨",
+  "Sketching geometry~ 📐",
+  "Building mesh~ 🏗️",
+  "Adding sparkles~ ✨",
+  "Almost done~ 🎀",
 ];
 
 export default function Index() {
@@ -38,16 +38,13 @@ export default function Index() {
       setIsGenerating(true);
       setProgress(0);
       setHasModel(false);
-
       const target = inferModelType(input.text);
       let step = 0;
-
       const interval = setInterval(() => {
         step++;
         const p = Math.min((step / 25) * 100, 100);
         setProgress(p);
         setStage(stages[Math.min(Math.floor(step / 5), stages.length - 1)]);
-
         if (step >= 25) {
           clearInterval(interval);
           setIsGenerating(false);
@@ -61,32 +58,38 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background bg-grid">
+      {/* Floating decorations */}
+      <div className="fixed top-20 left-10 text-2xl opacity-20 animate-bounce pointer-events-none">⭐</div>
+      <div className="fixed top-40 right-16 text-3xl opacity-15 animate-pulse pointer-events-none">🌸</div>
+      <div className="fixed bottom-32 left-20 text-2xl opacity-20 animate-bounce pointer-events-none" style={{ animationDelay: "0.5s" }}>💫</div>
+      <div className="fixed bottom-20 right-32 text-xl opacity-15 animate-pulse pointer-events-none" style={{ animationDelay: "1s" }}>✨</div>
+
       {/* Header */}
-      <header className="border-b border-border backdrop-blur-sm bg-background/80 sticky top-0 z-50">
-        <div className="container mx-auto flex items-center justify-between h-14 px-4">
+      <header className="border-b-2 border-border backdrop-blur-sm bg-background/80 sticky top-0 z-50">
+        <div className="container mx-auto flex items-center justify-between h-16 px-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-2xl bg-primary/15 border-2 border-primary/30 flex items-center justify-center">
               <Box className="w-4 h-4 text-primary" />
             </div>
-            <span className="font-bold text-lg tracking-tight text-foreground">
+            <span className="font-extrabold text-xl tracking-tight text-foreground">
               CAD<span className="text-gradient-primary">Gen</span>
             </span>
-            <span className="hidden sm:inline-block text-xs font-mono px-2 py-0.5 rounded bg-secondary text-muted-foreground border border-border">
-              v0.1 alpha
+            <span className="hidden sm:inline-block text-xs font-bold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground border-2 border-border">
+              ✨ alpha
             </span>
           </div>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground font-mono">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground font-bold">
             <span className="hidden md:flex items-center gap-1.5">
-              <Zap className="w-3 h-3 text-primary" /> AI-Powered
+              <Sparkles className="w-3.5 h-3.5 text-primary" /> AI-Powered
             </span>
             <span className="hidden md:flex items-center gap-1.5">
-              <Layers className="w-3 h-3 text-accent" /> Multi-Format
+              <Heart className="w-3.5 h-3.5 text-primary" /> Made with love
             </span>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main */}
       <main className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 h-[calc(100vh-8rem)]">
           {/* Left Panel */}
@@ -95,15 +98,11 @@ export default function Index() {
             animate={{ opacity: 1, x: 0 }}
             className="flex flex-col gap-4 overflow-y-auto"
           >
-            <div className="p-5 rounded-xl border border-border bg-card flex-1 flex flex-col">
+            <div className="p-5 rounded-3xl border-2 border-border bg-card kawaii-shadow flex-1 flex flex-col">
               <InputPanel onGenerate={handleGenerate} isGenerating={isGenerating} />
             </div>
-
-            {/* Progress / Export */}
-            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
-              {isGenerating && (
-                <GenerationProgress progress={progress} stage={stage} />
-              )}
+            <div className="p-5 rounded-3xl border-2 border-border bg-card kawaii-shadow space-y-4">
+              {isGenerating && <GenerationProgress progress={progress} stage={stage} />}
               <ExportPanel hasModel={hasModel} />
             </div>
           </motion.div>
@@ -113,26 +112,25 @@ export default function Index() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
-            className="relative rounded-xl border border-border overflow-hidden bg-card"
+            className="relative rounded-3xl border-2 border-border overflow-hidden bg-card kawaii-shadow"
           >
-            {/* Viewport Header */}
-            <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-2 bg-card/80 backdrop-blur-sm border-b border-border">
-              <span className="text-xs font-mono text-muted-foreground">
-                VIEWPORT — {hasModel ? modelType.toUpperCase() : "READY"}
+            <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-5 py-2.5 bg-card/80 backdrop-blur-sm border-b-2 border-border">
+              <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                <Star className="w-3.5 h-3.5 text-primary" />
+                {hasModel ? `${modelType.toUpperCase()} ✅` : "Ready to create~ ✨"}
               </span>
-              <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground">
-                <span>Orbit: LMB</span>
-                <span className="text-border">|</span>
-                <span>Zoom: Scroll</span>
-                <span className="text-border">|</span>
-                <span>Pan: RMB</span>
+              <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground">
+                <span>🖱️ Orbit</span>
+                <span className="text-border">·</span>
+                <span>🔍 Zoom</span>
+                <span className="text-border">·</span>
+                <span>✋ Pan</span>
               </div>
             </div>
 
-            {/* Scan line animation during generation */}
             {isGenerating && (
               <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
-                <div className="absolute inset-x-0 h-px bg-primary/60 animate-scan-line" />
+                <div className="absolute inset-x-0 h-0.5 animate-scan-line" style={{ background: "linear-gradient(90deg, transparent, hsl(330 80% 65% / 0.6), transparent)" }} />
               </div>
             )}
 
