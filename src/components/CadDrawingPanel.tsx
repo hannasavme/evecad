@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { X, Download, Ruler, Type, List, Crosshair } from "lucide-react";
+import { X, Download, Ruler, Type, List, Crosshair, ChevronLeft, ChevronRight } from "lucide-react";
 import type { SceneModel, ModelParams } from "@/components/ModelViewer";
 import { toast } from "sonner";
 
@@ -894,7 +894,7 @@ function dimStr(val: number) {
   return (val * 25.4).toFixed(1);
 }
 
-function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotation, onMoveAnnotation, titleText, onUpdateTitle, showSection, showBOM }: {
+function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotation, onMoveAnnotation, titleText, onUpdateTitle, showSection, showBOM, page, partsPerPage }: {
   models: SceneModel[];
   annotations: Annotation[];
   onUpdateAnnotation: (id: string, text: string) => void;
@@ -902,20 +902,27 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
   onMoveAnnotation: (id: string, x: number, y: number) => void;
   titleText: string; onUpdateTitle: (t: string) => void;
   showSection: boolean; showBOM: boolean;
+  page: number; partsPerPage: number;
 }) {
+  const startIdx = page * partsPerPage;
+  const pageModels = models.slice(startIdx, startIdx + partsPerPage);
+  const totalPages = Math.ceil(models.length / partsPerPage);
   const margin = 20;
   const scl = 55;
   const svgWidth = 1190;
-  const partRowH = 280;
+  const svgHeight = 842;
+  const partRowH = 250;
   const bomRowH = 16;
-  const bomH = (models.length + 1) * bomRowH + 4;
-  const viewsStartY = margin + (showBOM ? bomH + 30 : 30);
-  const minContentH = viewsStartY + models.length * partRowH + 150;
-  const svgHeight = Math.max(842, minContentH);
+  const showBOMOnPage = showBOM && page === 0;
+  const bomH = showBOMOnPage ? (models.length + 1) * bomRowH + 4 : 0;
+  const viewsStartY = margin + (showBOMOnPage ? Math.min(bomH, 200) + 30 : 30);
   const today = new Date().toISOString().slice(0, 10);
 
   // BOM table dimensions
   const bomW = 300;
+  const maxBomRows = 10;
+  const bomDisplayModels = models.slice(0, maxBomRows);
+  const bomDisplayH = showBOMOnPage ? (bomDisplayModels.length + 1) * bomRowH + 4 : 0;
   const bomX = svgWidth - margin - bomW;
   const bomY = margin + 10;
 
@@ -938,9 +945,9 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
       <rect x={margin + 4} y={margin + 4} width={svgWidth - margin * 2 - 8} height={svgHeight - margin * 2 - 8} fill="none" stroke={LINE_COLOR} strokeWidth={0.5} />
 
       {/* ─── Parts List / BOM ─── */}
-      {showBOM && (
+      {showBOMOnPage && (
         <g>
-          <rect x={bomX} y={bomY} width={bomW} height={bomH} fill="none" stroke={LINE_COLOR} strokeWidth={1} />
+          <rect x={bomX} y={bomY} width={bomW} height={bomDisplayH} fill="none" stroke={LINE_COLOR} strokeWidth={1} />
           {/* Header */}
           <rect x={bomX} y={bomY} width={bomW} height={bomRowH} fill="#f0f0f0" stroke={LINE_COLOR} strokeWidth={0.5} />
           {["ITEM", "QTY", "PART NAME", "TYPE", "MATERIAL"].map((h, i) => {
@@ -953,10 +960,10 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
           })}
           {/* Column lines */}
           {[35, 65, 165, 235].map((offset) => (
-            <line key={offset} x1={bomX + offset} y1={bomY} x2={bomX + offset} y2={bomY + bomH} stroke={LINE_COLOR} strokeWidth={0.3} />
+            <line key={offset} x1={bomX + offset} y1={bomY} x2={bomX + offset} y2={bomY + bomDisplayH} stroke={LINE_COLOR} strokeWidth={0.3} />
           ))}
           {/* Rows */}
-          {models.map((m, i) => {
+          {bomDisplayModels.map((m, i) => {
             const ry = bomY + (i + 1) * bomRowH;
             const colWidths = [35, 30, 100, 70, 65];
             return (
@@ -970,6 +977,9 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
               </g>
             );
           })}
+          {models.length > maxBomRows && (
+            <text x={bomX + bomW / 2} y={bomY + bomDisplayH + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">... +{models.length - maxBomRows} more items</text>
+          )}
           <text x={bomX + bomW / 2} y={bomY - 4} textAnchor="middle" fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">PARTS LIST</text>
         </g>
       )}
@@ -1019,11 +1029,12 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         {/* DWG NO */}
         <text x={tbX + tbW - 50} y={tbY + tbRowH * 2 + 12} fontSize={6} fill={HIDDEN_COLOR} fontFamily="monospace">DWG NO</text>
         <text x={tbX + tbW - 50} y={tbY + tbRowH * 3 + 12} fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">EVE-001</text>
-        <text x={tbX + tbW - 50} y={tbY + tbRowH * 4 + 12} fontSize={6} fill={HIDDEN_COLOR} fontFamily="monospace">SHEET 1 OF 1</text>
+        <text x={tbX + tbW - 50} y={tbY + tbRowH * 4 + 12} fontSize={6} fill={HIDDEN_COLOR} fontFamily="monospace">SHEET {page + 1} OF {totalPages}</text>
       </g>
 
       {/* ─── Part Views ─── */}
-      {models.map((model, idx) => {
+      {pageModels.map((model, idx) => {
+        const globalIdx = startIdx + idx;
         const profile = getProfile(model.type);
         const dims = getScaledDims(model);
         const partY = viewsStartY + idx * partRowH;
@@ -1050,7 +1061,7 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
           <g key={model.id}>
             {/* Part label */}
             <text x={margin + 10} y={partY + 10} fontSize={10} fontWeight="bold" fill={CENTER_COLOR} fontFamily="monospace">
-              Part {idx + 1}: {model.label} ({model.type})
+              Part {globalIdx + 1}: {model.label} ({model.type})
             </text>
 
             {/* View labels */}
@@ -1091,10 +1102,10 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
             <DimensionV y1={frontCy - fh / 2} y2={frontCy + fh / 2} x={frontCx + fw / 2 + 20} value={`${dimStr(dims.h)} mm`} />
 
             {/* Balloon callout */}
-            <Balloon cx={frontCx + fw / 2 + 45} cy={frontCy - fh / 2 - 10} tx={frontCx + fw / 4} ty={frontCy} num={idx + 1} />
+            <Balloon cx={frontCx + fw / 2 + 45} cy={frontCy - fh / 2 - 10} tx={frontCx + fw / 4} ty={frontCy} num={globalIdx + 1} />
 
             {/* Part separator */}
-            {idx < models.length - 1 && (
+            {idx < pageModels.length - 1 && (
               <line x1={margin + 4} y1={partY + partRowH - 10} x2={svgWidth - margin - 4} y2={partY + partRowH - 10} stroke="#ddd" strokeWidth={0.5} strokeDasharray="4 3" />
             )}
           </g>
@@ -1118,6 +1129,10 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
   const [showSection, setShowSection] = useState(true);
   const [showBOM, setShowBOM] = useState(true);
   const svgContainerRef = useRef<HTMLDivElement>(null);
+
+  const PARTS_PER_PAGE = 3;
+  const [drawingPage, setDrawingPage] = useState(0);
+  const totalPages = Math.ceil(models.length / PARTS_PER_PAGE);
 
   const addAnnotation = () => {
     setAnnotations((prev) => [...prev, { id: `ann-${++annotationId}`, x: 30 + Math.random() * 200, y: 40 + Math.random() * 100, text: "Note: edit me" }]);
@@ -1210,6 +1225,19 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
               <Download className="w-3 h-3 inline mr-1" />DXF
             </button>
             <div className="w-px h-5 bg-border mx-1" />
+            {/* Page navigation */}
+            {totalPages > 1 && (
+              <>
+                <button onClick={() => setDrawingPage(Math.max(0, drawingPage - 1))} disabled={drawingPage === 0} className="text-[10px] font-bold text-muted-foreground hover:text-primary px-1 py-1 rounded-lg hover:bg-muted disabled:opacity-30">
+                  <ChevronLeft className="w-3 h-3" />
+                </button>
+                <span className="text-[10px] font-bold text-muted-foreground px-1">{drawingPage + 1}/{totalPages}</span>
+                <button onClick={() => setDrawingPage(Math.min(totalPages - 1, drawingPage + 1))} disabled={drawingPage >= totalPages - 1} className="text-[10px] font-bold text-muted-foreground hover:text-primary px-1 py-1 rounded-lg hover:bg-muted disabled:opacity-30">
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+                <div className="w-px h-5 bg-border mx-1" />
+              </>
+            )}
             <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted">
               <X className="w-4 h-4" />
             </button>
@@ -1228,6 +1256,8 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
             onUpdateTitle={setTitleText}
             showSection={showSection}
             showBOM={showBOM}
+            page={drawingPage}
+            partsPerPage={PARTS_PER_PAGE}
           />
         </div>
       </div>
