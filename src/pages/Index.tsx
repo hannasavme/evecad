@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUndoHistory } from "@/hooks/use-undo-history";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthGate } from "@/hooks/useAuthGate";
 
 const DEFAULT_COLORS: Record<string, string> = {
   gear: "#f9a8d4",
@@ -36,6 +37,7 @@ let modelIdCounter = 0;
 
 export default function Index() {
   const { user } = useAuth();
+  const { needsAuth, requireAuth } = useAuthGate();
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState("Untitled Project");
   const [showProperties, setShowProperties] = useState(false);
@@ -58,6 +60,22 @@ export default function Index() {
   const setModelsImmediate = useCallback((updater: SceneModel[] | ((prev: SceneModel[]) => SceneModel[])) => {
     pushImmediate(typeof updater === "function" ? updater(modelsRef.current) : updater);
   }, [pushImmediate]);
+
+  // Show sign-in prompt for returning unauthenticated users
+  useEffect(() => {
+    if (needsAuth) {
+      toast.info("Welcome back! Sign in to save your work", {
+        description: "Create a free account to save projects, export models, and more.",
+        duration: 8000,
+        action: {
+          label: "Sign in",
+          onClick: () => {
+            window.location.href = "/auth";
+          },
+        },
+      });
+    }
+  }, [needsAuth]);
 
   const [selectedModelIds, setSelectedModelIds] = useState<Set<string>>(new Set());
   const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
@@ -428,7 +446,7 @@ export default function Index() {
             </button>
           )}
           <ImportButton onImport={(imported) => setModelsImmediate((prev) => [...prev, ...imported])} />
-          <ExportDropdown hasModel={models.length > 0} getScene={getScene} />
+          <ExportDropdown hasModel={models.length > 0} getScene={getScene} onAuthRequired={() => requireAuth("export")} />
           {user && (
             <SaveLoadMenu
               models={models}

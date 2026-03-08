@@ -14,13 +14,17 @@ const formats = [
 interface ExportDropdownProps {
   hasModel: boolean;
   getScene?: () => THREE.Scene | null;
+  onAuthRequired?: () => boolean;
 }
 
-export default function ExportDropdown({ hasModel, getScene }: ExportDropdownProps) {
+export default function ExportDropdown({ hasModel, getScene, onAuthRequired }: ExportDropdownProps) {
   const [open, setOpen] = useState(false);
 
   const handleExport = (format: string) => {
     setOpen(false);
+
+    // Check auth gate before allowing export
+    if (onAuthRequired && !onAuthRequired()) return;
 
     if (format === "step") {
       toast.info("STEP export coming soon", {
