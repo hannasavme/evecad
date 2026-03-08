@@ -237,6 +237,19 @@ Params:
   - knuckle: knuckleRadius (0.05-1), knuckleHeight (0.1-2), boreSize (0.02-0.5)
   - motor: motorRadius (0.05-1), motorLength (0.2-3), shaftDiameter (0.01-0.3)
   - standoff: standoffRadius (0.03-0.3), standoffHeight (0.1-2), threadRadius (0.01-0.15)
+  - nosecone: noseLength (0.3-5), noseRadius (0.1-3), noseProfile ("ogive"|"parabolic"|"conical")
+  - bodytube: tubeRadius (0.1-3), tubeLength (0.3-10), tubeWall (0.01-0.2)
+  - fin: finSpan (0.1-3), finRoot (0.1-3), finTip (0.05-2), finSweep (0-2), finThickness (0.01-0.2), finCount (2-8)
+  - centeringring: ringOuterRadius (0.1-3), ringInnerRadius (0.05-2), ringThickness (0.01-0.2)
+  - bulkhead: bulkheadRadius (0.1-3), bulkheadThickness (0.02-0.3)
+  - coupler: couplerRadius (0.1-3), couplerLength (0.1-3), couplerWall (0.01-0.1)
+  - launchguide: guideLength (0.2-3), guideRadius (0.01-0.2)
+  - motortube: mountRadius (0.05-1), mountLength (0.2-5), mountWall (0.005-0.1)
+  - thrustplate: plateRadius (0.1-3), plateThickness (0.01-0.2), plateHoleRadius (0.05-1)
+  - retainer: retainerRadius (0.05-1), retainerHeight (0.05-0.5)
+  - nozzle: nozzleThroat (0.02-0.5), nozzleExit (0.05-1), nozzleLength (0.1-2)
+  - ebay: ebayRadius (0.1-3), ebayLength (0.2-3), ebayWall (0.01-0.1)
+  - baffle: baffleRadius (0.1-3), baffleThickness (0.01-0.2), baffleHoles (4-24)
 
 CRITICAL RULES:
 1. ALWAYS use compound types when the object IS one of those things. NEVER substitute with basic primitives.
