@@ -224,7 +224,7 @@ function SceneModelComponent({ model, isSelected, onSelect }: { model: SceneMode
       ref={groupRef}
       position={model.position}
       scale={model.scale}
-      onClick={(e) => { e.stopPropagation(); onSelect(); }}
+      onClick={(e) => { e.stopPropagation(); onSelect(e.nativeEvent); }}
     >
       <MeshComp color={model.color} params={model.params} />
       {isSelected && (
