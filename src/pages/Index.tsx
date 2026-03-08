@@ -223,7 +223,7 @@ export default function Index() {
           type: p.type as SceneModel["type"],
           position: p.position as [number, number, number],
           scale: p.scale as [number, number, number],
-          color: DEFAULT_COLORS[p.type] || "#fde68a",
+          color: DEFAULT_COLORS[p.type] || "#f9a8d4",
           label: p.label,
         }));
         setModelsImmediate((prev) => [...prev, ...newParts]);
