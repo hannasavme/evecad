@@ -1188,29 +1188,38 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const centerY = (minY + maxY) / 2;
         const centerZ = (minZ + maxZ) / 2;
 
-        // Layout zones on the A3 sheet
-        const drawH = svgHeight - viewsStartY - 130;
-        const frontZoneW = drawAreaW * 0.42;
-        const sideZoneW = drawAreaW * 0.28;
-        const sectionZoneW = drawAreaW * 0.28;
-        const viewH = drawH * 0.55;
-        const topViewH = drawH * 0.38;
+        // Layout zones — everything must fit between viewsStartY and titleBlock top
+        const maxDrawBottom = tbY - 25; // leave gap above title block
+        const drawH = maxDrawBottom - viewsStartY;
+        const gap = 8;
 
-        // Auto-scale
-        const frontScaleW = (frontZoneW - 60) / totalW;
-        const frontScaleH = (viewH - 40) / totalH;
-        const sideScaleW = (sideZoneW - 40) / totalD;
-        const sideScaleH = (viewH - 40) / totalH;
-        const topScaleW = (frontZoneW - 60) / totalW;
-        const topScaleH = (topViewH - 40) / totalD;
-        const asmScale = Math.min(frontScaleW, frontScaleH, sideScaleW, sideScaleH, topScaleW, topScaleH, 40);
+        // 2-row layout: top row = front + side + section, bottom row = top view
+        const topRowH = drawH * 0.58;
+        const bottomRowH = drawH * 0.38;
 
-        // Default view positions (top-left corner of each view zone)
+        // Column widths (front gets more space for balloons)
+        const numCols = showSection ? 3 : 2;
+        const frontZoneW = drawAreaW * (showSection ? 0.40 : 0.55);
+        const sideZoneW = drawAreaW * (showSection ? 0.28 : 0.42);
+        const sectionZoneW = showSection ? drawAreaW * 0.28 : 0;
+        const viewH = topRowH - gap;
+        const topViewH = bottomRowH - gap;
+
+        // Auto-scale to fit the smallest zone
+        const frontScaleW = (frontZoneW - 80) / totalW;
+        const frontScaleH = (viewH - 50) / totalH;
+        const sideScaleW = (sideZoneW - 50) / totalD;
+        const sideScaleH = (viewH - 50) / totalH;
+        const topScaleW = (frontZoneW - 80) / totalW;
+        const topScaleH = (topViewH - 50) / totalD;
+        const asmScale = Math.min(frontScaleW, frontScaleH, sideScaleW, sideScaleH, topScaleW, topScaleH, 35);
+
+        // Default view positions — clamped inside the drawing border
         const defaultPositions: Record<string, { x: number; y: number }> = {
-          front: { x: margin, y: viewsStartY },
-          side: { x: margin + frontZoneW, y: viewsStartY },
-          top: { x: margin, y: viewsStartY + viewH + 10 },
-          section: { x: margin + frontZoneW + sideZoneW, y: viewsStartY },
+          front: { x: margin + gap, y: viewsStartY },
+          side: { x: margin + gap + frontZoneW + gap, y: viewsStartY },
+          top: { x: margin + gap, y: viewsStartY + topRowH + gap },
+          section: { x: margin + gap + frontZoneW + gap + sideZoneW + gap, y: viewsStartY },
         };
 
         // Use stored positions or defaults
