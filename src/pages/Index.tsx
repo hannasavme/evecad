@@ -102,10 +102,11 @@ export default function Index() {
             <div className="p-5 rounded-3xl border-2 border-border bg-card kawaii-shadow flex-1 flex flex-col">
               <InputPanel onGenerate={handleGenerate} isGenerating={isGenerating} />
             </div>
-            <div className="p-5 rounded-3xl border-2 border-border bg-card kawaii-shadow space-y-4">
-              {isGenerating && <GenerationProgress progress={progress} stage={stage} />}
-              <ExportPanel hasModel={hasModel} />
-            </div>
+            {isGenerating && (
+              <div className="p-5 rounded-3xl border-2 border-border bg-card kawaii-shadow">
+                <GenerationProgress progress={progress} stage={stage} />
+              </div>
+            )}
           </motion.div>
 
           {/* 3D Viewport */}
