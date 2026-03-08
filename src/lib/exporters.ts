@@ -4,8 +4,14 @@ import * as THREE from "three";
 export function exportSTL(scene: THREE.Scene): Blob {
   const triangles: { normal: THREE.Vector3; vertices: THREE.Vector3[] }[] = [];
 
+  scene.updateMatrixWorld(true);
+
   scene.traverse((obj) => {
     if (!(obj instanceof THREE.Mesh)) return;
+    // Skip non-model meshes (grid, helpers, selection indicators)
+    const mat = (obj as THREE.Mesh).material as THREE.Material;
+    if (mat && ('wireframe' in mat) && (mat as any).wireframe) return;
+    if (mat && 'opacity' in mat && (mat as any).opacity < 0.1) return;
     const mesh = obj as THREE.Mesh;
     const geometry = mesh.geometry.clone();
     geometry.applyMatrix4(mesh.matrixWorld);
@@ -66,11 +72,16 @@ export function exportSTL(scene: THREE.Scene): Blob {
 
 // OBJ Text Export
 export function exportOBJ(scene: THREE.Scene): Blob {
-  let output = "# CADGen OBJ Export\n";
+  let output = "# EveCAD OBJ Export\n";
   let vertexOffset = 0;
+
+  scene.updateMatrixWorld(true);
 
   scene.traverse((obj) => {
     if (!(obj instanceof THREE.Mesh)) return;
+    const mat = (obj as THREE.Mesh).material as THREE.Material;
+    if (mat && ('wireframe' in mat) && (mat as any).wireframe) return;
+    if (mat && 'opacity' in mat && (mat as any).opacity < 0.1) return;
     const mesh = obj as THREE.Mesh;
     const geometry = mesh.geometry.clone();
     geometry.applyMatrix4(mesh.matrixWorld);
