@@ -925,7 +925,6 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
   const bomDisplayH = showBOMOnPage ? (bomDisplayModels.length + 1) * bomRowH + 4 : 0;
   const bomX = svgWidth - margin - bomW;
   const bomY = margin + 10;
-  const bomY = margin + 10;
 
   // Title block
   const tbW = 300;
