@@ -148,7 +148,7 @@ export default function Index() {
           type,
           position: [offset, 0.5, 0],
           scale: [1, 1, 1],
-          color: DEFAULT_COLORS[type] || "#d8b4fe",
+          color: DEFAULT_COLORS[type] || "#f9a8d4",
           label: input.text?.slice(0, 30) || "model",
           visible: true,
         };
