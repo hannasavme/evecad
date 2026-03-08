@@ -120,7 +120,7 @@ For SIMPLE parts (single gear, bracket, etc.), return 1-3 parts.
 For COMPLEX objects (vehicles, machines, robots, devices), decompose into 40-80+ sub-parts for maximum detail.
 For MULTI-VEHICLE systems (swarms, fleets, convoys), model EACH vehicle separately with full detail.
 
-Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track, bolt, nut, screw, bearing, pulley, shaft, mug, hammer, handle, chassis, rocker, bogie, knuckle, motor, standoff.
+Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track, bolt, nut, screw, bearing, pulley, shaft, mug, hammer, handle, chassis, rocker, bogie, knuckle, motor, standoff, nosecone, bodytube, fin, centeringring, bulkhead, coupler, launchguide, motortube, thrustplate, retainer, nozzle, ebay, baffle.
 
 COMPOUND TYPE RULES (HIGHEST PRIORITY — ALWAYS FOLLOW):
 - "wheel": ANY wheel — auto-renders with tire, spoked rim, hub cap, axle hole, treads.
@@ -143,18 +143,31 @@ COMPOUND TYPE RULES (HIGHEST PRIORITY — ALWAYS FOLLOW):
 - "knuckle": ANY steering knuckle/joint housing — auto-renders with cylindrical housing, steering bore, axle bore, flanges, mounting ears.
 - "motor": ANY DC/gear motor — auto-renders with cylindrical body, gearbox housing, output shaft, terminals, mount tabs.
 - "standoff": ANY PCB standoff/spacer — auto-renders with hex body, threaded studs top/bottom.
+- "nosecone": ANY rocket nose cone — auto-renders ogive/parabolic/conical profile with shoulder ring.
+- "bodytube": ANY rocket body tube — auto-renders hollow cylinder with end rings.
+- "fin": ANY rocket fin set — auto-renders swept trapezoidal fins with configurable count.
+- "centeringring": ANY centering ring — auto-renders annular disk with glue tabs.
+- "bulkhead": ANY bulkhead/divider — auto-renders solid disk with U-bolt holes and edge bevel.
+- "coupler": ANY tube coupler — auto-renders thin-wall cylinder with alignment mark.
+- "launchguide": ANY launch lug/rail guide — auto-renders rail button with mount plate.
+- "motortube": ANY motor mount tube — auto-renders inner tube with thrust ring.
+- "thrustplate": ANY engine block/thrust ring — auto-renders disk with central motor hole and reinforcement.
+- "retainer": ANY motor retainer — auto-renders threaded cap with knurled grip.
+- "nozzle": ANY rocket nozzle — auto-renders convergent-divergent bell shape with exit ring.
+- "ebay": ANY avionics bay — auto-renders semi-transparent tube with internal PCB sled, switch band, threaded rods.
+- "baffle": ANY ejection baffle — auto-renders perforated disk with gas vent holes.
 
 If user asks to "generate a wheel" → use type "wheel" (NOT impeller).
 If user asks for an impeller/turbine/fan → use wedges/plates radially around a cylinder hub.
 
 Shape guide for BASIC types:
 - box: panels, frames, housings, blocks, covers, electronics bays, battery mounts
-- cylinder: pipes, columns, posts (NOT for wheels/shafts/bolts/motors — use compound types)
+- cylinder: pipes, columns, posts (NOT for wheels/shafts/bolts/motors/bodytubes — use compound types)
 - sphere: domes, ball joints, pressure vessels, pivot spheres (NOT for camera sensors)
-- cone: nozzles, funnels, tapered connectors
+- cone: simple cones only (NOT for nosecones — use nosecone type)
 - wedge: ramps, angled armor, turbine/impeller blades, sloped panels
 - torus: seals, o-rings, circular rails
-- tube: hollow pipes, exhaust tubes, structural tubes
+- tube: generic hollow pipes (NOT for rocket tubes — use bodytube/motortube)
 - plate: solar panels, flat mounting plates, fins, wings, shelves
 - gear: drive gears, sprockets, cogs
 - bracket: L-shaped mounts, suspension arms, support struts, motor brackets
@@ -168,6 +181,19 @@ ROVER ASSEMBLY REFERENCE (use when building Mars/planetary rovers):
 - Motors: one per wheel, mounted on knuckles or directly on bogie/rocker wheel mounts.
 - 6 wheels total: 2 on rockers (middle), 4 on bogies (corners).
 - Camera/antenna on mast above chassis. PCB standoffs inside electronics bay.
+
+ROCKET ASSEMBLY REFERENCE (use when building model/high-power rockets):
+- Build BOTTOM-UP: retainer at y=0, then nozzle, motortube, centering rings, body tube, ebay, coupler, upper body, nosecone on top.
+- All tube radii must match: bodytube.tubeRadius = nosecone.noseRadius = ebay.ebayRadius.
+- Motor mount inside lower body: motortube centered, centering rings spaced along it to align with bodytube.
+- Fins at base: position at lower body tube, rotation spaced evenly (3 fins = 0°, 120°, 240°).
+- Thrust plate: inside motortube at top, prevents motor sliding forward.
+- Retainer: threads onto bottom of motortube, keeps motor in.
+- Nozzle: at very bottom, exit faces down.
+- E-bay: between lower and upper body sections, with bulkheads on each end.
+- Baffle: above motor section, below recovery bay, protects parachute.
+- Launch guide: on exterior of lower body tube.
+- Coupler: joins body tube sections internally.
 
 For each part, provide:
 - type: one of the available shapes
