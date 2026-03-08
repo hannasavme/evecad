@@ -1,13 +1,13 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Type, Image, Upload, Sparkles, Star, Heart } from "lucide-react";
+import { Type, Image, Upload, Sparkles, Star, Heart, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-type InputMode = "text" | "image";
+export type InputMode = "text" | "image" | "paper";
 
 interface InputPanelProps {
-  onGenerate: (input: { mode: InputMode; text?: string; imageFile?: File }) => void;
+  onGenerate: (input: { mode: InputMode; text?: string; imageFile?: File; paperFile?: File }) => void;
   isGenerating: boolean;
 }
 
@@ -18,47 +18,67 @@ const TEXT_EXAMPLES = [
   "A cylinder pipe, hollow with thin walls",
 ];
 
-
 export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps) {
   const [mode, setMode] = useState<InputMode>("text");
   const [text, setText] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [paperFile, setPaperFile] = useState<File | null>(null);
+  const [paperContext, setPaperContext] = useState("");
   const [dragActive, setDragActive] = useState(false);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDragActive(false);
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith("image/")) setImageFile(file);
-  }, []);
+    if (!file) return;
+    if (mode === "paper" && file.type === "application/pdf") {
+      setPaperFile(file);
+    } else if (mode === "image" && file.type.startsWith("image/")) {
+      setImageFile(file);
+    }
+  }, [mode]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setImageFile(file);
+    if (file) {
+      if (mode === "paper") setPaperFile(file);
+      else setImageFile(file);
+    }
   };
 
   const handleGenerate = () => {
     if (mode === "text" && text.trim()) onGenerate({ mode, text });
     else if (mode === "image" && imageFile) onGenerate({ mode, imageFile });
+    else if (mode === "paper" && paperFile) onGenerate({ mode, paperFile, text: paperContext.trim() || undefined });
   };
 
+  const canGenerate =
+    mode === "text" ? text.trim().length > 0
+    : mode === "image" ? !!imageFile
+    : !!paperFile;
+
+  const modes = [
+    { key: "text" as const, label: "Text to CAD", icon: Type },
+    { key: "image" as const, label: "Image to CAD", icon: Image },
+    { key: "paper" as const, label: "Paper to CAD", icon: FileText },
+  ];
 
   return (
     <div className="flex flex-col h-full">
       {/* Mode Tabs */}
       <div className="flex gap-1 p-1.5 rounded-2xl bg-muted mb-4">
-        {(["text", "image"] as const).map((m) => (
+        {modes.map((m) => (
           <button
-            key={m}
-            onClick={() => setMode(m)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-sm font-bold transition-all ${
-              mode === m
+            key={m.key}
+            onClick={() => setMode(m.key)}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition-all ${
+              mode === m.key
                 ? "bg-card text-primary kawaii-shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            {m === "text" ? <Type className="w-4 h-4" /> : <Image className="w-4 h-4" />}
-            {m === "text" ? "Text to CAD" : "Image to CAD"}
+            <m.icon className="w-3.5 h-3.5" />
+            {m.label}
           </button>
         ))}
       </div>
@@ -97,7 +117,7 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
               </div>
             </div>
           </motion.div>
-        ) : (
+        ) : mode === "image" ? (
           <motion.div
             key="image"
             initial={{ opacity: 0, y: 10 }}
@@ -143,26 +163,81 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
               )}
             </div>
             <input id="file-input" type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="paper"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex-1 flex flex-col gap-3"
+          >
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <FileText className="w-3 h-3 text-primary" />
+              Upload academic paper
+            </label>
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={handleDrop}
+              className={`min-h-[100px] flex flex-col items-center justify-center gap-3 rounded-2xl border-3 border-dashed transition-all cursor-pointer ${
+                dragActive
+                  ? "border-primary bg-primary/5"
+                  : paperFile
+                  ? "border-primary/50 bg-primary/5"
+                  : "border-border hover:border-primary/40"
+              }`}
+              onClick={() => document.getElementById("paper-input")?.click()}
+            >
+              {paperFile ? (
+                <>
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-primary" />
+                  </div>
+                  <p className="text-sm text-foreground font-bold truncate max-w-[200px]">{paperFile.name}</p>
+                  <p className="text-xs text-muted-foreground">Click to replace</p>
+                </>
+              ) : (
+                <>
+                  <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+                    <Upload className="w-5 h-5 text-primary" />
+                  </div>
+                  <p className="text-sm text-muted-foreground font-semibold">
+                    Drop PDF here or <span className="text-primary">browse</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground">PDF up to 20MB</p>
+                </>
+              )}
+            </div>
+            <input id="paper-input" type="file" accept="application/pdf" onChange={handleFileSelect} className="hidden" />
 
-
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              Focus area (optional)
+            </label>
+            <Textarea
+              value={paperContext}
+              onChange={(e) => setPaperContext(e.target.value)}
+              placeholder="e.g., Generate the proposed heat exchanger design from Section 3"
+              className="min-h-[70px] resize-none bg-muted/50 border-2 border-border focus:border-primary rounded-2xl text-sm p-3"
+            />
           </motion.div>
         )}
       </AnimatePresence>
 
       <Button
         onClick={handleGenerate}
-        disabled={isGenerating || (mode === "text" ? !text.trim() : !imageFile)}
+        disabled={isGenerating || !canGenerate}
         className="mt-4 w-full h-12 rounded-2xl font-bold text-sm tracking-wide kawaii-shadow"
       >
         {isGenerating ? (
           <span className="flex items-center gap-2">
             <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-            Generating...
+            {mode === "paper" ? "Analyzing paper..." : "Generating..."}
           </span>
         ) : (
           <span className="flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
-            Generate CAD Model
+            {mode === "paper" ? "Generate from Paper" : "Generate CAD Model"}
           </span>
         )}
       </Button>
