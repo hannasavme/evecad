@@ -485,7 +485,7 @@ export default function Index() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 w-80"
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 w-[min(20rem,calc(100vw-2rem))]"
           >
             <div className="p-4 rounded-2xl border-2 border-border bg-card/90 backdrop-blur-md kawaii-shadow">
               <GenerationProgress progress={progress} stage={stage} />
