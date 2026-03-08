@@ -676,10 +676,45 @@ function validateAssembly(
     return executeAssembly(originalModels);
   }
 
-  // Build connectivity graph to detect floating parts
   const tolerance = 0.3;
 
+  // Helper: check if two positioned parts touch
+  function partsTouch(pi: any, pj: any, origI: PartModel, origJ: PartModel): boolean {
+    const sizeI = getPartSize({ ...origI, scale: pi.new_scale || origI.scale });
+    const posI = pi.new_position || [0, 0, 0];
+    const sizeJ = getPartSize({ ...origJ, scale: pj.new_scale || origJ.scale });
+    const posJ = pj.new_position || [0, 0, 0];
+    return [0, 1, 2].every(axis => {
+      const minI = posI[axis] - sizeI[axis] / 2;
+      const maxI = posI[axis] + sizeI[axis] / 2;
+      const minJ = posJ[axis] - sizeJ[axis] / 2;
+      const maxJ = posJ[axis] + sizeJ[axis] / 2;
+      return maxI + tolerance >= minJ && maxJ + tolerance >= minI;
+    });
+  }
+
+  // Build connectivity graph via BFS
+  const visited = new Set<number>();
+  const queue = [0];
+  visited.add(0);
+  while (queue.length > 0) {
+    const idx = queue.shift()!;
+    for (let j = 0; j < plan.parts.length; j++) {
+      if (visited.has(j)) continue;
+      const origI = originalModels.find(m => m.id === plan.parts[idx].id);
+      const origJ = originalModels.find(m => m.id === plan.parts[j].id);
+      if (!origI || !origJ) continue;
+      if (partsTouch(plan.parts[idx], plan.parts[j], origI, origJ)) {
+        visited.add(j);
+        queue.push(j);
+      }
+    }
+  }
+
+  // Fix any floating parts
   for (let i = 0; i < plan.parts.length; i++) {
+    if (visited.has(i)) continue;
+
     const pi = plan.parts[i];
     const origI = originalModels.find(m => m.id === pi.id);
     if (!origI) continue;
@@ -687,52 +722,66 @@ function validateAssembly(
     const sizeI = getPartSize({ ...origI, scale: pi.new_scale || origI.scale });
     const posI = pi.new_position || [0, 0, 0];
 
-    let connected = false;
-    for (let j = 0; j < plan.parts.length; j++) {
-      if (i === j) continue;
+    // Find nearest connected part
+    let bestJ = 0;
+    let bestDist = Infinity;
+    for (const j of visited) {
       const pj = plan.parts[j];
-      const origJ = originalModels.find(m => m.id === pj.id);
-      if (!origJ) continue;
-
-      const sizeJ = getPartSize({ ...origJ, scale: pj.new_scale || origJ.scale });
       const posJ = pj.new_position || [0, 0, 0];
-
-      // Check if bounding boxes touch or overlap (within tolerance)
-      const touching = [0, 1, 2].every(axis => {
-        const minI = posI[axis] - sizeI[axis] / 2;
-        const maxI = posI[axis] + sizeI[axis] / 2;
-        const minJ = posJ[axis] - sizeJ[axis] / 2;
-        const maxJ = posJ[axis] + sizeJ[axis] / 2;
-        return maxI + tolerance >= minJ && maxJ + tolerance >= minI;
-      });
-
-      if (touching) { connected = true; break; }
+      const dist = Math.sqrt(
+        (posI[0] - posJ[0]) ** 2 + (posI[1] - posJ[1]) ** 2 + (posI[2] - posJ[2]) ** 2
+      );
+      if (dist < bestDist) { bestDist = dist; bestJ = j; }
     }
 
-    // If floating, snap to nearest part
-    if (!connected && i > 0) {
-      let bestJ = 0;
-      let bestDist = Infinity;
-      for (let j = 0; j < plan.parts.length; j++) {
-        if (i === j) continue;
-        const pj = plan.parts[j];
-        const posJ = pj.new_position || [0, 0, 0];
-        const dist = Math.sqrt(
-          (posI[0] - posJ[0]) ** 2 + (posI[1] - posJ[1]) ** 2 + (posI[2] - posJ[2]) ** 2
-        );
-        if (dist < bestDist) { bestDist = dist; bestJ = j; }
-      }
+    const pj = plan.parts[bestJ];
+    const origJ = originalModels.find(m => m.id === pj.id);
+    if (!origJ) continue;
 
-      // Snap: place this part on top of the nearest part
-      const pj = plan.parts[bestJ];
-      const origJ = originalModels.find(m => m.id === pj.id);
-      if (origJ) {
-        const sizeJ = getPartSize({ ...origJ, scale: pj.new_scale || origJ.scale });
-        const posJ = pj.new_position || [0, 0, 0];
-        pi.new_position = [posJ[0], posJ[1] + sizeJ[1] / 2 + sizeI[1] / 2, posJ[2]];
-        pi.modification = (pi.modification || "") + " [auto-snapped to prevent floating]";
+    const sizeJ = getPartSize({ ...origJ, scale: pj.new_scale || origJ.scale });
+    const posJ = pj.new_position || [0, 0, 0];
+
+    // Determine best snap strategy based on part types
+    const cType = origI.type;
+    const topMountTypes = ["camera", "antenna", "lidar", "transceiver", "solarpanel", "rtg", "proxsensor", "sbc", "imu"];
+    const bottomMountTypes = ["wheel", "track", "knuckle"];
+    const sideMountTypes = ["rocker", "bogie", "dronearm", "bracket", "wing", "motor"];
+
+    if (bottomMountTypes.includes(cType)) {
+      // Place below target
+      pi.new_position = [posJ[0], posJ[1] - sizeJ[1] / 2 - sizeI[1] / 2, posJ[2]];
+      // Preserve X/Z offset if reasonable
+      if (Math.abs(posI[0] - posJ[0]) < sizeJ[0]) pi.new_position[0] = posI[0];
+      if (Math.abs(posI[2] - posJ[2]) < sizeJ[2]) pi.new_position[2] = posI[2];
+    } else if (sideMountTypes.includes(cType)) {
+      // Attach to side
+      const dx = posI[0] - posJ[0];
+      const side = dx >= 0 ? 1 : -1;
+      pi.new_position = [posJ[0] + side * (sizeJ[0] / 2 + sizeI[0] / 2), posJ[1], posJ[2]];
+    } else if (topMountTypes.includes(cType)) {
+      // Place on top
+      pi.new_position = [posI[0], posJ[1] + sizeJ[1] / 2 + sizeI[1] / 2, posI[2]];
+      // Ensure X/Z within parent footprint
+      for (const axis of [0, 2]) {
+        const maxOff = sizeJ[axis] / 2;
+        if (Math.abs(pi.new_position[axis] - posJ[axis]) > maxOff) {
+          pi.new_position[axis] = posJ[axis] + Math.sign(pi.new_position[axis] - posJ[axis]) * maxOff * 0.8;
+        }
+      }
+    } else {
+      // Generic: close all gaps
+      pi.new_position = [...posI];
+      for (let axis = 0; axis < 3; axis++) {
+        const gap = Math.abs(posI[axis] - posJ[axis]) - (sizeJ[axis] / 2 + sizeI[axis] / 2);
+        if (gap > 0.05) {
+          const dir = posI[axis] > posJ[axis] ? 1 : -1;
+          pi.new_position[axis] = posJ[axis] + dir * (sizeJ[axis] / 2 + sizeI[axis] / 2);
+        }
       }
     }
+
+    pi.modification = (pi.modification || "") + " [auto-snapped: no floating parts]";
+    visited.add(i);
   }
 
   return plan;
