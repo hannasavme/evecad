@@ -1898,6 +1898,452 @@ function ProxSensorMesh({ color, params }: { color: string; params?: ModelParams
   );
 }
 
+// ─── Orbiter Compound Primitives ──────────────────────────
+
+function FuselageMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const l = params?.fuselageLength ?? params?.depth ?? 5.0;
+  const w = params?.fuselageWidth ?? params?.width ?? 1.5;
+  const h = params?.fuselageHeight ?? params?.height ?? 1.2;
+  const noseRatio = params?.fuselageNoseRatio ?? 0.25;
+
+  const geometry = useMemo(() => {
+    const shape = new THREE.Shape();
+    // Cross-section: rounded rectangle
+    const hw = w / 2, hh = h / 2, cr = Math.min(hw, hh) * 0.3;
+    shape.moveTo(-hw + cr, -hh);
+    shape.lineTo(hw - cr, -hh);
+    shape.quadraticCurveTo(hw, -hh, hw, -hh + cr);
+    shape.lineTo(hw, hh - cr);
+    shape.quadraticCurveTo(hw, hh, hw - cr, hh);
+    shape.lineTo(-hw + cr, hh);
+    shape.quadraticCurveTo(-hw, hh, -hw, hh - cr);
+    shape.lineTo(-hw, -hh + cr);
+    shape.quadraticCurveTo(-hw, -hh, -hw + cr, -hh);
+    const bodyLen = l * (1 - noseRatio);
+    return new THREE.ExtrudeGeometry(shape, {
+      depth: bodyLen, bevelEnabled: false,
+    });
+  }, [l, w, h, noseRatio]);
+
+  const noseLen = l * noseRatio;
+
+  return (
+    <group>
+      {/* Main body */}
+      <mesh geometry={geometry} position={[0, 0, -l * (1 - noseRatio) / 2]} rotation={[0, 0, 0]}>
+        <meshStandardMaterial color={color} metalness={0.4} roughness={0.35} />
+      </mesh>
+      {/* Nose cone (tapered) */}
+      <mesh position={[0, 0, l / 2 - noseLen / 2]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[w * 0.08, Math.max(w, h) * 0.5, noseLen, 16]} />
+        <meshStandardMaterial color={color} metalness={0.5} roughness={0.3} />
+      </mesh>
+      {/* Window band */}
+      <mesh position={[0, h * 0.35, l * 0.3]}>
+        <boxGeometry args={[w * 0.7, h * 0.15, 0.02]} />
+        <meshStandardMaterial color="#1a237e" metalness={0.8} roughness={0.1} transparent opacity={0.7} />
+      </mesh>
+      {/* Belly heat shield panel */}
+      <mesh position={[0, -h / 2 - 0.01, 0]}>
+        <boxGeometry args={[w * 0.95, 0.03, l * 0.85]} />
+        <meshStandardMaterial color="#2d2d2d" metalness={0.3} roughness={0.7} />
+      </mesh>
+      {/* Structural ring frames */}
+      {Array.from({ length: 4 }).map((_, i) => (
+        <mesh key={i} position={[0, 0, -l * 0.35 + i * (l * 0.25)]} rotation={[0, 0, 0]}>
+          <torusGeometry args={[Math.max(w, h) * 0.48, 0.025, 8, 24]} />
+          <meshStandardMaterial color="#888" metalness={0.6} roughness={0.3} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function WingMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const span = params?.wingSpan ?? 3.0;
+  const root = params?.wingRoot ?? 2.5;
+  const tip = params?.wingTip ?? 0.8;
+  const sweep = params?.wingSweep ?? 1.5;
+  const thick = params?.wingThickness ?? params?.thickness ?? 0.08;
+  const dihedral = params?.wingDihedral ?? 3;
+
+  const wingShape = useMemo(() => {
+    const shape = new THREE.Shape();
+    // Delta/swept wing planform
+    shape.moveTo(0, 0);
+    shape.lineTo(root, 0);
+    shape.lineTo(root - sweep + tip, span);
+    shape.lineTo(root - sweep, span);
+    shape.closePath();
+    return new THREE.ExtrudeGeometry(shape, {
+      depth: thick, bevelEnabled: true, bevelThickness: thick * 0.3, bevelSize: thick * 0.2, bevelSegments: 3,
+    });
+  }, [span, root, tip, sweep, thick]);
+
+  const dihedralRad = (dihedral * Math.PI) / 180;
+
+  return (
+    <group>
+      {/* Left wing */}
+      <mesh geometry={wingShape} position={[-root / 2, 0, 0]} rotation={[dihedralRad, 0, 0]}>
+        <meshStandardMaterial color={color} metalness={0.4} roughness={0.35} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Right wing (mirrored) */}
+      <mesh geometry={wingShape} position={[-root / 2, 0, 0]} rotation={[-dihedralRad, 0, 0]} scale={[1, 1, -1]}>
+        <meshStandardMaterial color={color} metalness={0.4} roughness={0.35} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Leading edge RCC panels */}
+      <mesh position={[root * 0.3, 0, span * 0.5]} rotation={[0, 0, 0]}>
+        <boxGeometry args={[0.04, thick * 2, span * 0.9]} />
+        <meshStandardMaterial color="#333" metalness={0.3} roughness={0.6} />
+      </mesh>
+      <mesh position={[root * 0.3, 0, -span * 0.5]} rotation={[0, 0, 0]}>
+        <boxGeometry args={[0.04, thick * 2, span * 0.9]} />
+        <meshStandardMaterial color="#333" metalness={0.3} roughness={0.6} />
+      </mesh>
+      {/* Aileron hinge lines */}
+      <mesh position={[-root * 0.35, 0, span * 0.6]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.015, 0.015, span * 0.3, 8]} />
+        <meshStandardMaterial color="#666" metalness={0.5} roughness={0.3} />
+      </mesh>
+      <mesh position={[-root * 0.35, 0, -span * 0.6]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.015, 0.015, span * 0.3, 8]} />
+        <meshStandardMaterial color="#666" metalness={0.5} roughness={0.3} />
+      </mesh>
+    </group>
+  );
+}
+
+function EngineBellMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const throat = params?.engineBellThroat ?? 0.15;
+  const exit = params?.engineBellExit ?? params?.radius ?? 0.5;
+  const l = params?.engineBellLength ?? params?.height ?? 1.2;
+  const gimbal = params?.engineBellGimbal ?? 0;
+
+  const bellGeometry = useMemo(() => {
+    const points: THREE.Vector2[] = [];
+    const steps = 30;
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      let r: number;
+      if (t < 0.15) {
+        // Inlet manifold
+        r = exit * 0.6 + (throat * 1.5 - exit * 0.6) * (t / 0.15);
+      } else if (t < 0.35) {
+        // Convergent
+        const ct = (t - 0.15) / 0.2;
+        r = throat * 1.5 - (throat * 1.5 - throat) * ct;
+      } else {
+        // Divergent bell curve
+        const dt = (t - 0.35) / 0.65;
+        r = throat + (exit - throat) * Math.pow(dt, 0.7);
+      }
+      points.push(new THREE.Vector2(r, t * l));
+    }
+    return new THREE.LatheGeometry(points, 32);
+  }, [throat, exit, l]);
+
+  const gimbalRad = (gimbal * Math.PI) / 180;
+
+  return (
+    <group rotation={[gimbalRad, 0, 0]}>
+      {/* Bell nozzle */}
+      <mesh geometry={bellGeometry} position={[0, -l / 2, 0]}>
+        <meshStandardMaterial color={color} metalness={0.7} roughness={0.15} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Combustion chamber */}
+      <mesh position={[0, l * 0.05, 0]}>
+        <cylinderGeometry args={[throat * 1.8, throat * 1.5, l * 0.2, 24]} />
+        <meshStandardMaterial color="#555" metalness={0.6} roughness={0.2} />
+      </mesh>
+      {/* Turbopump housing */}
+      <mesh position={[throat * 2, l * 0.15, 0]}>
+        <cylinderGeometry args={[throat * 0.8, throat * 0.8, l * 0.15, 12]} />
+        <meshStandardMaterial color="#777" metalness={0.5} roughness={0.3} />
+      </mesh>
+      {/* Propellant feed lines */}
+      <mesh position={[throat * 1.5, l * 0.3, throat * 0.5]} rotation={[0.3, 0, 0.2]}>
+        <cylinderGeometry args={[throat * 0.15, throat * 0.15, l * 0.3, 8]} />
+        <meshStandardMaterial color="#888" metalness={0.6} roughness={0.25} />
+      </mesh>
+      <mesh position={[-throat * 1.5, l * 0.3, -throat * 0.5]} rotation={[-0.3, 0, -0.2]}>
+        <cylinderGeometry args={[throat * 0.15, throat * 0.15, l * 0.3, 8]} />
+        <meshStandardMaterial color="#888" metalness={0.6} roughness={0.25} />
+      </mesh>
+      {/* Exit ring */}
+      <mesh position={[0, l * 0.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[exit, exit * 0.03, 8, 32]} />
+        <meshStandardMaterial color="#666" metalness={0.7} roughness={0.2} />
+      </mesh>
+      {/* Gimbal actuator mount */}
+      <mesh position={[0, -l * 0.05, throat * 2.2]}>
+        <boxGeometry args={[throat * 0.6, throat * 0.4, throat * 0.3]} />
+        <meshStandardMaterial color="#999" metalness={0.5} roughness={0.3} />
+      </mesh>
+    </group>
+  );
+}
+
+function OMSPodMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const l = params?.omsPodLength ?? params?.height ?? 1.5;
+  const r = params?.omsPodRadius ?? params?.radius ?? 0.4;
+
+  return (
+    <group>
+      {/* Pod body */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[r * 0.7, r, l, 16]} />
+        <meshStandardMaterial color={color} metalness={0.4} roughness={0.35} />
+      </mesh>
+      {/* Nose cap */}
+      <mesh position={[0, 0, l / 2]} rotation={[Math.PI / 2, 0, 0]}>
+        <sphereGeometry args={[r * 0.7, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color={color} metalness={0.4} roughness={0.35} />
+      </mesh>
+      {/* OMS engine nozzle */}
+      <mesh position={[0, 0, -l / 2 - r * 0.3]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[r * 0.5, r * 0.25, r * 0.6, 16]} />
+        <meshStandardMaterial color="#555" metalness={0.7} roughness={0.2} />
+      </mesh>
+      {/* RCS thruster cluster */}
+      {[0, 90, 180, 270].map((deg) => {
+        const rad = (deg * Math.PI) / 180;
+        return (
+          <mesh key={deg} position={[Math.cos(rad) * r * 0.8, Math.sin(rad) * r * 0.8, -l * 0.3]}>
+            <cylinderGeometry args={[0.03, 0.02, 0.06, 8]} />
+            <meshStandardMaterial color="#777" metalness={0.6} roughness={0.25} />
+          </mesh>
+        );
+      })}
+      {/* Heat shield plate */}
+      <mesh position={[0, -r * 0.95, 0]}>
+        <boxGeometry args={[r * 1.2, 0.02, l * 0.7]} />
+        <meshStandardMaterial color="#333" metalness={0.3} roughness={0.6} />
+      </mesh>
+    </group>
+  );
+}
+
+function RCSThrusterMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.rcsRadius ?? params?.radius ?? 0.06;
+  const l = params?.rcsLength ?? params?.height ?? 0.12;
+  const nozzles = params?.rcsNozzleCount ?? 1;
+
+  return (
+    <group>
+      {/* Mounting block */}
+      <mesh position={[0, l * 0.3, 0]}>
+        <boxGeometry args={[r * 4, l * 0.4, r * 4]} />
+        <meshStandardMaterial color={color} metalness={0.4} roughness={0.4} />
+      </mesh>
+      {/* Thruster nozzles */}
+      {Array.from({ length: nozzles }).map((_, i) => {
+        const offset = nozzles > 1 ? (i - (nozzles - 1) / 2) * r * 3 : 0;
+        return (
+          <group key={i}>
+            <mesh position={[offset, -l * 0.15, 0]}>
+              <cylinderGeometry args={[r, r * 0.5, l * 0.5, 12]} />
+              <meshStandardMaterial color="#666" metalness={0.6} roughness={0.2} />
+            </mesh>
+            {/* Nozzle exit ring */}
+            <mesh position={[offset, -l * 0.4, 0]} rotation={[Math.PI / 2, 0, 0]}>
+              <torusGeometry args={[r, r * 0.1, 6, 12]} />
+              <meshStandardMaterial color="#888" metalness={0.7} roughness={0.2} />
+            </mesh>
+          </group>
+        );
+      })}
+      {/* Fuel feed line */}
+      <mesh position={[0, l * 0.6, 0]}>
+        <cylinderGeometry args={[r * 0.4, r * 0.4, l * 0.3, 8]} />
+        <meshStandardMaterial color="#aaa" metalness={0.5} roughness={0.3} />
+      </mesh>
+    </group>
+  );
+}
+
+function PropTankMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.propTankRadius ?? params?.radius ?? 0.8;
+  const l = params?.propTankLength ?? params?.height ?? 2.5;
+  const domed = params?.propTankDomed ?? true;
+
+  return (
+    <group>
+      {/* Main cylindrical body */}
+      <mesh>
+        <cylinderGeometry args={[r, r, l, 24]} />
+        <meshStandardMaterial color={color} metalness={0.5} roughness={0.25} />
+      </mesh>
+      {/* Top dome */}
+      {domed && (
+        <mesh position={[0, l / 2, 0]}>
+          <sphereGeometry args={[r, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <meshStandardMaterial color={color} metalness={0.5} roughness={0.25} />
+        </mesh>
+      )}
+      {/* Bottom dome */}
+      {domed && (
+        <mesh position={[0, -l / 2, 0]} rotation={[Math.PI, 0, 0]}>
+          <sphereGeometry args={[r, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <meshStandardMaterial color={color} metalness={0.5} roughness={0.25} />
+        </mesh>
+      )}
+      {/* Reinforcement stringers */}
+      {Array.from({ length: 8 }).map((_, i) => {
+        const angle = (i / 8) * Math.PI * 2;
+        return (
+          <mesh key={i} position={[Math.cos(angle) * r, 0, Math.sin(angle) * r]} rotation={[0, -angle, 0]}>
+            <boxGeometry args={[0.02, l * 0.9, 0.015]} />
+            <meshStandardMaterial color="#aaa" metalness={0.6} roughness={0.3} />
+          </mesh>
+        );
+      })}
+      {/* Ring frames */}
+      {Array.from({ length: 3 }).map((_, i) => (
+        <mesh key={`rf${i}`} position={[0, -l * 0.3 + i * l * 0.3, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[r + 0.01, 0.02, 6, 24]} />
+          <meshStandardMaterial color="#999" metalness={0.6} roughness={0.25} />
+        </mesh>
+      ))}
+      {/* Feed/drain port on top */}
+      <mesh position={[0, l / 2 + (domed ? r * 0.9 : 0) + 0.05, 0]}>
+        <cylinderGeometry args={[r * 0.12, r * 0.12, 0.1, 12]} />
+        <meshStandardMaterial color="#888" metalness={0.7} roughness={0.2} />
+      </mesh>
+      {/* Feed/drain port on bottom */}
+      <mesh position={[0, -l / 2 - (domed ? r * 0.9 : 0) - 0.05, 0]}>
+        <cylinderGeometry args={[r * 0.15, r * 0.15, 0.1, 12]} />
+        <meshStandardMaterial color="#888" metalness={0.7} roughness={0.2} />
+      </mesh>
+      {/* Pressure sensor */}
+      <mesh position={[r * 0.7, l * 0.3, r * 0.7]}>
+        <boxGeometry args={[0.06, 0.08, 0.04]} />
+        <meshStandardMaterial color="#333" metalness={0.4} roughness={0.4} />
+      </mesh>
+    </group>
+  );
+}
+
+function ReactionWheelMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.rwRadius ?? params?.radius ?? 0.25;
+  const h = params?.rwHeight ?? params?.height ?? 0.12;
+  const rimT = params?.rwRimThickness ?? 0.03;
+
+  return (
+    <group>
+      {/* Housing */}
+      <mesh>
+        <cylinderGeometry args={[r * 1.15, r * 1.15, h, 24]} />
+        <meshStandardMaterial color={color} metalness={0.4} roughness={0.4} />
+      </mesh>
+      {/* Flywheel rim */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[r, rimT, 12, 32]} />
+        <meshStandardMaterial color="#bbb" metalness={0.8} roughness={0.1} />
+      </mesh>
+      {/* Hub/motor */}
+      <mesh>
+        <cylinderGeometry args={[r * 0.3, r * 0.3, h * 1.1, 16]} />
+        <meshStandardMaterial color="#555" metalness={0.6} roughness={0.3} />
+      </mesh>
+      {/* Spokes */}
+      {Array.from({ length: 6 }).map((_, i) => {
+        const angle = (i / 6) * Math.PI * 2;
+        const spokeLen = r - r * 0.3 - rimT;
+        return (
+          <mesh key={i} position={[Math.cos(angle) * (r * 0.3 + spokeLen / 2), 0, Math.sin(angle) * (r * 0.3 + spokeLen / 2)]}
+            rotation={[0, -angle + Math.PI / 2, 0]}>
+            <boxGeometry args={[spokeLen, h * 0.5, rimT * 0.5]} />
+            <meshStandardMaterial color="#999" metalness={0.6} roughness={0.25} />
+          </mesh>
+        );
+      })}
+      {/* Mounting base */}
+      <mesh position={[0, -h / 2 - 0.015, 0]}>
+        <boxGeometry args={[r * 2.2, 0.03, r * 2.2]} />
+        <meshStandardMaterial color="#777" metalness={0.5} roughness={0.3} />
+      </mesh>
+      {/* Encoder ring */}
+      <mesh position={[0, h / 2, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[r * 0.5, 0.008, 4, 24]} />
+        <meshStandardMaterial color="#c4a000" metalness={0.7} roughness={0.2} />
+      </mesh>
+      {/* Cable connector */}
+      <mesh position={[r * 1.15, 0, 0]}>
+        <boxGeometry args={[0.05, h * 0.5, 0.04]} />
+        <meshStandardMaterial color="#333" metalness={0.4} roughness={0.4} />
+      </mesh>
+    </group>
+  );
+}
+
+function AvionicsBoxMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const w = params?.avionicsWidth ?? params?.width ?? 0.6;
+  const h = params?.avionicsHeight ?? params?.height ?? 0.4;
+  const d = params?.avionicsDepth ?? params?.depth ?? 0.5;
+  const slots = params?.avionicsSlots ?? 4;
+
+  return (
+    <group>
+      {/* Main enclosure */}
+      <mesh><boxGeometry args={[w, h, d]} /><meshStandardMaterial color={color} metalness={0.4} roughness={0.35} /></mesh>
+      {/* Front panel connectors */}
+      {Array.from({ length: slots }).map((_, i) => {
+        const xPos = -w * 0.35 + (w * 0.7 / Math.max(slots - 1, 1)) * i;
+        return (
+          <mesh key={i} position={[xPos, 0, d / 2 + 0.01]}>
+            <boxGeometry args={[w / slots * 0.6, h * 0.25, 0.02]} />
+            <meshStandardMaterial color="#222" metalness={0.5} roughness={0.3} />
+          </mesh>
+        );
+      })}
+      {/* Status LEDs */}
+      <mesh position={[w * 0.35, h * 0.3, d / 2 + 0.005]}>
+        <sphereGeometry args={[0.012, 6, 6]} />
+        <meshStandardMaterial color="#00ff00" emissive="#00ff00" emissiveIntensity={0.5} />
+      </mesh>
+      <mesh position={[w * 0.25, h * 0.3, d / 2 + 0.005]}>
+        <sphereGeometry args={[0.012, 6, 6]} />
+        <meshStandardMaterial color="#ffaa00" emissive="#ffaa00" emissiveIntensity={0.3} />
+      </mesh>
+      {/* Heat sink fins on top */}
+      {Array.from({ length: 6 }).map((_, i) => (
+        <mesh key={`hs${i}`} position={[0, h / 2 + 0.015, -d * 0.3 + i * (d * 0.12)]}>
+          <boxGeometry args={[w * 0.8, 0.03, 0.01]} />
+          <meshStandardMaterial color="#aaa" metalness={0.7} roughness={0.2} />
+        </mesh>
+      ))}
+      {/* EMI gasket edge */}
+      <mesh position={[0, 0, d / 2]} rotation={[0, 0, 0]}>
+        <boxGeometry args={[w + 0.01, h + 0.01, 0.005]} />
+        <meshStandardMaterial color="#666" metalness={0.3} roughness={0.5} />
+      </mesh>
+      {/* Mounting ears */}
+      <mesh position={[w / 2 + 0.03, 0, d * 0.25]}>
+        <boxGeometry args={[0.06, h * 0.2, 0.08]} />
+        <meshStandardMaterial color={color} metalness={0.5} roughness={0.3} />
+      </mesh>
+      <mesh position={[-w / 2 - 0.03, 0, d * 0.25]}>
+        <boxGeometry args={[0.06, h * 0.2, 0.08]} />
+        <meshStandardMaterial color={color} metalness={0.5} roughness={0.3} />
+      </mesh>
+      <mesh position={[w / 2 + 0.03, 0, -d * 0.25]}>
+        <boxGeometry args={[0.06, h * 0.2, 0.08]} />
+        <meshStandardMaterial color={color} metalness={0.5} roughness={0.3} />
+      </mesh>
+      <mesh position={[-w / 2 - 0.03, 0, -d * 0.25]}>
+        <boxGeometry args={[0.06, h * 0.2, 0.08]} />
+        <meshStandardMaterial color={color} metalness={0.5} roughness={0.3} />
+      </mesh>
+      {/* Cable harness connector (rear) */}
+      <mesh position={[0, -h * 0.1, -d / 2 - 0.02]}>
+        <boxGeometry args={[w * 0.5, h * 0.3, 0.04]} />
+        <meshStandardMaterial color="#444" metalness={0.5} roughness={0.3} />
+      </mesh>
+    </group>
+  );
+}
+
 const meshMap: Record<string, React.FC<{ color: string; params?: ModelParams }>> = {
   gear: GearMesh,
   bracket: BracketMesh,
@@ -1954,6 +2400,14 @@ const meshMap: Record<string, React.FC<{ color: string; params?: ModelParams }>>
   harness: HarnessMesh,
   imu: IMUMesh,
   proxsensor: ProxSensorMesh,
+  fuselage: FuselageMesh,
+  wing: WingMesh,
+  enginebell: EngineBellMesh,
+  omspod: OMSPodMesh,
+  rcsthruster: RCSThrusterMesh,
+  proptank: PropTankMesh,
+  reactionwheel: ReactionWheelMesh,
+  avionicsbox: AvionicsBoxMesh,
 };
 
 // ─── Scene Components ──────────────────────────────────
