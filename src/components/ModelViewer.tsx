@@ -1,5 +1,5 @@
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, Environment, ContactShadows, Float } from "@react-three/drei";
+import { OrbitControls, Environment, Float, Grid } from "@react-three/drei";
 import { Suspense, useMemo, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import * as THREE from "three";
 
@@ -132,10 +132,21 @@ function Scene({ models, selectedModelId, onSelectModel }: ModelViewerProps) {
         </Float>
       )}
 
-      <ContactShadows position={[0, -0.1, 0]} opacity={0.3} scale={10} blur={3} far={4} color="#f9a8d4" />
+      <Grid
+        position={[0, -0.1, 0]}
+        args={[200, 200]}
+        cellSize={1}
+        cellThickness={0.5}
+        cellColor="#f0abfc"
+        sectionSize={5}
+        sectionThickness={1}
+        sectionColor="#e9d5ff"
+        fadeDistance={80}
+        fadeStrength={1.5}
+        infiniteGrid
+      />
       <Environment preset="apartment" />
       <OrbitControls enablePan enableZoom enableRotate autoRotate={models.length === 0} autoRotateSpeed={1.5} />
-      <gridHelper args={[50, 50, "#f0abfc", "#fce7f3"]} position={[0, -0.1, 0]} />
     </>
   );
 }
