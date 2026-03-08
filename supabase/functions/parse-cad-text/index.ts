@@ -1213,6 +1213,10 @@ You MUST call the parse_cad function.`;
 
     if (toolCall?.function?.arguments) {
       const parsed = JSON.parse(toolCall.function.arguments);
+      // Post-process: fix floating parts
+      if (parsed.parts && Array.isArray(parsed.parts) && parsed.parts.length > 1) {
+        fixFloatingParts(parsed.parts);
+      }
       console.log("AI parsed result:", JSON.stringify(parsed));
       return new Response(JSON.stringify(parsed), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -1230,6 +1234,127 @@ You MUST call the parse_cad function.`;
     });
   }
 });
+
+// Get the approximate bounding extent of a part based on its type and params
+function getPartExtent(part: any): [number, number, number] {
+  const p = part.params || {};
+  const type = part.type;
+  switch (type) {
+    case "box": case "chassis": case "avionicsbox":
+      return [p.width || 1.2, p.height || 1.2, p.depth || 1.2];
+    case "cylinder": case "tube": case "motor": case "bodytube": case "motortube":
+      return [(p.radius || 0.5) * 2, p.height || 1.5, (p.radius || 0.5) * 2];
+    case "sphere":
+      return [(p.radius || 0.5) * 2, (p.radius || 0.5) * 2, (p.radius || 0.5) * 2];
+    case "cone": case "nosecone":
+      return [(p.radiusBottom || p.radius || 0.5) * 2, p.height || 1.5, (p.radiusBottom || p.radius || 0.5) * 2];
+    case "plate":
+      return [p.width || (p.radius || 1) * 2, p.thickness || 0.05, p.depth || (p.radius || 1) * 2];
+    case "torus": case "bearing":
+      return [(p.radius || p.outerRadius || 0.5) * 2, (p.tube || 0.1) * 2, (p.radius || p.outerRadius || 0.5) * 2];
+    case "wheel":
+      return [(p.width || 0.3), (p.radius || 0.5) * 2, (p.radius || 0.5) * 2];
+    case "antenna":
+      return [(p.dishRadius || 0.4) * 2, p.mastHeight || 0.5, (p.dishRadius || 0.4) * 2];
+    case "camera":
+      return [p.bodyWidth || 0.2, p.bodyHeight || 0.15, p.bodyDepth || 0.2];
+    case "harness":
+      return [(p.harnessRadius || 0.02) * 2, p.harnessLength || 1, (p.harnessRadius || 0.02) * 2];
+    case "battery":
+      return [p.batteryWidth || 0.5, p.batteryHeight || 0.3, p.batteryLength || 0.5];
+    default:
+      return [0.5, 0.5, 0.5];
+  }
+}
+
+// Distance between two part centers
+function partDist(a: any, b: any): number {
+  const ap = a.position, bp = b.position;
+  return Math.sqrt((ap[0] - bp[0]) ** 2 + (ap[1] - bp[1]) ** 2 + (ap[2] - bp[2]) ** 2);
+}
+
+// Check if two parts are "connected" (bounding boxes touch or overlap with tolerance)
+function partsConnect(a: any, b: any, tolerance = 0.15): boolean {
+  const ea = getPartExtent(a), eb = getPartExtent(b);
+  const ap = a.position, bp = b.position;
+  for (let axis = 0; axis < 3; axis++) {
+    const gap = Math.abs(ap[axis] - bp[axis]) - (ea[axis] / 2 + eb[axis] / 2);
+    if (gap > tolerance) return false;
+  }
+  return true;
+}
+
+// Fix floating parts by moving them to touch their nearest neighbor
+function fixFloatingParts(parts: any[]) {
+  if (parts.length < 2) return;
+
+  // Build connectivity graph
+  const connected = new Set<number>();
+  const queue: number[] = [0]; // Start from first part
+  connected.add(0);
+
+  // BFS to find all connected parts
+  while (queue.length > 0) {
+    const idx = queue.shift()!;
+    for (let j = 0; j < parts.length; j++) {
+      if (connected.has(j)) continue;
+      if (partsConnect(parts[idx], parts[j])) {
+        connected.add(j);
+        queue.push(j);
+      }
+    }
+  }
+
+  // Find floating parts (not connected to main body)
+  const floating = [];
+  for (let i = 0; i < parts.length; i++) {
+    if (!connected.has(i)) floating.push(i);
+  }
+
+  if (floating.length === 0) return;
+  console.log(`Fixing ${floating.length} floating parts out of ${parts.length}`);
+
+  // For each floating part, find nearest connected part and snap to it
+  for (const fi of floating) {
+    const fp = parts[fi];
+    let nearestIdx = 0;
+    let nearestDist = Infinity;
+
+    for (const ci of connected) {
+      const d = partDist(fp, parts[ci]);
+      if (d < nearestDist) {
+        nearestDist = d;
+        nearestIdx = ci;
+      }
+    }
+
+    const target = parts[nearestIdx];
+    const te = getPartExtent(target);
+    const fe = getPartExtent(fp);
+
+    // Find which axis has the largest gap and close it
+    const ap = fp.position, bp = target.position;
+    let maxGapAxis = 0, maxGap = 0;
+    for (let axis = 0; axis < 3; axis++) {
+      const gap = Math.abs(ap[axis] - bp[axis]) - (te[axis] / 2 + fe[axis] / 2);
+      if (gap > maxGap) {
+        maxGap = gap;
+        maxGapAxis = axis;
+      }
+    }
+
+    // Move the floating part along the largest gap axis to close the gap
+    if (maxGap > 0.15) {
+      const dir = ap[maxGapAxis] > bp[maxGapAxis] ? 1 : -1;
+      const targetPos = bp[maxGapAxis] + dir * (te[maxGapAxis] / 2 + fe[maxGapAxis] / 2);
+      fp.position[maxGapAxis] = targetPos;
+      console.log(`  Snapped "${fp.label}" axis ${maxGapAxis}: ${ap[maxGapAxis].toFixed(2)} → ${targetPos.toFixed(2)}`);
+    }
+
+    // After snapping, add to connected set so other floating parts can chain-connect
+    connected.add(fi);
+  }
+}
 
 function localParse(text: string) {
   const t = text.toLowerCase();
