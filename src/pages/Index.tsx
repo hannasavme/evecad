@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Star, X, Layers, Trash2, Wrench, Loader2, Ruler, Crosshair, Pencil, Eye, EyeOff } from "lucide-react";
+import { Plus, Star, X, Layers, Trash2, Wrench, Loader2, Ruler, Crosshair, Pencil, Eye, EyeOff, SlidersHorizontal } from "lucide-react";
 import mascotImg from "@/assets/mascot.png";
 import InputPanel, { type InputMode } from "@/components/InputPanel";
 import ModelViewer, { type SceneModel, type ModelViewerHandle } from "@/components/ModelViewer";
@@ -32,6 +32,7 @@ const stages = [
 let modelIdCounter = 0;
 
 export default function Index() {
+  const [showProperties, setShowProperties] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAssembling, setIsAssembling] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -377,6 +378,19 @@ export default function Index() {
               Assemble
             </button>
           )}
+          {selectedModels.length > 0 && (
+            <button
+              onClick={() => setShowProperties(!showProperties)}
+              className={`flex items-center gap-1.5 text-[10px] font-bold transition-colors px-2.5 py-1.5 rounded-xl border-2 bg-card/60 ${
+                showProperties
+                  ? "border-primary/40 text-primary"
+                  : "border-border text-muted-foreground hover:text-primary hover:border-primary/40"
+              }`}
+            >
+              <SlidersHorizontal className="w-3 h-3" />
+              Properties
+            </button>
+          )}
           {models.length > 0 && (
             <button
               onClick={() => setShowDrawing(!showDrawing)}
@@ -405,14 +419,14 @@ export default function Index() {
         />
       </div>
 
-      {/* Properties Panel */}
+      {/* Properties Panel — only when toggled from top bar */}
       <AnimatePresence>
-        {selectedModels.length > 0 && !showInput && (
+        {showProperties && selectedModels.length > 0 && !showInput && (
           <PropertiesPanel
             models={selectedModels}
             onUpdate={handleUpdateModel}
             onBatchUpdate={handleBatchUpdate}
-            onClose={() => setSelectedModelIds(new Set())}
+            onClose={() => setShowProperties(false)}
           />
         )}
       </AnimatePresence>

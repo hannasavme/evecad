@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Palette, X, Settings2, Ruler, Move3D, RotateCcw } from "lucide-react";
+import { Palette, X, Settings2, Ruler, Move3D, RotateCcw, SlidersHorizontal } from "lucide-react";
 import type { SceneModel, ModelParams } from "@/components/ModelViewer";
 
 const KAWAII_COLORS = [
@@ -170,8 +170,8 @@ export default function PropertiesPanel({ models: selectedModels, onUpdate, onBa
     >
       <div className="p-4 rounded-2xl border-2 border-border bg-card/95 backdrop-blur-md kawaii-shadow space-y-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-extrabold text-foreground capitalize flex items-center gap-1.5">
-            {isMulti ? `${selectedModels.length} selected` : model.type}
+          <span className="text-sm font-extrabold text-foreground flex items-center gap-1.5">
+            <SlidersHorizontal className="w-3.5 h-3.5" /> {isMulti ? `${selectedModels.length} selected` : "Properties"}
           </span>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
         </div>
