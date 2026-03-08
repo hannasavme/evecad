@@ -9,9 +9,12 @@ import ImportButton from "@/components/ImportButton";
 import GenerationProgress from "@/components/GenerationProgress";
 import PropertiesPanel from "@/components/PropertiesPanel";
 import CadDrawingPanel from "@/components/CadDrawingPanel";
+import UserMenu from "@/components/UserMenu";
+import SaveLoadMenu from "@/components/SaveLoadMenu";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUndoHistory } from "@/hooks/use-undo-history";
+import { useAuth } from "@/hooks/useAuth";
 
 const DEFAULT_COLORS: Record<string, string> = {
   gear: "#f9a8d4",
@@ -32,6 +35,9 @@ const stages = [
 let modelIdCounter = 0;
 
 export default function Index() {
+  const { user } = useAuth();
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState("Untitled Project");
   const [showProperties, setShowProperties] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAssembling, setIsAssembling] = useState(false);
@@ -423,6 +429,21 @@ export default function Index() {
           )}
           <ImportButton onImport={(imported) => setModelsImmediate((prev) => [...prev, ...imported])} />
           <ExportDropdown hasModel={models.length > 0} getScene={getScene} />
+          {user && (
+            <SaveLoadMenu
+              models={models}
+              onLoad={(loaded) => {
+                pushImmediate(loaded);
+              }}
+              currentProjectId={currentProjectId}
+              onProjectChange={(id, name) => {
+                setCurrentProjectId(id);
+                setProjectName(name);
+              }}
+              projectName={projectName}
+            />
+          )}
+          <UserMenu />
         </div>
       </header>
 
