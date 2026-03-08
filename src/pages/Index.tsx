@@ -1,12 +1,20 @@
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Box, Plus, Star, Sparkles, Heart, X, Layers, Trash2 } from "lucide-react";
+import { Box, Plus, Star, X, Layers, Trash2, Wrench, Loader2 } from "lucide-react";
 import InputPanel from "@/components/InputPanel";
 import ModelViewer, { type SceneModel, type ModelViewerHandle } from "@/components/ModelViewer";
 import ExportDropdown from "@/components/ExportDropdown";
 import GenerationProgress from "@/components/GenerationProgress";
+import PropertiesPanel from "@/components/PropertiesPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+const DEFAULT_COLORS: Record<string, string> = {
+  gear: "#f9a8d4",
+  bracket: "#c4b5fd",
+  box: "#d8b4fe",
+  cylinder: "#a5f3fc",
+};
 
 const stages = [
   "Asking AI to understand~ ✨",
@@ -20,19 +28,26 @@ let modelIdCounter = 0;
 
 export default function Index() {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isAssembling, setIsAssembling] = useState(false);
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState("");
   const [showInput, setShowInput] = useState(false);
   const [models, setModels] = useState<SceneModel[]>([]);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
+  const [assemblyInstructions, setAssemblyInstructions] = useState<string | null>(null);
   const viewerRef = useRef<ModelViewerHandle>(null);
+
+  const selectedModel = models.find((m) => m.id === selectedModelId) || null;
+
+  const handleUpdateModel = useCallback((id: string, updates: Partial<SceneModel>) => {
+    setModels((prev) => prev.map((m) => (m.id === id ? { ...m, ...updates } : m)));
+  }, []);
 
   const handleGenerate = useCallback(
     async (input: { mode: string; text?: string; imageFile?: File }) => {
       setIsGenerating(true);
       setProgress(0);
 
-      // Start progress animation
       let step = 0;
       const interval = setInterval(() => {
         step++;
@@ -46,30 +61,24 @@ export default function Index() {
       let label = input.text?.slice(0, 30) || "model";
 
       try {
-        // Call AI edge function to parse text
         if (input.mode === "text" && input.text) {
           const { data, error } = await supabase.functions.invoke("parse-cad-text", {
             body: { text: input.text },
           });
-
-          if (error) {
-            console.error("AI parse error:", error);
-            // Fallback to local inference
-            type = localInferType(input.text);
-          } else if (data?.type) {
+          if (!error && data?.type) {
             type = data.type;
             label = data.label || label;
+          } else {
+            type = localInferType(input.text);
           }
         } else {
           type = "box";
           label = "Uploaded model";
         }
-      } catch (err) {
-        console.error("Generate error:", err);
+      } catch {
         type = localInferType(input.text);
       }
 
-      // Finish progress
       clearInterval(interval);
       setProgress(100);
       setStage(stages[stages.length - 1]);
@@ -80,6 +89,8 @@ export default function Index() {
           id: `model-${++modelIdCounter}`,
           type,
           position: [offset, 0.5, 0],
+          scale: [1, 1, 1],
+          color: DEFAULT_COLORS[type] || "#d8b4fe",
           label,
         };
         setModels((prev) => [...prev, newModel]);
@@ -91,6 +102,81 @@ export default function Index() {
     },
     [models.length]
   );
+
+  const handleAssemble = useCallback(async () => {
+    if (models.length < 2) {
+      toast.error("Need at least 2 parts to assemble! 🔧");
+      return;
+    }
+
+    setIsAssembling(true);
+    setAssemblyInstructions(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("assemble-parts", {
+        body: { models },
+      });
+
+      if (error) {
+        console.error("Assembly error:", error);
+        toast.error("Assembly failed 😿");
+        setIsAssembling(false);
+        return;
+      }
+
+      // Apply new positions and scales
+      if (data?.parts) {
+        setModels((prev) =>
+          prev.map((m, index) => {
+            // Match by id or by index (AI may return "Part 1" instead of actual id)
+            const update = data.parts.find((p: any) => p.id === m.id) || data.parts[index];
+            if (update) {
+              return {
+                ...m,
+                position: (update.new_position || m.position) as [number, number, number],
+                scale: (update.new_scale || m.scale) as [number, number, number],
+              };
+            }
+            return m;
+          })
+        );
+
+        // Show modifications as toasts
+        for (let i = 0; i < data.parts.length; i++) {
+          const part = data.parts[i];
+          if (part.modification && part.modification !== "Aligned for assembly") {
+            const model = models[i];
+            toast.info(`🔧 ${model?.type || "Part"}: ${part.modification}`);
+          }
+        }
+      }
+
+      // Add any additional parts
+      if (data?.additional_parts?.length > 0) {
+        const newParts: SceneModel[] = data.additional_parts.map((p: any) => ({
+          id: `model-${++modelIdCounter}`,
+          type: p.type as SceneModel["type"],
+          position: p.position as [number, number, number],
+          scale: p.scale as [number, number, number],
+          color: DEFAULT_COLORS[p.type] || "#fde68a",
+          label: p.label,
+        }));
+        setModels((prev) => [...prev, ...newParts]);
+        toast.success(`Added ${newParts.length} extra part(s) for assembly! ✨`);
+      }
+
+      if (data?.instructions) {
+        setAssemblyInstructions(data.instructions);
+      }
+
+      toast.success("Assembly complete! 🎉");
+    } catch (err) {
+      console.error("Assembly error:", err);
+      toast.error("Assembly failed 😿");
+    }
+
+    setIsAssembling(false);
+  }, [models]);
 
   const localInferType = (text?: string): SceneModel["type"] => {
     if (!text) return "box";
@@ -125,7 +211,22 @@ export default function Index() {
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {/* Assemble Button */}
+          {models.length >= 2 && (
+            <button
+              onClick={handleAssemble}
+              disabled={isAssembling}
+              className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors px-2.5 py-1.5 rounded-xl border-2 border-border hover:border-primary/40 bg-card/60 disabled:opacity-50"
+            >
+              {isAssembling ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Wrench className="w-3 h-3" />
+              )}
+              Assemble 🔧
+            </button>
+          )}
           <ExportDropdown hasModel={models.length > 0} getScene={getScene} />
         </div>
       </header>
@@ -139,6 +240,40 @@ export default function Index() {
           onSelectModel={setSelectedModelId}
         />
       </div>
+
+      {/* Properties Panel */}
+      <AnimatePresence>
+        {selectedModel && !showInput && (
+          <PropertiesPanel
+            model={selectedModel}
+            onUpdate={handleUpdateModel}
+            onClose={() => setSelectedModelId(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Assembly instructions overlay */}
+      <AnimatePresence>
+        {assemblyInstructions && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-16 left-1/2 -translate-x-1/2 z-30 max-w-md"
+          >
+            <div className="p-3 rounded-2xl border-2 border-primary/30 bg-card/90 backdrop-blur-md kawaii-shadow flex items-start gap-2">
+              <Wrench className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+              <p className="text-xs font-bold text-foreground">{assemblyInstructions}</p>
+              <button
+                onClick={() => setAssemblyInstructions(null)}
+                className="text-muted-foreground hover:text-foreground shrink-0"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Generation progress overlay */}
       <AnimatePresence>
@@ -158,7 +293,7 @@ export default function Index() {
 
       {/* Models list — bottom left */}
       {models.length > 0 && (
-        <div className="absolute bottom-6 left-4 z-30 flex flex-col gap-1.5">
+        <div className="absolute bottom-6 left-4 z-30 flex flex-col gap-1.5 max-h-[50vh] overflow-y-auto">
           <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1 mb-1">
             <Layers className="w-3 h-3" /> Models ({models.length})
           </span>
@@ -172,8 +307,12 @@ export default function Index() {
                   : "bg-card/80 backdrop-blur-sm border-border text-foreground hover:border-primary/30"
               }`}
             >
+              <span
+                className="w-3 h-3 rounded-full shrink-0 border border-border"
+                style={{ backgroundColor: m.color }}
+              />
               <span className="capitalize">{m.type}</span>
-              <span className="text-muted-foreground truncate max-w-[100px]">{m.label}</span>
+              <span className="text-muted-foreground truncate max-w-[80px]">{m.label}</span>
             </button>
           ))}
           {selectedModelId && (
