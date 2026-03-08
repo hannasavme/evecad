@@ -127,13 +127,14 @@ export default function Index() {
       // Apply new positions and scales
       if (data?.parts) {
         setModels((prev) =>
-          prev.map((m) => {
-            const update = data.parts.find((p: any) => p.id === m.id);
+          prev.map((m, index) => {
+            // Match by id or by index (AI may return "Part 1" instead of actual id)
+            const update = data.parts.find((p: any) => p.id === m.id) || data.parts[index];
             if (update) {
               return {
                 ...m,
-                position: update.new_position as [number, number, number],
-                scale: update.new_scale as [number, number, number],
+                position: (update.new_position || m.position) as [number, number, number],
+                scale: (update.new_scale || m.scale) as [number, number, number],
               };
             }
             return m;
@@ -141,9 +142,10 @@ export default function Index() {
         );
 
         // Show modifications as toasts
-        for (const part of data.parts) {
+        for (let i = 0; i < data.parts.length; i++) {
+          const part = data.parts[i];
           if (part.modification && part.modification !== "Aligned for assembly") {
-            const model = models.find((m) => m.id === part.id);
+            const model = models[i];
             toast.info(`🔧 ${model?.type || "Part"}: ${part.modification}`);
           }
         }
