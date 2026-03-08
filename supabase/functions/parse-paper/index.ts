@@ -153,30 +153,42 @@ Be thorough but concise. Extract the key engineering/design information that wou
         messages: [
           {
             role: "system",
-            content: `You are a CAD geometry decomposition engine. Given a detailed engineering analysis of a device or system from an academic paper, create a 3D CAD model by decomposing it into primitive parts.
+            content: `You are a HIGH-DETAIL CAD geometry decomposition engine. Given engineering analysis from an academic paper, create a detailed 3D CAD model with 20-50+ parts.
 
-Available shape types: gear, bracket, box, cylinder.
+Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate.
 
-For each part, provide:
-- type: one of the available shapes
-- label: descriptive name (max 30 chars)
-- position: [x, y, z] coordinates — SPREAD PARTS OUT appropriately, don't stack them
-- color: hex color from this palette ONLY: #f9a8d4 (pink), #c4b5fd (lavender), #99f6e4 (mint), #fde68a (yellow), #fecaca (peach), #e9d5ff (light purple). Vary colors across parts.
-- params: geometry parameters specific to type:
-  - gear: teeth (6-80), holeDiameter (0-1), thickness (0.1-1.5)
-  - bracket: armLength (0.3-3), thickness (0.02-0.5), width (0.1-2)
-  - box: width (0.1-10), height (0.1-10), depth (0.1-10), slots (0-20), wallThickness (0.01-0.5)
-  - cylinder: radius (0.05-5), height (0.1-10), wallThickness (0.01-0.5), segments (8-64)
+Shape guide:
+- box: rectangular solids (chassis, panels, frames, housings)
+- cylinder: round columns, rods, axles, shafts, wheels
+- sphere: balls, domes, sensor heads, joints
+- cone: nozzles, funnels, pointed tips, antenna bases
+- wedge: ramps, angled supports, aerodynamic noses
+- torus: rings, seals, wheel rims
+- tube: hollow pipes, exhaust, handles, structural tubes
+- plate: flat panels, solar panels, fins, wings, shelves
+- gear: toothed wheels, sprockets, cogs
+- bracket: L-shaped mounts, supports, arms
 
-Think creatively about how to approximate the described design using these primitives. 
-IMPORTANT: Position parts correctly relative to each other — don't put everything at [0,0,0].
-Create enough parts to capture the key structural elements of the design.
+For each part provide: type, label (max 30 chars), position [x,y,z], rotation [rx,ry,rz] in degrees, color (hex from: #f9a8d4, #c4b5fd, #99f6e4, #fde68a, #fecaca, #e9d5ff, #a5f3fc, #86efac, #fdba74, #fda4af), and params.
 
+Params by type:
+- gear: teeth, holeDiameter, thickness
+- bracket: armLength, thickness, width
+- box: width, height, depth, slots, wallThickness
+- cylinder: radius, height, wallThickness, segments
+- sphere: radius, segments
+- cone: radiusTop, radiusBottom, height, segments
+- wedge: width, height, depth
+- torus: radius, tube, segments
+- tube: radius, height, wallThickness, segments
+- plate: radius, thickness, width, depth
+
+CRITICAL: Generate 20-50+ parts. Use rotation to angle parts. Position precisely. Use varied shapes.
 You MUST call the parse_cad function.`,
           },
           {
             role: "user",
-            content: `Based on this engineering analysis from an academic paper, create a 3D CAD model:\n\n${paperAnalysis}${focusArea ? `\n\nUser focus: ${focusArea}` : ""}`,
+            content: `Based on this engineering analysis from an academic paper, create a detailed 3D CAD model:\n\n${paperAnalysis}${focusArea ? `\n\nUser focus: ${focusArea}` : ""}`,
           },
         ],
         tools: [
@@ -193,9 +205,10 @@ You MUST call the parse_cad function.`,
                     items: {
                       type: "object",
                       properties: {
-                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder"] },
+                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate"] },
                         label: { type: "string" },
                         position: { type: "array", items: { type: "number" }, description: "[x, y, z]" },
+                        rotation: { type: "array", items: { type: "number" }, description: "[rx, ry, rz] degrees" },
                         color: { type: "string" },
                         params: {
                           type: "object",
@@ -211,10 +224,13 @@ You MUST call the parse_cad function.`,
                             wallThickness: { type: "number" },
                             radius: { type: "number" },
                             segments: { type: "number" },
+                            radiusTop: { type: "number" },
+                            radiusBottom: { type: "number" },
+                            tube: { type: "number" },
                           },
                         },
                       },
-                      required: ["type", "label", "position", "color", "params"],
+                      required: ["type", "label", "position", "rotation", "color", "params"],
                       additionalProperties: false,
                     },
                   },

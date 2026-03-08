@@ -114,26 +114,50 @@ Be concise but accurate. Use real engineering references. This will be used to c
     }
 
     // Step 2: CAD decomposition with research context
-    const systemPrompt = `You are a CAD geometry decomposition engine. Given a description or image, determine if it's a simple part or a complex object.
+    const systemPrompt = `You are a HIGH-DETAIL CAD geometry decomposition engine. Your goal is to create visually rich, accurate 3D models using primitive shapes.
 
-For SIMPLE parts (gear, bracket, box, cylinder, pipe, etc.), return a single part.
-For COMPLEX objects (vehicles, machines, robots, furniture, devices, etc.), decompose them into multiple simpler sub-parts that can each be represented as one of: gear, bracket, box, cylinder.
+For SIMPLE parts (single gear, bracket, etc.), return 1-3 parts.
+For COMPLEX objects (vehicles, machines, robots, furniture, devices), decompose into 20-50+ sub-parts for maximum detail. Every visible feature should be a separate part.
 
-Available shape types: gear, bracket, box, cylinder.
+Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate.
+
+Shape guide:
+- box: rectangular solids (chassis, panels, frames, housings, blocks)
+- cylinder: round columns, rods, axles, shafts, barrels, wheels
+- sphere: balls, domes, sensor heads, joints
+- cone: nozzles, funnels, pointed tips, antenna bases, tapered parts
+- wedge: ramps, angled supports, aerodynamic noses, sloped surfaces
+- torus: rings, seals, o-rings, wheels rims, donuts
+- tube: hollow pipes, exhaust, handles, structural tubes
+- plate: flat panels, solar panels, fins, wings, shelves, flanges
+- gear: toothed wheels, sprockets, cogs
+- bracket: L-shaped mounts, supports, arms
 
 For each part, provide:
 - type: one of the available shapes
 - label: descriptive name (max 30 chars)
-- position: [x, y, z] coordinates for assembly placement
-- color: hex color from this kawaii palette ONLY: #f9a8d4 (pink), #c4b5fd (lavender), #99f6e4 (mint), #fde68a (yellow), #fecaca (peach), #e9d5ff (light purple). Vary colors across parts.
+- position: [x, y, z] — CAREFULLY position each part relative to others. Use precise offsets.
+- rotation: [rx, ry, rz] in DEGREES — use rotation to angle parts correctly (e.g., 45° for angled struts, 90° for sideways mounting)
+- color: hex color. Use varied but cohesive colors. Palette: #f9a8d4, #c4b5fd, #99f6e4, #fde68a, #fecaca, #e9d5ff, #a5f3fc, #86efac, #fdba74, #fda4af, #a5b4fc, #f0abfc
 - params: geometry parameters specific to type:
   - gear: teeth (6-80), holeDiameter (0-1), thickness (0.1-1.5)
   - bracket: armLength (0.3-3), thickness (0.02-0.5), width (0.1-2)
   - box: width (0.1-10), height (0.1-10), depth (0.1-10), slots (0-20), wallThickness (0.01-0.5)
   - cylinder: radius (0.05-5), height (0.1-10), wallThickness (0.01-0.5), segments (8-64)
+  - sphere: radius (0.05-5), segments (8-64)
+  - cone: radiusTop (0-5), radiusBottom (0.05-5), height (0.1-10), segments (8-64)
+  - wedge: width (0.1-10), height (0.1-10), depth (0.1-10)
+  - torus: radius (0.1-5), tube (0.01-2), segments (8-64)
+  - tube: radius (0.05-5), height (0.1-10), wallThickness (0.01-1), segments (8-64)
+  - plate: radius (0.1-10), thickness (0.01-1), width (0.1-10), depth (0.1-10)
 
-Think creatively about how to approximate complex shapes using these primitives. Pay close attention to PROPORTIONS and SPATIAL ARRANGEMENT — parts must be positioned correctly relative to each other.
-${researchContext ? `\n\nREFERENCE RESEARCH about this object (use this for accurate proportions and structure):\n${researchContext}` : ""}
+CRITICAL RULES:
+1. Use MANY parts (20-50+) for complex objects. Every strut, panel, wheel, sensor, joint, and detail matters.
+2. Position parts PRECISELY — measure offsets carefully so parts connect at correct attachment points.
+3. Use ROTATION to angle parts (suspension arms, angled panels, tilted sensors, etc.)
+4. Use VARIED SHAPES — don't just use boxes. Mix cylinders, cones, plates, spheres for realism.
+5. Think like an engineer: structural frame → mounting points → sub-assemblies → details → accessories.
+${researchContext ? `\n\nREFERENCE RESEARCH (use for accurate proportions and structure):\n${researchContext}` : ""}
 
 You MUST call the parse_cad function.`;
 
@@ -144,7 +168,7 @@ You MUST call the parse_cad function.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: imageBase64 ? "google/gemini-2.5-flash" : "google/gemini-3-flash-preview",
+        model: imageBase64 ? "google/gemini-2.5-flash" : "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
           ...(userContent.length > 1
@@ -162,13 +186,14 @@ You MUST call the parse_cad function.`;
                 properties: {
                   parts: {
                     type: "array",
-                    description: "Array of parts. Single-element for simple objects, multiple for complex objects.",
+                    description: "Array of parts. 20-50+ for complex objects.",
                     items: {
                       type: "object",
                       properties: {
-                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder"] },
+                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate"] },
                         label: { type: "string" },
                         position: { type: "array", items: { type: "number" }, description: "[x, y, z]" },
+                        rotation: { type: "array", items: { type: "number" }, description: "[rx, ry, rz] in degrees" },
                         color: { type: "string", description: "Hex color" },
                         params: {
                           type: "object",
@@ -184,10 +209,13 @@ You MUST call the parse_cad function.`;
                             wallThickness: { type: "number" },
                             radius: { type: "number" },
                             segments: { type: "number" },
+                            radiusTop: { type: "number" },
+                            radiusBottom: { type: "number" },
+                            tube: { type: "number" },
                           },
                         },
                       },
-                      required: ["type", "label", "position", "color", "params"],
+                      required: ["type", "label", "position", "rotation", "color", "params"],
                       additionalProperties: false,
                     },
                   },

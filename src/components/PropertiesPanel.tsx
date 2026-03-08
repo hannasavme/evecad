@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Palette, X, Settings2, Ruler, Move3D } from "lucide-react";
+import { Palette, X, Settings2, Ruler, Move3D, RotateCcw } from "lucide-react";
 import type { SceneModel, ModelParams } from "@/components/ModelViewer";
 
 const KAWAII_COLORS = [
@@ -27,22 +27,9 @@ const UNITS: { value: Unit; label: string }[] = [
   { value: "ft", label: "ft" },
 ];
 
-// Conversion factors to internal units (1 internal unit = 1 cm)
-const TO_INTERNAL: Record<Unit, number> = {
-  mm: 0.1,
-  cm: 1,
-  m: 100,
-  in: 2.54,
-  ft: 30.48,
-};
-
-function toDisplay(internal: number, unit: Unit): number {
-  return parseFloat((internal / TO_INTERNAL[unit]).toFixed(4));
-}
-
-function toInternal(display: number, unit: Unit): number {
-  return display * TO_INTERNAL[unit];
-}
+const TO_INTERNAL: Record<Unit, number> = { mm: 0.1, cm: 1, m: 100, in: 2.54, ft: 30.48 };
+function toDisplay(internal: number, unit: Unit): number { return parseFloat((internal / TO_INTERNAL[unit]).toFixed(4)); }
+function toInternal(display: number, unit: Unit): number { return display * TO_INTERNAL[unit]; }
 
 interface ParamDef {
   key: keyof ModelParams;
@@ -52,7 +39,7 @@ interface ParamDef {
   max?: number;
   step?: number;
   default: number;
-  hasDimension: boolean; // whether this uses the unit system
+  hasDimension: boolean;
 }
 
 const PARAM_DEFS: Record<string, ParamDef[]> = {
@@ -79,10 +66,42 @@ const PARAM_DEFS: Record<string, ParamDef[]> = {
     { key: "wallThickness", label: "Wall", type: "number", min: 0.01, max: 1, step: 0.01, default: 0.15, hasDimension: true },
     { key: "segments", label: "Smoothness", type: "int", min: 8, max: 64, step: 1, default: 32, hasDimension: false },
   ],
+  sphere: [
+    { key: "radius", label: "Radius", type: "number", min: 0.05, max: 5, step: 0.05, default: 0.8, hasDimension: true },
+    { key: "segments", label: "Smoothness", type: "int", min: 8, max: 64, step: 1, default: 32, hasDimension: false },
+  ],
+  cone: [
+    { key: "radiusTop", label: "Top R", type: "number", min: 0, max: 5, step: 0.05, default: 0, hasDimension: true },
+    { key: "radiusBottom", label: "Bottom R", type: "number", min: 0.05, max: 5, step: 0.05, default: 0.8, hasDimension: true },
+    { key: "height", label: "Height", type: "number", min: 0.1, max: 10, step: 0.1, default: 1.5, hasDimension: true },
+    { key: "segments", label: "Smoothness", type: "int", min: 8, max: 64, step: 1, default: 32, hasDimension: false },
+  ],
+  wedge: [
+    { key: "width", label: "Width", type: "number", min: 0.1, max: 10, step: 0.1, default: 1.0, hasDimension: true },
+    { key: "height", label: "Height", type: "number", min: 0.1, max: 10, step: 0.1, default: 0.8, hasDimension: true },
+    { key: "depth", label: "Depth", type: "number", min: 0.1, max: 10, step: 0.1, default: 1.5, hasDimension: true },
+  ],
+  torus: [
+    { key: "radius", label: "Radius", type: "number", min: 0.1, max: 5, step: 0.05, default: 0.8, hasDimension: true },
+    { key: "tube", label: "Tube R", type: "number", min: 0.01, max: 2, step: 0.01, default: 0.15, hasDimension: true },
+    { key: "segments", label: "Smoothness", type: "int", min: 8, max: 64, step: 1, default: 32, hasDimension: false },
+  ],
+  tube: [
+    { key: "radius", label: "Radius", type: "number", min: 0.05, max: 5, step: 0.05, default: 0.5, hasDimension: true },
+    { key: "height", label: "Height", type: "number", min: 0.1, max: 10, step: 0.1, default: 2.0, hasDimension: true },
+    { key: "wallThickness", label: "Wall", type: "number", min: 0.01, max: 1, step: 0.01, default: 0.08, hasDimension: true },
+    { key: "segments", label: "Smoothness", type: "int", min: 8, max: 64, step: 1, default: 32, hasDimension: false },
+  ],
+  plate: [
+    { key: "radius", label: "Radius", type: "number", min: 0.1, max: 10, step: 0.1, default: 1.0, hasDimension: true },
+    { key: "thickness", label: "Thickness", type: "number", min: 0.01, max: 1, step: 0.01, default: 0.05, hasDimension: true },
+    { key: "width", label: "Width", type: "number", min: 0.1, max: 10, step: 0.1, default: 1.0, hasDimension: true },
+    { key: "depth", label: "Depth", type: "number", min: 0.1, max: 10, step: 0.1, default: 1.0, hasDimension: true },
+  ],
 };
 
 interface PropertiesPanelProps {
-  models: SceneModel[];  // selected models (1 or more)
+  models: SceneModel[];
   onUpdate: (id: string, updates: Partial<SceneModel>) => void;
   onBatchUpdate: (ids: string[], updates: Partial<SceneModel>) => void;
   onClose: () => void;
@@ -91,20 +110,27 @@ interface PropertiesPanelProps {
 export default function PropertiesPanel({ models: selectedModels, onUpdate, onBatchUpdate, onClose }: PropertiesPanelProps) {
   const [unit, setUnit] = useState<Unit>("mm");
   const isMulti = selectedModels.length > 1;
-  const model = selectedModels[0]; // primary model for single-select editing
+  const model = selectedModels[0];
+
   const handlePositionChange = (axis: 0 | 1 | 2, value: number) => {
     const newPos: [number, number, number] = [...model.position];
     newPos[axis] = toInternal(value, unit);
     onUpdate(model.id, { position: newPos });
   };
 
+  const handleRotationChange = (axis: 0 | 1 | 2, value: number) => {
+    const newRot: [number, number, number] = [...(model.rotation || [0, 0, 0])];
+    newRot[axis] = value;
+    onUpdate(model.id, { rotation: newRot });
+  };
+
   const handleParamChange = (key: keyof ModelParams, value: number) => {
-    onUpdate(model.id, {
-      params: { ...(model.params || {}), [key]: value },
-    });
+    onUpdate(model.id, { params: { ...(model.params || {}), [key]: value } });
   };
 
   const paramDefs = PARAM_DEFS[model.type] || [];
+
+  const inputClass = "flex-1 h-7 rounded-lg bg-muted border border-border text-xs font-bold text-foreground text-center px-2 focus:border-primary focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
   return (
     <motion.div
@@ -118,9 +144,7 @@ export default function PropertiesPanel({ models: selectedModels, onUpdate, onBa
           <span className="text-sm font-extrabold text-foreground capitalize flex items-center gap-1.5">
             {isMulti ? `${selectedModels.length} selected` : model.type}
           </span>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X className="w-4 h-4" />
-          </button>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
         </div>
 
         {/* Unit selector */}
@@ -129,51 +153,26 @@ export default function PropertiesPanel({ models: selectedModels, onUpdate, onBa
           <span className="text-[10px] font-bold text-muted-foreground uppercase">Unit</span>
           <div className="flex gap-0.5 ml-auto">
             {UNITS.map((u) => (
-              <button
-                key={u.value}
-                onClick={() => setUnit(u.value)}
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-lg transition-all ${
-                  unit === u.value
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
+              <button key={u.value} onClick={() => setUnit(u.value)} className={`text-[10px] font-bold px-2 py-0.5 rounded-lg transition-all ${unit === u.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
                 {u.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Geometry / Dimensions — only for single select */}
+        {/* Dimensions — single select */}
         {!isMulti && paramDefs.length > 0 && (
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-              <Settings2 className="w-3 h-3" /> Dimensions
-            </label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1"><Settings2 className="w-3 h-3" /> Dimensions</label>
             <div className="space-y-1.5">
               {paramDefs.map((p) => {
                 const rawVal = (model.params?.[p.key] as number) ?? p.default;
                 const displayVal = p.hasDimension ? toDisplay(rawVal, unit) : rawVal;
-
                 return (
                   <div key={p.key} className="flex items-center gap-2">
                     <span className="text-[10px] font-bold text-muted-foreground w-16 shrink-0">{p.label}</span>
-                    <input
-                      type="number"
-                      min={p.hasDimension ? toDisplay(p.min ?? 0, unit) : p.min}
-                      max={p.hasDimension ? toDisplay(p.max ?? 100, unit) : p.max}
-                      step={p.type === "int" ? 1 : (p.hasDimension ? toDisplay(p.step ?? 0.1, unit) || 0.01 : p.step)}
-                      value={p.type === "int" ? displayVal : parseFloat(displayVal.toFixed(3))}
-                      onChange={(e) => {
-                        const v = p.type === "int" ? parseInt(e.target.value) : parseFloat(e.target.value);
-                        if (isNaN(v)) return;
-                        handleParamChange(p.key, p.hasDimension ? toInternal(v, unit) : v);
-                      }}
-                      className="flex-1 h-7 rounded-lg bg-muted border border-border text-xs font-bold text-foreground text-center px-2 focus:border-primary focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
-                    <span className="text-[10px] font-bold text-muted-foreground w-6 text-right">
-                      {p.hasDimension ? unit : ""}
-                    </span>
+                    <input type="number" min={p.hasDimension ? toDisplay(p.min ?? 0, unit) : p.min} max={p.hasDimension ? toDisplay(p.max ?? 100, unit) : p.max} step={p.type === "int" ? 1 : (p.hasDimension ? toDisplay(p.step ?? 0.1, unit) || 0.01 : p.step)} value={p.type === "int" ? displayVal : parseFloat(displayVal.toFixed(3))} onChange={(e) => { const v = p.type === "int" ? parseInt(e.target.value) : parseFloat(e.target.value); if (isNaN(v)) return; handleParamChange(p.key, p.hasDimension ? toInternal(v, unit) : v); }} className={inputClass} />
+                    <span className="text-[10px] font-bold text-muted-foreground w-6 text-right">{p.hasDimension ? unit : ""}</span>
                   </div>
                 );
               })}
@@ -181,59 +180,34 @@ export default function PropertiesPanel({ models: selectedModels, onUpdate, onBa
           </div>
         )}
 
-        {/* Multi-select: shared dimension overrides */}
+        {/* Multi-select batch dimensions */}
         {isMulti && (
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-              <Settings2 className="w-3 h-3" /> Batch Dimensions
-            </label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1"><Settings2 className="w-3 h-3" /> Batch Dimensions</label>
             <p className="text-[10px] text-muted-foreground">Set shared dimensions for all selected parts</p>
             {[
-              { key: "width" as keyof ModelParams, label: "Width", dim: true },
-              { key: "height" as keyof ModelParams, label: "Height", dim: true },
-              { key: "depth" as keyof ModelParams, label: "Depth", dim: true },
+              { key: "width" as keyof ModelParams, label: "Width" },
+              { key: "height" as keyof ModelParams, label: "Height" },
+              { key: "depth" as keyof ModelParams, label: "Depth" },
             ].map((p) => (
               <div key={p.key} className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-muted-foreground w-16 shrink-0">{p.label}</span>
-                <input
-                  type="number"
-                  step={unit === "mm" ? 1 : 0.1}
-                  placeholder="—"
-                  onChange={(e) => {
-                    const v = parseFloat(e.target.value);
-                    if (isNaN(v)) return;
-                    const ids = selectedModels.map((m) => m.id);
-                    const internal = toInternal(v, unit);
-                    ids.forEach((id) => onUpdate(id, { params: { ...selectedModels.find((m) => m.id === id)?.params, [p.key]: internal } }));
-                  }}
-                  className="flex-1 h-7 rounded-lg bg-muted border border-border text-xs font-bold text-foreground text-center px-2 focus:border-primary focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
+                <input type="number" step={unit === "mm" ? 1 : 0.1} placeholder="—" onChange={(e) => { const v = parseFloat(e.target.value); if (isNaN(v)) return; const internal = toInternal(v, unit); selectedModels.forEach((m) => onUpdate(m.id, { params: { ...m.params, [p.key]: internal } })); }} className={inputClass} />
                 <span className="text-[10px] font-bold text-muted-foreground w-6 text-right">{unit}</span>
               </div>
             ))}
           </div>
         )}
 
-        {/* Position Controls — only for single select */}
+        {/* Position — single select */}
         {!isMulti && (
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-              <Move3D className="w-3 h-3" /> Position
-            </label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1"><Move3D className="w-3 h-3" /> Position</label>
             <div className="space-y-1.5">
               {(["X", "Y", "Z"] as const).map((axis, i) => (
                 <div key={axis} className="flex items-center gap-2">
                   <span className="text-[10px] font-bold text-muted-foreground w-6">{axis}</span>
-                  <input
-                    type="number"
-                    step={unit === "mm" ? 1 : 0.1}
-                    value={parseFloat(toDisplay(model.position[i], unit).toFixed(3))}
-                    onChange={(e) => {
-                      const v = parseFloat(e.target.value);
-                      if (!isNaN(v)) handlePositionChange(i as 0 | 1 | 2, v);
-                    }}
-                    className="flex-1 h-7 rounded-lg bg-muted border border-border text-xs font-bold text-foreground text-center px-2 focus:border-primary focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  />
+                  <input type="number" step={unit === "mm" ? 1 : 0.1} value={parseFloat(toDisplay(model.position[i], unit).toFixed(3))} onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) handlePositionChange(i as 0 | 1 | 2, v); }} className={inputClass} />
                   <span className="text-[10px] font-bold text-muted-foreground w-6 text-right">{unit}</span>
                 </div>
               ))}
@@ -241,30 +215,28 @@ export default function PropertiesPanel({ models: selectedModels, onUpdate, onBa
           </div>
         )}
 
-        {/* Color Picker — works for both single and multi */}
+        {/* Rotation — single select */}
+        {!isMulti && (
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1"><RotateCcw className="w-3 h-3" /> Rotation (°)</label>
+            <div className="space-y-1.5">
+              {(["Rx", "Ry", "Rz"] as const).map((axis, i) => (
+                <div key={axis} className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-muted-foreground w-6">{axis}</span>
+                  <input type="number" step={5} value={parseFloat(((model.rotation || [0, 0, 0])[i]).toFixed(1))} onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) handleRotationChange(i as 0 | 1 | 2, v); }} className={inputClass} />
+                  <span className="text-[10px] font-bold text-muted-foreground w-6 text-right">°</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Color */}
         <div className="space-y-2">
-          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-            <Palette className="w-3 h-3" /> Color {isMulti && "(apply to all)"}
-          </label>
+          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1"><Palette className="w-3 h-3" /> Color {isMulti && "(apply to all)"}</label>
           <div className="grid grid-cols-6 gap-1.5">
             {KAWAII_COLORS.map((c) => (
-              <button
-                key={c.hex}
-                onClick={() => {
-                  if (isMulti) {
-                    onBatchUpdate(selectedModels.map((m) => m.id), { color: c.hex });
-                  } else {
-                    onUpdate(model.id, { color: c.hex });
-                  }
-                }}
-                title={c.name}
-                className={`w-7 h-7 rounded-xl border-2 transition-all hover:scale-110 ${
-                  !isMulti && model.color === c.hex
-                    ? "border-foreground scale-110 ring-2 ring-primary/30"
-                    : "border-transparent"
-                }`}
-                style={{ backgroundColor: c.hex }}
-              />
+              <button key={c.hex} onClick={() => { if (isMulti) onBatchUpdate(selectedModels.map((m) => m.id), { color: c.hex }); else onUpdate(model.id, { color: c.hex }); }} title={c.name} className={`w-7 h-7 rounded-xl border-2 transition-all hover:scale-110 ${!isMulti && model.color === c.hex ? "border-foreground scale-110 ring-2 ring-primary/30" : "border-transparent"}`} style={{ backgroundColor: c.hex }} />
             ))}
           </div>
         </div>
