@@ -77,21 +77,30 @@ export default function Index() {
 
       let type: SceneModel["type"] = "box";
       let label = input.text?.slice(0, 30) || "model";
+      let params: Record<string, any> = {};
 
       try {
+        const body: Record<string, any> = {};
+
         if (input.mode === "text" && input.text) {
-          const { data, error } = await supabase.functions.invoke("parse-cad-text", {
-            body: { text: input.text },
-          });
-          if (!error && data?.type) {
-            type = data.type;
-            label = data.label || label;
-          } else {
-            type = localInferType(input.text);
-          }
+          body.text = input.text;
+        } else if (input.mode === "image" && input.imageFile) {
+          // Convert image to base64
+          const base64 = await fileToBase64(input.imageFile);
+          body.imageBase64 = base64;
+          label = "Image model";
+        }
+
+        const { data, error } = await supabase.functions.invoke("parse-cad-text", {
+          body,
+        });
+
+        if (!error && data?.type) {
+          type = data.type;
+          label = data.label || label;
+          params = data.params || {};
         } else {
-          type = "box";
-          label = "Uploaded model";
+          type = localInferType(input.text);
         }
       } catch {
         type = localInferType(input.text);
@@ -110,16 +119,26 @@ export default function Index() {
           scale: [1, 1, 1],
           color: DEFAULT_COLORS[type] || "#d8b4fe",
           label,
+          params,
         };
         setModelsImmediate((prev) => [...prev, newModel]);
         setSelectedModelId(newModel.id);
         setShowInput(false);
         setIsGenerating(false);
-        toast.success(`${type} generated!`);
+        toast.success(`${type} generated with ${Object.keys(params).length} custom parameters!`);
       }, 300);
     },
     [models.length]
   );
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
 
   const handleAssemble = useCallback(async () => {
     if (models.length < 2) {
