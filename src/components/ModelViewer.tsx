@@ -107,7 +107,7 @@ export interface ModelViewerHandle {
 interface ModelViewerProps {
   models: SceneModel[];
   selectedModelIds: Set<string>;
-  onSelectModel: (id: string | null, additive?: boolean) => void;
+  onSelectModel: (id: string | null, additive?: boolean, rangeSelect?: boolean) => void;
 }
 
 function degToRad(d: number) { return (d * Math.PI) / 180; }
