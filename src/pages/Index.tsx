@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Star, X, Layers, Trash2, Wrench, Loader2, Ruler, Crosshair } from "lucide-react";
+import { Plus, Star, X, Layers, Trash2, Wrench, Loader2, Ruler, Crosshair, Pencil } from "lucide-react";
 import mascotImg from "@/assets/mascot.png";
 import InputPanel from "@/components/InputPanel";
 import ModelViewer, { type SceneModel, type ModelViewerHandle } from "@/components/ModelViewer";
@@ -350,43 +350,55 @@ export default function Index() {
           {models.map((m) => (
             <div
               key={m.id}
-              onClick={() => setSelectedModelId(m.id === selectedModelId ? null : m.id)}
-              onDoubleClick={(e) => {
-                e.stopPropagation();
-                setEditingLabelId(m.id);
-                setEditingLabelValue(m.label);
-              }}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border-2 cursor-pointer ${
-                selectedModelId === m.id
-                  ? "bg-primary/15 border-primary/40 text-primary"
-                  : "bg-card/80 backdrop-blur-sm border-border text-foreground hover:border-primary/30"
-              }`}
+              className="flex items-center gap-1"
             >
-              <span
-                className="w-3 h-3 rounded-full shrink-0 border border-border"
-                style={{ backgroundColor: m.color }}
-              />
-              <span className="capitalize shrink-0">{m.type}</span>
-              {editingLabelId === m.id ? (
-                <input
-                  autoFocus
-                  value={editingLabelValue}
-                  onChange={(e) => setEditingLabelValue(e.target.value)}
-                  onBlur={() => {
-                    if (editingLabelValue.trim()) {
-                      setModelsImmediate((prev) => prev.map((x) => x.id === m.id ? { ...x, label: editingLabelValue.trim() } : x));
-                    }
-                    setEditingLabelId(null);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                    if (e.key === "Escape") setEditingLabelId(null);
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="bg-transparent border-b border-primary outline-none text-xs font-bold max-w-[100px] text-foreground"
+              <button
+                onClick={() => setSelectedModelId(m.id === selectedModelId ? null : m.id)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border-2 flex-1 min-w-0 ${
+                  selectedModelId === m.id
+                    ? "bg-primary/15 border-primary/40 text-primary"
+                    : "bg-card/80 backdrop-blur-sm border-border text-foreground hover:border-primary/30"
+                }`}
+              >
+                <span
+                  className="w-3 h-3 rounded-full shrink-0 border border-border"
+                  style={{ backgroundColor: m.color }}
                 />
-              ) : (
-                <span className="text-muted-foreground truncate max-w-[80px]">{m.label}</span>
+                <span className="capitalize shrink-0">{m.type}</span>
+                {editingLabelId === m.id ? (
+                  <input
+                    autoFocus
+                    value={editingLabelValue}
+                    onChange={(e) => setEditingLabelValue(e.target.value)}
+                    onBlur={() => {
+                      if (editingLabelValue.trim()) {
+                        setModelsImmediate((prev) => prev.map((x) => x.id === m.id ? { ...x, label: editingLabelValue.trim() } : x));
+                      }
+                      setEditingLabelId(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                      if (e.key === "Escape") setEditingLabelId(null);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="bg-transparent border-b border-primary outline-none text-xs font-bold max-w-[100px] text-foreground"
+                  />
+                ) : (
+                  <span className="text-muted-foreground truncate max-w-[80px]">{m.label}</span>
+                )}
+              </button>
+              {selectedModelId === m.id && editingLabelId !== m.id && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingLabelId(m.id);
+                    setEditingLabelValue(m.label);
+                  }}
+                  className="p-1 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+                  title="Rename"
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
               )}
             </div>
           ))}
