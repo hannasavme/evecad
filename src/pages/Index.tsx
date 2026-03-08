@@ -20,7 +20,8 @@ const DEFAULT_COLORS: Record<string, string> = {
 };
 
 const stages = [
-  "Asking AI to understand",
+  "Researching real-world structure",
+  "Analyzing components",
   "Parsing geometry",
   "Building mesh",
   "Adding details",
