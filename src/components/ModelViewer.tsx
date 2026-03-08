@@ -706,7 +706,7 @@ function PulleyMesh({ color, params }: { color: string; params?: ModelParams }) 
         );
       })}
       {/* Bore */}
-      <mesh><cylinderGeometry args={[hubR * 0.4, hubR * 0.4, w + 0.02, 12]} rotation={[Math.PI / 2, 0, 0]} /><meshStandardMaterial color="#222" metalness={0.5} roughness={0.3} /></mesh>
+      <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[hubR * 0.4, hubR * 0.4, w + 0.02, 12]} /><meshStandardMaterial color="#222" metalness={0.5} roughness={0.3} /></mesh>
     </group>
   );
 }
