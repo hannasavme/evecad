@@ -212,13 +212,14 @@ ROCKER-BOGIE SUSPENSION (the key differentiator of Mars rovers):
 - Additional structural tubes: cylinder connecting rocker to chassis at angle
 
 WHEELS (6 total — aluminum with grousers/treads):
+*** CRITICAL: wheel, bearing, pulley, and torus types are ALREADY oriented vertically by the renderer. Do NOT add rotation=[90,0,0] or rotation=[270,0,0]. Use rotation=[0,0,0] for standard upright wheels. Only rotate Y for steering angle. ***
 - Wheel params: radius=0.5, width=0.35, spokes=6, treadDepth=0.06
-- Left front: wheel at [-2.2, 0.5, -1.6] — on left bogie front
-- Left middle: wheel at [-2.2, 0.5, 0.3] — on left rocker middle
-- Left rear: wheel at [-2.2, 0.5, 1.5] — on left bogie rear
-- Right front: wheel at [2.2, 0.5, -1.6]
-- Right middle: wheel at [2.2, 0.5, 0.3]
-- Right rear: wheel at [2.2, 0.5, 1.5]
+- Left front: wheel at [-2.2, 0.5, -1.6] rotation=[0,0,0]
+- Left middle: wheel at [-2.2, 0.5, 0.3] rotation=[0,0,0]
+- Left rear: wheel at [-2.2, 0.5, 1.5] rotation=[0,0,0]
+- Right front: wheel at [2.2, 0.5, -1.6] rotation=[0,0,0]
+- Right middle: wheel at [2.2, 0.5, 0.3] rotation=[0,0,0]
+- Right rear: wheel at [2.2, 0.5, 1.5] rotation=[0,0,0]
 - Steering knuckles: knuckle on each of the 4 corner wheels
 - Motors: motor on each wheel (6 drive motors)
 - Corner steering motors: 4 additional motors for steering on corner knuckles
