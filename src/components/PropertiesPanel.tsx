@@ -90,14 +90,10 @@ interface PropertiesPanelProps {
 export default function PropertiesPanel({ model, onUpdate, onClose }: PropertiesPanelProps) {
   const [unit, setUnit] = useState<Unit>("mm");
 
-  const handleScaleChange = (axis: 0 | 1 | 2, value: number) => {
-    const newScale: [number, number, number] = [...model.scale];
-    newScale[axis] = value;
-    onUpdate(model.id, { scale: newScale });
-  };
-
-  const handleUniformScale = (value: number) => {
-    onUpdate(model.id, { scale: [value, value, value] });
+  const handlePositionChange = (axis: 0 | 1 | 2, value: number) => {
+    const newPos: [number, number, number] = [...model.position];
+    newPos[axis] = toInternal(value, unit);
+    onUpdate(model.id, { position: newPos });
   };
 
   const handleParamChange = (key: keyof ModelParams, value: number) => {
