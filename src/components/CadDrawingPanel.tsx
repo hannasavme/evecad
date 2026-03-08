@@ -18,7 +18,7 @@ interface CadDrawingPanelProps {
   onClose: () => void;
 }
 
-type ViewType = "front" | "top" | "side" | "isometric";
+type ViewType = "front" | "top" | "side" | "isometric" | "perspective" | "dimetric" | "trimetric";
 
 // ─── Shape profile data for each primitive type ──────────
 
