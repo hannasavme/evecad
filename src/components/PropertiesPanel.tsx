@@ -92,8 +92,6 @@ export default function PropertiesPanel({ models: selectedModels, onUpdate, onBa
   const [unit, setUnit] = useState<Unit>("mm");
   const isMulti = selectedModels.length > 1;
   const model = selectedModels[0]; // primary model for single-select editing
-  const [unit, setUnit] = useState<Unit>("mm");
-
   const handlePositionChange = (axis: 0 | 1 | 2, value: number) => {
     const newPos: [number, number, number] = [...model.position];
     newPos[axis] = toInternal(value, unit);
