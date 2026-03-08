@@ -5,6 +5,7 @@ import mascotImg from "@/assets/mascot.png";
 import InputPanel, { type InputMode } from "@/components/InputPanel";
 import ModelViewer, { type SceneModel, type ModelViewerHandle } from "@/components/ModelViewer";
 import ExportDropdown from "@/components/ExportDropdown";
+import ImportButton from "@/components/ImportButton";
 import GenerationProgress from "@/components/GenerationProgress";
 import PropertiesPanel from "@/components/PropertiesPanel";
 import CadDrawingPanel from "@/components/CadDrawingPanel";
