@@ -18,12 +18,6 @@ const TEXT_EXAMPLES = [
   "A cylinder pipe, hollow with thin walls",
 ];
 
-const IMAGE_EXAMPLES = [
-  { label: "⚙️ Gear sketch", description: "A spur gear with 12 teeth and a central bore hole, side profile view" },
-  { label: "📐 Bracket sketch", description: "An L-shaped metal bracket with mounting holes, isometric view" },
-  { label: "📦 Enclosure sketch", description: "A rectangular box enclosure with ventilation slots on the front face" },
-  { label: "🔧 Pipe sketch", description: "A hollow cylindrical pipe with thick walls, cross-section view" },
-];
 
 export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps) {
   const [mode, setMode] = useState<InputMode>("text");
