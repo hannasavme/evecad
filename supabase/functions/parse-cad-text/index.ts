@@ -120,34 +120,36 @@ For SIMPLE parts (single gear, bracket, etc.), return 1-3 parts.
 For COMPLEX objects (vehicles, machines, robots, devices), decompose into 40-80+ sub-parts for maximum detail.
 For MULTI-VEHICLE systems (swarms, fleets, convoys), model EACH vehicle separately with full detail.
 
-Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate.
+Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track.
 
 Shape guide with DETAILED usage:
 - box: chassis bodies, panels, frames, housings, blocks, covers, instrument boxes, docking bays
-- cylinder: wheels, axles, shafts, rods, masts, antenna poles, drill bits, barrels, rollers, hubs
-- sphere: sensor heads, domes, ball joints, camera housings, radar domes
-- cone: nozzles, funnels, drill tips, antenna dishes (wide radiusBottom, small radiusTop), tapered connectors
+- cylinder: axles, shafts, rods, masts, poles, barrels, rollers, hubs, pistons
+- sphere: domes, ball joints, pressure vessels
+- cone: nozzles, funnels, tapered connectors, nose cones
 - wedge: ramps, angled armor, aerodynamic noses, sloped panels, plow blades
-- torus: wheel rims, seals, o-rings, tire rings, circular rails
+- torus: seals, o-rings, circular rails, rings
 - tube: hollow pipes, exhaust tubes, cable conduits, structural tubes, handles, roll cages
 - plate: solar panels, flat mounting plates, fins, wings, shelves, flanges, ground plates, skid plates
 - gear: drive gears, sprockets, cogs, reduction gears
-- bracket: L-shaped mounts, suspension arms, support struts, hinged arms, camera mounts
+- bracket: L-shaped mounts, suspension arms, support struts, hinged arms
+- **wheel**: DETAILED wheel with tire, rim, hub, spokes, and treads — use for ANY wheel
+- **camera**: DETAILED camera with body, lens barrel, glass, LED indicator, mount — use for cameras/sensors
+- **antenna**: DETAILED antenna with parabolic dish, mast, feed horn, support struts — use for antennas/dishes
+- **drill**: DETAILED drill with motor housing, chuck, spiral bit, tip — use for drills/boring tools
+- **track**: DETAILED tank track with road wheels, drive sprocket, idler, track pads — use for tracked vehicles
+
+IMPORTANT: ALWAYS use compound types (wheel, camera, antenna, drill, track) instead of basic cylinders/spheres for these components. They render with much higher visual detail automatically.
 
 For each part, provide:
 - type: one of the available shapes
-- label: descriptive name (max 30 chars), e.g. "FL Wheel", "Chassis Top Panel", "Drill Bit Tip"
-- position: [x, y, z] — CAREFULLY position. Wheels touch ground at y=radius. Axles align with wheel centers.
-- rotation: [rx, ry, rz] in DEGREES — suspension arms at 30-45°, solar panels tilted, cameras angled
-- color: hex color. Use cohesive but distinct colors per sub-system:
-  * Chassis/frame: #c4b5fd (lavender)
-  * Wheels/treads: #a5b4fc (periwinkle) 
-  * Sensors/cameras: #a5f3fc (sky)
-  * Power/solar: #fde68a (lemon)
-  * Tools/arms: #fdba74 (peach)
-  * Structural/brackets: #e9d5ff (lilac)
-  * Accent/details: #f9a8d4 (sakura)
-- params: geometry parameters specific to type (see ranges below)
+- label: descriptive name (max 30 chars)
+- position: [x, y, z] — CAREFULLY position. Wheels touch ground at y=radius.
+- rotation: [rx, ry, rz] in DEGREES
+- color: hex color per sub-system:
+  * Chassis/frame: #c4b5fd | Wheels/treads: #a5b4fc | Sensors: #a5f3fc
+  * Power/solar: #fde68a | Tools/arms: #fdba74 | Structural: #e9d5ff | Accent: #f9a8d4
+- params: geometry parameters specific to type
 
 Params:
   - gear: teeth (6-80), holeDiameter (0-1), thickness (0.1-1.5)
@@ -160,28 +162,18 @@ Params:
   - torus: radius (0.1-5), tube (0.01-2), segments (8-64)
   - tube: radius (0.05-5), height (0.1-10), wallThickness (0.01-1), segments (8-64)
   - plate: radius (0.1-10), thickness (0.01-1), width (0.1-10), depth (0.1-10)
-
-EXAMPLE — How to build a 4-wheeled rover (30+ parts minimum):
-1. Main chassis: box (w:3, h:0.6, d:2) at y=0.8
-2. Top cover plate: plate (w:2.8, d:1.8, thick:0.05) at y=1.15
-3. Bottom skid plate: plate (w:2.5, d:1.5, thick:0.03) at y=0.5
-4. 4x Wheels: cylinder (r:0.4, h:0.3) at corners, each with:
-5. 4x Wheel rims: torus (r:0.35, tube:0.05) same positions
-6. 4x Axle stubs: cylinder (r:0.06, h:0.5) connecting wheels to chassis
-7. 4x Suspension brackets: bracket (armLen:0.5) at 20° angles
-8. Antenna mast: cylinder (r:0.03, h:1.2) on top
-9. Antenna dish: cone (rTop:0.02, rBot:0.4, h:0.15) on top of mast
-10. Camera: sphere (r:0.08) + cylinder mount
-11. Solar panel: plate (w:1.5, d:0.8) tilted at 15°
-...and so on for every detail.
+  - wheel: radius (0.1-3), width (0.1-1), spokes (3-12), hubRadius (auto), treadDepth (0.02-0.1)
+  - camera: lensRadius (0.03-0.3), bodyWidth (0.1-0.6), bodyHeight (0.08-0.4), bodyDepth (0.1-0.5)
+  - antenna: dishRadius (0.2-2), mastHeight (0.5-5), mastRadius (0.02-0.1)
+  - drill: bitLength (0.5-5), bitRadius (0.05-0.5), spirals (2-8)
+  - track: trackLength (1-6), trackWidth (0.1-0.8), wheelCount (3-8), radius (0.1-0.5)
 
 CRITICAL RULES:
-1. Use 40-80+ parts for complex objects. Every wheel needs wheel+rim+axle (3 parts each).
-2. For MULTI-VEHICLE scenes: position each vehicle separately (offset by 5-8 units).
-3. Position with PRECISION: wheels touch ground, axles align, panels connect flush.
-4. Use ROTATION for realism: suspension arms, tilted panels, angled cameras, drill angles.
-5. Build LAYERED: frame → drivetrain → body panels → sub-systems → details → accessories.
-6. Each sub-assembly (wheel set, arm, antenna) should have 3-5+ parts, not just 1.
+1. ALWAYS use wheel for wheels, camera for cameras, antenna for antennas, drill for drills, track for tracked vehicles.
+2. Use 30-60+ parts for complex objects.
+3. For MULTI-VEHICLE scenes: position each vehicle separately (offset by 5-8 units).
+4. Position with PRECISION: wheels touch ground, axles align, panels connect flush.
+5. Use ROTATION for realism: suspension arms, tilted panels, angled cameras.
 ${researchContext ? `\n\nREFERENCE RESEARCH (use for accurate proportions and structure):\n${researchContext}` : ""}
 
 You MUST call the parse_cad function.`;
