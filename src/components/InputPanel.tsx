@@ -42,12 +42,6 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
     else if (mode === "image" && imageFile) onGenerate({ mode, imageFile });
   };
 
-  const handleImageExample = (description: string) => {
-    // Switch to text mode and use the description to generate via text
-    // This gives better results than trying to generate/find placeholder images
-    setMode("text");
-    setText(description);
-  };
 
   return (
     <div className="flex flex-col h-full">
