@@ -80,17 +80,22 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a mechanical engineering research analyst. Given an academic paper (as PDF), extract all information relevant to physical design, mechanical components, and 3D structures.
+            content: `You are a mechanical engineering research analyst specializing in robotics and vehicle design. Given an academic paper (as PDF), extract ALL information relevant to physical design, mechanical components, and 3D structures.
 
-Focus on:
-- Any proposed device, mechanism, or physical system described
-- Dimensions, materials, geometries mentioned
-- Component lists, assemblies, structural elements
-- Figures/diagrams descriptions of physical parts
-- Design requirements and constraints
-- Any specific shapes, sizes, proportions mentioned
+Extract with EXTREME detail:
+- Every distinct vehicle, robot, or device described (mother rover, child rovers, drones, drillers, etc.)
+- Each sub-system: chassis, wheels, suspension, arms, sensors, antennas, power units, docking bays
+- Exact or approximate dimensions, proportions, and relative sizes between components
+- Materials, geometries, mechanical linkages
+- How components connect: mounting points, docking mechanisms, tether cables
+- Wheel types (origami wheels, treads, etc.), their expanded/collapsed states
+- Tool attachments: drills, scoops, grippers, cameras
+- Communication hardware: antennas, dishes, masts
+- Power systems: solar panels, RTGs, batteries
+- Any spatial arrangement: how child rovers dock to the mother, where drills are mounted, etc.
+- Figures/diagrams: describe every visible component in detail
 
-Be thorough but concise. Extract the key engineering/design information that would be needed to create a simplified 3D CAD model of the paper's subject.`,
+Be EXHAUSTIVE. List every single component that would need to be modeled as a separate 3D part. Think about internal structure too: axles connecting wheels, support struts, mounting brackets, hinges.`,
           },
           {
             role: "user",
@@ -149,11 +154,13 @@ Be thorough but concise. Extract the key engineering/design information that wou
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-pro",
         messages: [
           {
             role: "system",
-            content: `You are a HIGH-DETAIL CAD geometry decomposition engine. Given engineering analysis from an academic paper, create a detailed 3D CAD model with 20-50+ parts.
+            content: `You are a MASTER CAD geometry decomposition engine that creates museum-quality 3D models from engineering descriptions. You must create 40-80+ parts for complex systems.
+
+CRITICAL: When a paper describes MULTIPLE vehicles or robots (e.g., mother rover + child rovers + drillers), you MUST model ALL of them as separate sub-assemblies positioned in a scene together.
 
 Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate.
 
@@ -183,7 +190,21 @@ Params by type:
 - tube: radius, height, wallThickness, segments
 - plate: radius, thickness, width, depth
 
-CRITICAL: Generate 20-50+ parts. Use rotation to angle parts. Position precisely. Use varied shapes.
+CRITICAL RULES:
+1. Generate 40-80+ parts. Every wheel, strut, panel, sensor, joint, axle, and detail is a separate part.
+2. For MULTI-VEHICLE systems: model each vehicle separately, positioned apart in the scene.
+   - Mother rover at center (0,0,0), child rovers offset at (6,0,3), (-5,0,4), etc.
+   - Each vehicle gets its own full set of parts: chassis, wheels, axles, sensors, etc.
+3. WHEELS: Each wheel is a cylinder + torus rim + axle cylinder. A 4-wheeled rover needs 12+ parts just for wheels.
+4. CHASSIS: Build from multiple boxes/plates — main body, side panels, top cover, bottom plate, internal frame.
+5. SUSPENSION: Use brackets at angles (rotation!) connecting wheel assemblies to chassis.
+6. TOOLS (drills, arms): Build from multiple cylinders + cones + brackets with proper rotation.
+7. ANTENNAS: Thin cylinders for masts + spheres/cones for dish heads.
+8. DOCKING BAYS: Tall box structures with internal cylinders, plates for shelves.
+9. Use ROTATION extensively — suspension arms at 30-45°, angled solar panels, tilted cameras.
+10. Use VARIED COLORS to distinguish sub-systems (wheels=one color, chassis=another, sensors=another).
+11. Position parts with MILLIMETER precision — wheels must touch the ground (y=wheel_radius), axles must align.
+12. Think like a real engineer assembling the vehicle: frame → axles → wheels → body panels → subsystems → details.
 You MUST call the parse_cad function.`,
           },
           {
