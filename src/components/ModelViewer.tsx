@@ -242,9 +242,45 @@ export interface ModelParams {
   avionicsHeight?: number;
   avionicsDepth?: number;
   avionicsSlots?: number;
+  // Drone - Frame
+  droneFrameSize?: number;
+  droneFrameThickness?: number;
+  droneArmCount?: number;
+  droneFrameSlots?: number;
+  // Drone - Arm
+  droneArmLength?: number;
+  droneArmWidth?: number;
+  droneArmThickness?: number;
+  // Drone - Propeller
+  propDiameter?: number;
+  propPitch?: number;
+  propBlades?: number;
+  // Drone - Prop Guard
+  guardRadius?: number;
+  guardHeight?: number;
+  guardThickness?: number;
+  // Drone - Brushless Motor
+  blMotorRadius?: number;
+  blMotorHeight?: number;
+  blMotorBells?: number;
+  blMotorShaftR?: number;
+  // Drone - FC Tray
+  fcTrayWidth?: number;
+  fcTrayDepth?: number;
+  fcTrayThickness?: number;
+  fcTrayHoleSpacing?: number;
+  // Drone - Battery Tray
+  batTrayWidth?: number;
+  batTrayDepth?: number;
+  batTrayHeight?: number;
+  batTrayStrapSlots?: number;
+  // Drone - ESC Box
+  escWidth?: number;
+  escDepth?: number;
+  escHeight?: number;
 }
 
-export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track" | "bolt" | "nut" | "screw" | "bearing" | "pulley" | "shaft" | "mug" | "hammer" | "handle" | "chassis" | "rocker" | "bogie" | "knuckle" | "motor" | "standoff" | "nosecone" | "bodytube" | "fin" | "centeringring" | "bulkhead" | "coupler" | "launchguide" | "motortube" | "thrustplate" | "retainer" | "nozzle" | "ebay" | "baffle" | "solarpanel" | "battery" | "rtg" | "sbc" | "transceiver" | "radiator" | "gripper" | "lidar" | "heatpipe" | "harness" | "imu" | "proxsensor" | "fuselage" | "wing" | "enginebell" | "omspod" | "rcsthruster" | "proptank" | "reactionwheel" | "avionicsbox";
+export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track" | "bolt" | "nut" | "screw" | "bearing" | "pulley" | "shaft" | "mug" | "hammer" | "handle" | "chassis" | "rocker" | "bogie" | "knuckle" | "motor" | "standoff" | "nosecone" | "bodytube" | "fin" | "centeringring" | "bulkhead" | "coupler" | "launchguide" | "motortube" | "thrustplate" | "retainer" | "nozzle" | "ebay" | "baffle" | "solarpanel" | "battery" | "rtg" | "sbc" | "transceiver" | "radiator" | "gripper" | "lidar" | "heatpipe" | "harness" | "imu" | "proxsensor" | "fuselage" | "wing" | "enginebell" | "omspod" | "rcsthruster" | "proptank" | "reactionwheel" | "avionicsbox" | "droneframe" | "dronearm" | "propeller" | "propguard" | "brushlessmotor" | "fctray" | "batterytray" | "escbox";
 
 export interface SceneModel {
   id: string;
