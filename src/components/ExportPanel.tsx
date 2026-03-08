@@ -2,9 +2,9 @@ import { Download, FileBox, Printer, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 const formats = [
-  { id: "step", label: "STEP", desc: "Pro CAD ⚙️", icon: FileBox },
-  { id: "stl", label: "STL", desc: "3D Print 🖨️", icon: Printer },
-  { id: "obj", label: "OBJ", desc: "Preview 👀", icon: Eye },
+  { id: "step", label: "STEP", desc: "Pro CAD", icon: FileBox },
+  { id: "stl", label: "STL", desc: "3D Print", icon: Printer },
+  { id: "obj", label: "OBJ", desc: "Preview", icon: Eye },
 ];
 
 interface ExportPanelProps {
@@ -13,15 +13,15 @@ interface ExportPanelProps {
 
 export default function ExportPanel({ hasModel }: ExportPanelProps) {
   const handleExport = (format: string) => {
-    toast.success(`${format.toUpperCase()} export started! 🎉`, {
-      description: "Connect a backend to enable real CAD file generation~",
+    toast.success(`${format.toUpperCase()} export started`, {
+      description: "Connect a backend to enable real CAD file generation.",
     });
   };
 
   return (
     <div className="space-y-3">
       <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-        Export Format 📁
+        Export Format
       </h3>
       <div className="grid grid-cols-3 gap-2">
         {formats.map((f) => (
