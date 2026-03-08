@@ -221,6 +221,9 @@ export default function Index() {
           setIsGenerating(false);
           if (parts.length > 1) {
             toast.success(`${data.assemblyName || "Assembly"}: ${parts.length} parts generated!`);
+            if (data.paperSummary) {
+              toast.info(data.paperSummary, { duration: 6000 });
+            }
           } else {
             toast.success(`${parts[0].type} generated!`);
           }
