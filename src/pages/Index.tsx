@@ -206,6 +206,7 @@ export default function Index() {
             p.position?.[1] ?? 0.5,
             p.position?.[2] ?? 0,
           ] as [number, number, number],
+          rotation: (p.rotation || [0, 0, 0]) as [number, number, number],
           scale: [1, 1, 1] as [number, number, number],
           color: p.color || DEFAULT_COLORS[p.type] || "#f9a8d4",
           label: p.label || p.type,
