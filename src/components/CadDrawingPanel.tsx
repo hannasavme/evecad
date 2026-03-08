@@ -1861,6 +1861,7 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
             onUpdateTitle={setTitleText}
             showSection={showSection}
             showBOM={showBOM}
+            showIsometric={showIsometric}
             page={drawingPage}
             partsPerPage={PARTS_PER_PAGE}
             isAssemblyMode={isAssemblyMode}
