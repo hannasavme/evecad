@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Box, Plus, Star, X, Layers, Trash2, Wrench, Loader2 } from "lucide-react";
+import { Plus, Star, X, Layers, Trash2, Wrench, Loader2 } from "lucide-react";
+import mascotImg from "@/assets/mascot.png";
 import InputPanel from "@/components/InputPanel";
 import ModelViewer, { type SceneModel, type ModelViewerHandle } from "@/components/ModelViewer";
 import ExportDropdown from "@/components/ExportDropdown";
@@ -200,14 +201,9 @@ export default function Index() {
       {/* Header */}
       <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 h-12 bg-card/70 backdrop-blur-md border-b-2 border-border">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-primary/15 border-2 border-primary/30 flex items-center justify-center">
-            <Box className="w-4 h-4 text-primary" />
-          </div>
+          <img src={mascotImg} alt="EveCAD mascot" className="w-8 h-8 rounded-xl" />
           <span className="font-extrabold text-lg tracking-tight text-foreground">
-            CAD<span className="text-gradient-primary">Gen</span>
-          </span>
-          <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground border-2 border-border">
-            ✨ alpha
+            Eve<span className="text-gradient-primary">CAD</span>
           </span>
         </div>
 
