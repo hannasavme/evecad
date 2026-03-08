@@ -1139,6 +1139,19 @@ const meshMap: Record<string, React.FC<{ color: string; params?: ModelParams }>>
   knuckle: KnuckleMesh,
   motor: MotorMesh,
   standoff: StandoffMesh,
+  nosecone: NoseConeMesh,
+  bodytube: BodyTubeMesh,
+  fin: FinMesh,
+  centeringring: CenteringRingMesh,
+  bulkhead: BulkheadMesh,
+  coupler: CouplerMesh,
+  launchguide: LaunchGuideMesh,
+  motortube: MotorTubeMesh,
+  thrustplate: ThrustPlateMesh,
+  retainer: RetainerMesh,
+  nozzle: NozzleMesh,
+  ebay: EBayMesh,
+  baffle: BaffleMesh,
 };
 
 // ─── Scene Components ──────────────────────────────────
