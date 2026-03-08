@@ -66,12 +66,12 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
   return (
     <div className="flex flex-col h-full">
       {/* Mode Tabs */}
-      <div className="flex gap-1 p-1.5 rounded-2xl bg-muted mb-4">
+      <div className="flex gap-1 p-1 sm:p-1.5 rounded-2xl bg-muted mb-3 sm:mb-4">
         {modes.map((m) => (
           <button
             key={m.key}
             onClick={() => setMode(m.key)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all ${
               mode === m.key
                 ? "bg-card text-primary kawaii-shadow-sm"
                 : "text-muted-foreground hover:text-foreground"

@@ -372,53 +372,53 @@ export default function Index() {
   return (
     <div className="h-screen w-screen overflow-hidden bg-background relative">
       {/* Header */}
-      <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 h-12 bg-card/70 backdrop-blur-md border-b-2 border-border">
-        <div className="flex items-center gap-2.5">
-          <img src={mascotImg} alt="EveCAD mascot" className="w-8 h-8 rounded-xl" />
-          <span className="font-extrabold text-lg tracking-tight text-foreground">
+      <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-2 sm:px-4 h-12 bg-card/70 backdrop-blur-md border-b-2 border-border">
+        <div className="flex items-center gap-2">
+          <img src={mascotImg} alt="EveCAD mascot" className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl" />
+          <span className="font-extrabold text-base sm:text-lg tracking-tight text-foreground">
             Eve<span className="text-gradient-primary">CAD</span>
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto">
           {models.length >= 2 && (
             <button
               onClick={handleAssemble}
               disabled={isAssembling}
-              className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors px-2.5 py-1.5 rounded-xl border-2 border-border hover:border-primary/40 bg-card/60 disabled:opacity-50"
+              className="flex items-center gap-1 sm:gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors px-2 sm:px-2.5 py-1.5 rounded-xl border-2 border-border hover:border-primary/40 bg-card/60 disabled:opacity-50 shrink-0"
             >
               {isAssembling ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
               ) : (
                 <Wrench className="w-3 h-3" />
               )}
-              Assemble
+              <span className="hidden sm:inline">Assemble</span>
             </button>
           )}
           {selectedModels.length > 0 && (
             <button
               onClick={() => setShowProperties(!showProperties)}
-              className={`flex items-center gap-1.5 text-[10px] font-bold transition-colors px-2.5 py-1.5 rounded-xl border-2 bg-card/60 ${
+              className={`flex items-center gap-1 sm:gap-1.5 text-[10px] font-bold transition-colors px-2 sm:px-2.5 py-1.5 rounded-xl border-2 bg-card/60 shrink-0 ${
                 showProperties
                   ? "border-primary/40 text-primary"
                   : "border-border text-muted-foreground hover:text-primary hover:border-primary/40"
               }`}
             >
               <SlidersHorizontal className="w-3 h-3" />
-              Properties
+              <span className="hidden sm:inline">Properties</span>
             </button>
           )}
           {models.length > 0 && (
             <button
               onClick={() => setShowDrawing(!showDrawing)}
-              className={`flex items-center gap-1.5 text-[10px] font-bold transition-colors px-2.5 py-1.5 rounded-xl border-2 bg-card/60 ${
+              className={`flex items-center gap-1 sm:gap-1.5 text-[10px] font-bold transition-colors px-2 sm:px-2.5 py-1.5 rounded-xl border-2 bg-card/60 shrink-0 ${
                 showDrawing
                   ? "border-primary/40 text-primary"
                   : "border-border text-muted-foreground hover:text-primary hover:border-primary/40"
               }`}
             >
               <Ruler className="w-3 h-3" />
-              Drawing
+              <span className="hidden sm:inline">Drawing</span>
             </button>
           )}
           <ImportButton onImport={(imported) => setModelsImmediate((prev) => [...prev, ...imported])} />
@@ -485,7 +485,7 @@ export default function Index() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 w-80"
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 w-[min(20rem,calc(100vw-2rem))]"
           >
             <div className="p-4 rounded-2xl border-2 border-border bg-card/90 backdrop-blur-md kawaii-shadow">
               <GenerationProgress progress={progress} stage={stage} />
@@ -496,7 +496,7 @@ export default function Index() {
 
       {/* Models list — bottom left */}
       {models.length > 0 && (
-        <div className="absolute bottom-6 left-4 z-30 flex flex-col gap-1.5 max-h-[50vh] overflow-y-auto p-3 rounded-2xl border-2 border-border bg-card/90 backdrop-blur-md">
+        <div className="absolute bottom-4 sm:bottom-6 left-2 sm:left-4 z-30 flex flex-col gap-1.5 max-h-[40vh] sm:max-h-[50vh] max-w-[200px] sm:max-w-none overflow-y-auto p-2 sm:p-3 rounded-2xl border-2 border-border bg-card/90 backdrop-blur-md">
           <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1 mb-1">
             <Layers className="w-3 h-3" /> Models ({models.length})
           </span>
@@ -615,7 +615,7 @@ export default function Index() {
       {/* Recenter button */}
       <button
         onClick={() => viewerRef.current?.resetCamera()}
-        className="absolute bottom-[5.5rem] right-7 z-40 w-10 h-10 rounded-xl bg-card/90 border-2 border-border text-muted-foreground hover:text-primary hover:border-primary/40 flex items-center justify-center transition-all"
+        className="absolute bottom-20 sm:bottom-[5.5rem] right-5 sm:right-7 z-40 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-card/90 border-2 border-border text-muted-foreground hover:text-primary hover:border-primary/40 flex items-center justify-center transition-all"
         title="Recenter view"
       >
         <Crosshair className="w-4 h-4" />
@@ -624,16 +624,16 @@ export default function Index() {
       {/* Add model FAB */}
       <button
         onClick={() => setShowInput(!showInput)}
-        className="absolute bottom-6 right-6 z-40 w-14 h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center kawaii-shadow hover:scale-105 transition-transform"
+        className="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 z-40 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center kawaii-shadow hover:scale-105 transition-transform"
       >
         <AnimatePresence mode="wait">
           {showInput ? (
             <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </motion.div>
           ) : (
             <motion.div key="add" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
-              <Plus className="w-6 h-6" />
+              <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -647,7 +647,7 @@ export default function Index() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="absolute bottom-24 right-6 z-40 w-[380px] max-h-[70vh] overflow-y-auto"
+            className="absolute bottom-20 sm:bottom-24 right-4 sm:right-6 z-40 w-[min(380px,calc(100vw-2rem))] max-h-[65vh] sm:max-h-[70vh] overflow-y-auto"
           >
             <div className="p-5 rounded-3xl border-2 border-border bg-card/95 backdrop-blur-md kawaii-shadow">
               <div className="flex items-center justify-between mb-3">
