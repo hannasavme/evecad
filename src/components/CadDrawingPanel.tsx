@@ -1,6 +1,6 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
-import { X, Download, Ruler, Type, List, Crosshair, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Download, Ruler, Type, List, Crosshair, ChevronLeft, ChevronRight, Eye, Layers } from "lucide-react";
 import type { SceneModel, ModelParams } from "@/components/ModelViewer";
 import { toast } from "sonner";
 
@@ -894,7 +894,7 @@ function dimStr(val: number) {
   return (val * 25.4).toFixed(1);
 }
 
-function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotation, onMoveAnnotation, titleText, onUpdateTitle, showSection, showBOM, page, partsPerPage }: {
+function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotation, onMoveAnnotation, titleText, onUpdateTitle, showSection, showBOM, page, partsPerPage, isAssemblyMode }: {
   models: SceneModel[];
   annotations: Annotation[];
   onUpdateAnnotation: (id: string, text: string) => void;
@@ -903,10 +903,11 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
   titleText: string; onUpdateTitle: (t: string) => void;
   showSection: boolean; showBOM: boolean;
   page: number; partsPerPage: number;
+  isAssemblyMode: boolean;
 }) {
   const startIdx = page * partsPerPage;
-  const pageModels = models.slice(startIdx, startIdx + partsPerPage);
-  const totalPages = Math.ceil(models.length / partsPerPage);
+  const pageModels = isAssemblyMode ? models : models.slice(startIdx, startIdx + partsPerPage);
+  const totalPages = isAssemblyMode ? 1 : Math.ceil(models.length / partsPerPage);
   const margin = 20;
   const scl = 55;
   const svgWidth = 1190;
@@ -1032,8 +1033,55 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         <text x={tbX + tbW - 50} y={tbY + tbRowH * 4 + 12} fontSize={6} fill={HIDDEN_COLOR} fontFamily="monospace">SHEET {page + 1} OF {totalPages}</text>
       </g>
 
-      {/* ─── Part Views ─── */}
-      {pageModels.map((model, idx) => {
+      {/* ─── Assembly View (all parts overlaid) ─── */}
+      {isAssemblyMode && (
+        <g>
+          <text x={margin + 10} y={viewsStartY + 10} fontSize={11} fontWeight="bold" fill={CENTER_COLOR} fontFamily="monospace">
+            ASSEMBLY DRAWING — {models.length} components
+          </text>
+          <text x={margin + 10} y={viewsStartY + 22} fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">FRONT VIEW (Assembly)</text>
+          <text x={margin + drawAreaW * 0.5} y={viewsStartY + 22} fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">RIGHT SIDE VIEW (Assembly)</text>
+          <text x={margin + 10} y={viewsStartY + 290} fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">TOP VIEW (Assembly)</text>
+
+          {models.map((model, idx) => {
+            const profile = getProfile(model.type);
+            const dims = getScaledDims(model);
+            const viewScale = scl * 0.7;
+
+            const offsetX = (model.position?.[0] || 0) * viewScale * 0.3;
+            const offsetY = -(model.position?.[1] || 0) * viewScale * 0.3;
+            const offsetZ = (model.position?.[2] || 0) * viewScale * 0.3;
+
+            const frontCx = margin + drawAreaW * 0.22 + offsetX;
+            const frontCy = viewsStartY + 150 + offsetY;
+            const sideCx = margin + drawAreaW * 0.55 + offsetZ;
+            const sideCy = viewsStartY + 150 + offsetY;
+            const topCx = margin + drawAreaW * 0.22 + offsetX;
+            const topCy = viewsStartY + 380 + offsetZ;
+
+            const frontFn = profile.frontProfile || defaultProfile.frontProfile;
+            const topFn = profile.topProfile || defaultProfile.topProfile;
+            const sideFn = profile.sideProfile || defaultProfile.sideProfile;
+            const fw = dims.w * viewScale;
+            const fh = dims.h * viewScale;
+
+            const colors = ["hsl(280,30%,25%)", "hsl(210,50%,40%)", "hsl(340,50%,40%)", "hsl(150,40%,35%)", "hsl(30,60%,40%)", "hsl(260,40%,50%)"];
+            const color = colors[idx % colors.length];
+
+            return (
+              <g key={model.id} opacity={0.75}>
+                <g style={{ color }}>{frontFn(dims.w * viewScale, dims.h * viewScale, frontCx, frontCy, model.params)}</g>
+                <g style={{ color }}>{sideFn(dims.d * viewScale, dims.h * viewScale, sideCx, sideCy, model.params)}</g>
+                <g style={{ color }}>{topFn(dims.w * viewScale, dims.d * viewScale, topCx, topCy, model.params)}</g>
+                <Balloon cx={frontCx + fw / 2 + 20} cy={frontCy - fh / 2 - 5} tx={frontCx + fw / 4} ty={frontCy} num={idx + 1} />
+              </g>
+            );
+          })}
+        </g>
+      )}
+
+      {/* ─── Individual Part Views ─── */}
+      {!isAssemblyMode && pageModels.map((model, idx) => {
         const globalIdx = startIdx + idx;
         const profile = getProfile(model.type);
         const dims = getScaledDims(model);
@@ -1128,11 +1176,30 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
   const [titleText, setTitleText] = useState("EveCAD Drawing");
   const [showSection, setShowSection] = useState(true);
   const [showBOM, setShowBOM] = useState(true);
+  const [visibleIds, setVisibleIds] = useState<Set<string>>(() => new Set(models.map(m => m.id)));
+  const [showComponentDropdown, setShowComponentDropdown] = useState(false);
   const svgContainerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const filteredModels = useMemo(() => models.filter(m => visibleIds.has(m.id)), [models, visibleIds]);
+  const isAssemblyMode = visibleIds.size === models.length && models.length > 1;
 
   const PARTS_PER_PAGE = 3;
   const [drawingPage, setDrawingPage] = useState(0);
-  const totalPages = Math.ceil(models.length / PARTS_PER_PAGE);
+  const totalPages = isAssemblyMode ? 1 : Math.ceil(filteredModels.length / PARTS_PER_PAGE);
+
+  const toggleComponent = (id: string) => {
+    setVisibleIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    setDrawingPage(0);
+  };
+
+  const selectAll = () => { setVisibleIds(new Set(models.map(m => m.id))); setDrawingPage(0); };
+  const selectNone = () => { setVisibleIds(new Set()); setDrawingPage(0); };
 
   const addAnnotation = () => {
     setAnnotations((prev) => [...prev, { id: `ann-${++annotationId}`, x: 30 + Math.random() * 200, y: 40 + Math.random() * 100, text: "Note: edit me" }]);
@@ -1208,6 +1275,45 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
             <Ruler className="w-4 h-4 text-primary" /> Technical Drawing — ISO/EU Standard
           </span>
           <div className="flex items-center gap-1.5">
+            {/* Component visibility dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setShowComponentDropdown(!showComponentDropdown)}
+                className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all flex items-center gap-1 ${isAssemblyMode ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+              >
+                <Eye className="w-3 h-3" />
+                {isAssemblyMode ? "Assembly" : `${visibleIds.size}/${models.length}`}
+              </button>
+              {showComponentDropdown && (
+                <div className="absolute top-full right-0 mt-1 w-56 bg-popover border border-border rounded-lg shadow-lg z-50 py-1 max-h-64 overflow-y-auto">
+                  <div className="flex items-center justify-between px-3 py-1.5 border-b border-border">
+                    <span className="text-[10px] font-bold text-foreground">Components</span>
+                    <div className="flex gap-1">
+                      <button onClick={selectAll} className="text-[9px] text-primary hover:underline">All</button>
+                      <span className="text-[9px] text-muted-foreground">|</span>
+                      <button onClick={selectNone} className="text-[9px] text-primary hover:underline">None</button>
+                    </div>
+                  </div>
+                  {isAssemblyMode && (
+                    <div className="px-3 py-1 bg-accent/50 border-b border-border">
+                      <span className="text-[9px] font-bold text-accent-foreground flex items-center gap-1"><Layers className="w-3 h-3" /> Assembly Drawing Mode</span>
+                    </div>
+                  )}
+                  {models.map((m, i) => (
+                    <label key={m.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-muted cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={visibleIds.has(m.id)}
+                        onChange={() => toggleComponent(m.id)}
+                        className="w-3 h-3 rounded border-input accent-primary"
+                      />
+                      <span className="text-[10px] text-foreground truncate">{i + 1}. {m.label}</span>
+                      <span className="text-[9px] text-muted-foreground ml-auto">{m.type}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
             <button onClick={() => setShowSection(!showSection)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showSection ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
               <Crosshair className="w-3 h-3 inline mr-1" />Section
             </button>
@@ -1226,7 +1332,7 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
             </button>
             <div className="w-px h-5 bg-border mx-1" />
             {/* Page navigation */}
-            {totalPages > 1 && (
+            {totalPages > 1 && !isAssemblyMode && (
               <>
                 <button onClick={() => setDrawingPage(Math.max(0, drawingPage - 1))} disabled={drawingPage === 0} className="text-[10px] font-bold text-muted-foreground hover:text-primary px-1 py-1 rounded-lg hover:bg-muted disabled:opacity-30">
                   <ChevronLeft className="w-3 h-3" />
@@ -1247,7 +1353,7 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
         {/* Drawing canvas */}
         <div ref={svgContainerRef} className="flex-1 overflow-auto bg-white p-2">
           <DrawingSVG
-            models={models}
+            models={filteredModels}
             annotations={annotations}
             onUpdateAnnotation={updateAnnotation}
             onDeleteAnnotation={deleteAnnotation}
@@ -1258,6 +1364,7 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
             showBOM={showBOM}
             page={drawingPage}
             partsPerPage={PARTS_PER_PAGE}
+            isAssemblyMode={isAssemblyMode}
           />
         </div>
       </div>
