@@ -1,6 +1,6 @@
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { OrbitControls, Environment, Float, Grid } from "@react-three/drei";
-import { Suspense, useMemo, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import { Suspense, useMemo, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 import * as THREE from "three";
 
 export interface SceneModel {
