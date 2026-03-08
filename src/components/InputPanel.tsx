@@ -150,23 +150,7 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
             </div>
             <input id="file-input" type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
 
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground font-bold">Or try these examples</p>
-              <div className="flex flex-wrap gap-1.5">
-                {IMAGE_EXAMPLES.map((ex, i) => (
-                  <button
-                    key={i}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleImageExample(ex.description);
-                    }}
-                    className="text-xs px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground hover:bg-primary/15 hover:text-primary transition-colors border-2 border-transparent hover:border-primary/30 font-semibold"
-                  >
-                    {ex.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+
           </motion.div>
         )}
       </AnimatePresence>
