@@ -35,6 +35,9 @@ const stages = [
 let modelIdCounter = 0;
 
 export default function Index() {
+  const { user } = useAuth();
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState("Untitled Project");
   const [showProperties, setShowProperties] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAssembling, setIsAssembling] = useState(false);
