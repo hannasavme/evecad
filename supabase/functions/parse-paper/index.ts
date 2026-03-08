@@ -205,16 +205,16 @@ CRITICAL RULES:
 2. For MULTI-VEHICLE systems: model each vehicle separately, positioned apart in the scene.
    - Mother rover at center (0,0,0), child rovers offset at (6,0,3), (-5,0,4), etc.
    - Each vehicle gets its own full set of parts: chassis, wheels, axles, sensors, etc.
-3. WHEELS: Each wheel is a cylinder + torus rim + axle cylinder. A 4-wheeled rover needs 12+ parts just for wheels.
-4. CHASSIS: Build from multiple boxes/plates — main body, side panels, top cover, bottom plate, internal frame.
-5. SUSPENSION: Use brackets at angles (rotation!) connecting wheel assemblies to chassis.
-6. TOOLS (drills, arms): Build from multiple cylinders + cones + brackets with proper rotation.
-7. ANTENNAS: Thin cylinders for masts + spheres/cones for dish heads.
-8. DOCKING BAYS: Tall box structures with internal cylinders, plates for shelves.
+3. WHEELS: Use the 'wheel' type (not cylinder+torus). Each wheel auto-renders with tire, rim, hub, spokes, treads.
+4. CAMERAS: Use the 'camera' type (not sphere). Auto-renders with lens barrel, glass, body, LED.
+5. ANTENNAS: Use the 'antenna' type (not cone+cylinder). Auto-renders with parabolic dish, mast, feed horn.
+6. DRILLS: Use the 'drill' type (not cylinder+cone). Auto-renders with spiral bit, motor housing, chuck.
+7. TRACKS: Use the 'track' type for tracked vehicles. Auto-renders with road wheels, sprocket, track pads.
+8. CHASSIS: Build from multiple boxes/plates — main body, side panels, top cover, bottom plate.
 9. Use ROTATION extensively — suspension arms at 30-45°, angled solar panels, tilted cameras.
-10. Use VARIED COLORS to distinguish sub-systems (wheels=one color, chassis=another, sensors=another).
-11. Position parts with MILLIMETER precision — wheels must touch the ground (y=wheel_radius), axles must align.
-12. Think like a real engineer assembling the vehicle: frame → axles → wheels → body panels → subsystems → details.
+10. Use VARIED COLORS to distinguish sub-systems.
+11. Position parts with PRECISION — wheels touch ground at y=wheel_radius, parts connect properly.
+12. Think like an engineer: frame → wheels → body panels → subsystems → sensors → details.
 You MUST call the parse_cad function.`,
           },
           {
