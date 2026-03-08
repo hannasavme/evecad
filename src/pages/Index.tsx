@@ -1,13 +1,10 @@
 import { useState, useCallback } from "react";
-import { motion } from "framer-motion";
-import { Box, Layers, Zap, Heart, Star, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Box, Plus, Star, Sparkles, Heart, X, Layers, Trash2 } from "lucide-react";
 import InputPanel from "@/components/InputPanel";
-import ModelViewer from "@/components/ModelViewer";
-import ExportPanel from "@/components/ExportPanel";
+import ModelViewer, { type SceneModel } from "@/components/ModelViewer";
 import ExportDropdown from "@/components/ExportDropdown";
 import GenerationProgress from "@/components/GenerationProgress";
-
-type ModelType = "gear" | "bracket" | "box" | "cylinder" | "default";
 
 const stages = [
   "Reading your wishes~ ✨",
@@ -17,131 +14,194 @@ const stages = [
   "Almost done~ 🎀",
 ];
 
+let modelIdCounter = 0;
+
 export default function Index() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState("");
-  const [modelType, setModelType] = useState<ModelType>("default");
-  const [hasModel, setHasModel] = useState(false);
+  const [showInput, setShowInput] = useState(false);
+  const [models, setModels] = useState<SceneModel[]>([]);
+  const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
 
-  const inferModelType = (text?: string): ModelType => {
+  const inferModelType = (text?: string): SceneModel["type"] => {
     if (!text) return "box";
     const t = text.toLowerCase();
     if (t.includes("gear")) return "gear";
     if (t.includes("bracket") || t.includes("l-shape")) return "bracket";
     if (t.includes("cylinder") || t.includes("pipe")) return "cylinder";
-    if (t.includes("box") || t.includes("enclosure")) return "box";
-    return "gear";
+    return "box";
   };
 
   const handleGenerate = useCallback(
     (input: { mode: string; text?: string; imageFile?: File }) => {
       setIsGenerating(true);
       setProgress(0);
-      setHasModel(false);
-      const target = inferModelType(input.text);
+      const type = inferModelType(input.text);
+      const label = input.text?.slice(0, 30) || type;
       let step = 0;
+
       const interval = setInterval(() => {
         step++;
-        const p = Math.min((step / 25) * 100, 100);
-        setProgress(p);
+        setProgress(Math.min((step / 25) * 100, 100));
         setStage(stages[Math.min(Math.floor(step / 5), stages.length - 1)]);
         if (step >= 25) {
           clearInterval(interval);
           setIsGenerating(false);
-          setModelType(target);
-          setHasModel(true);
+          const offset = models.length * 2.5;
+          const newModel: SceneModel = {
+            id: `model-${++modelIdCounter}`,
+            type,
+            position: [offset, 0.5, 0],
+            label,
+          };
+          setModels((prev) => [...prev, newModel]);
+          setSelectedModelId(newModel.id);
+          setShowInput(false);
         }
       }, 120);
     },
-    []
+    [models.length]
   );
 
-  return (
-    <div className="min-h-screen bg-background bg-grid">
-      {/* Floating decorations */}
-      <div className="fixed top-20 left-10 text-2xl opacity-20 animate-bounce pointer-events-none">⭐</div>
-      <div className="fixed top-40 right-16 text-3xl opacity-15 animate-pulse pointer-events-none">🌸</div>
-      <div className="fixed bottom-32 left-20 text-2xl opacity-20 animate-bounce pointer-events-none" style={{ animationDelay: "0.5s" }}>💫</div>
-      <div className="fixed bottom-20 right-32 text-xl opacity-15 animate-pulse pointer-events-none" style={{ animationDelay: "1s" }}>✨</div>
+  const handleDeleteSelected = () => {
+    if (!selectedModelId) return;
+    setModels((prev) => prev.filter((m) => m.id !== selectedModelId));
+    setSelectedModelId(null);
+  };
 
-      {/* Header */}
-      <header className="border-b-2 border-border backdrop-blur-sm bg-background/80 sticky top-0 z-50">
-        <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-primary/15 border-2 border-primary/30 flex items-center justify-center">
-              <Box className="w-4 h-4 text-primary" />
-            </div>
-            <span className="font-extrabold text-xl tracking-tight text-foreground">
-              CAD<span className="text-gradient-primary">Gen</span>
-            </span>
-            <span className="hidden sm:inline-block text-xs font-bold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground border-2 border-border">
-              ✨ alpha
-            </span>
+  return (
+    <div className="h-screen w-screen overflow-hidden bg-background relative">
+      {/* Header — compact overlay */}
+      <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 h-12 bg-card/70 backdrop-blur-md border-b-2 border-border">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-primary/15 border-2 border-primary/30 flex items-center justify-center">
+            <Box className="w-4 h-4 text-primary" />
           </div>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground font-bold">
-            <span className="hidden md:flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-primary" /> AI-Powered
-            </span>
-            <span className="hidden md:flex items-center gap-1.5">
-              <Heart className="w-3.5 h-3.5 text-primary" /> Made with love
-            </span>
-          </div>
+          <span className="font-extrabold text-lg tracking-tight text-foreground">
+            CAD<span className="text-gradient-primary">Gen</span>
+          </span>
+          <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground border-2 border-border">
+            ✨ alpha
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground">
+          <span className="hidden md:flex items-center gap-1">
+            <Sparkles className="w-3 h-3 text-primary" /> AI-Powered
+          </span>
+          <span>🖱️ Orbit</span>
+          <span className="text-border">·</span>
+          <span>🔍 Zoom</span>
+          <span className="text-border">·</span>
+          <span>✋ Pan</span>
+          <span className="text-border">·</span>
+          <ExportDropdown hasModel={models.length > 0} />
         </div>
       </header>
 
-      {/* Main */}
-      <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 min-h-[500px]" style={{ height: "calc(100vh - 7rem)" }}>
-          {/* Left Panel */}
+      {/* Full-screen 3D Viewport */}
+      <div className="absolute inset-0 pt-12">
+        <ModelViewer
+          models={models}
+          selectedModelId={selectedModelId}
+          onSelectModel={setSelectedModelId}
+        />
+      </div>
+
+      {/* Generation progress overlay */}
+      <AnimatePresence>
+        {isGenerating && (
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col gap-4 overflow-y-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 w-80"
           >
-            <div className="p-5 rounded-3xl border-2 border-border bg-card kawaii-shadow flex-1 flex flex-col">
+            <div className="p-4 rounded-2xl border-2 border-border bg-card/90 backdrop-blur-md kawaii-shadow">
+              <GenerationProgress progress={progress} stage={stage} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Models list — bottom left */}
+      {models.length > 0 && (
+        <div className="absolute bottom-6 left-4 z-30 flex flex-col gap-1.5">
+          <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1 mb-1">
+            <Layers className="w-3 h-3" /> Models ({models.length})
+          </span>
+          {models.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => setSelectedModelId(m.id === selectedModelId ? null : m.id)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border-2 ${
+                selectedModelId === m.id
+                  ? "bg-primary/15 border-primary/40 text-primary"
+                  : "bg-card/80 backdrop-blur-sm border-border text-foreground hover:border-primary/30"
+              }`}
+            >
+              <span className="capitalize">{m.type}</span>
+              <span className="text-muted-foreground truncate max-w-[100px]">{m.label}</span>
+            </button>
+          ))}
+          {selectedModelId && (
+            <button
+              onClick={handleDeleteSelected}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-destructive/10 border-2 border-destructive/30 text-destructive hover:bg-destructive/20 transition-all"
+            >
+              <Trash2 className="w-3 h-3" /> Remove
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Add model FAB */}
+      <button
+        onClick={() => setShowInput(!showInput)}
+        className="absolute bottom-6 right-6 z-40 w-14 h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center kawaii-shadow hover:scale-105 transition-transform"
+      >
+        <AnimatePresence mode="wait">
+          {showInput ? (
+            <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
+              <X className="w-6 h-6" />
+            </motion.div>
+          ) : (
+            <motion.div key="add" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
+              <Plus className="w-6 h-6" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </button>
+
+      {/* Floating input panel */}
+      <AnimatePresence>
+        {showInput && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="absolute bottom-24 right-6 z-40 w-[380px] max-h-[70vh] overflow-y-auto"
+          >
+            <div className="p-5 rounded-3xl border-2 border-border bg-card/95 backdrop-blur-md kawaii-shadow">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-extrabold text-foreground flex items-center gap-1.5">
+                  <Star className="w-4 h-4 text-primary" /> Add a Part ✨
+                </span>
+                <button onClick={() => setShowInput(false)} className="text-muted-foreground hover:text-foreground">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
               <InputPanel onGenerate={handleGenerate} isGenerating={isGenerating} />
             </div>
-            {isGenerating && (
-              <div className="p-5 rounded-3xl border-2 border-border bg-card kawaii-shadow">
-                <GenerationProgress progress={progress} stage={stage} />
-              </div>
-            )}
           </motion.div>
+        )}
+      </AnimatePresence>
 
-          {/* 3D Viewport */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 }}
-            className="relative rounded-3xl border-2 border-border overflow-hidden bg-card kawaii-shadow"
-          >
-            <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-5 py-2.5 bg-card/80 backdrop-blur-sm border-b-2 border-border">
-              <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
-                <Star className="w-3.5 h-3.5 text-primary" />
-                {hasModel ? `${modelType.toUpperCase()} ✅` : "Ready to create~ ✨"}
-              </span>
-              <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground">
-                <span>🖱️ Orbit</span>
-                <span className="text-border">·</span>
-                <span>🔍 Zoom</span>
-                <span className="text-border">·</span>
-                <span>✋ Pan</span>
-                <span className="text-border">·</span>
-                <ExportDropdown hasModel={hasModel} />
-              </div>
-            </div>
-
-            {isGenerating && (
-              <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
-                <div className="absolute inset-x-0 h-0.5 animate-scan-line" style={{ background: "linear-gradient(90deg, transparent, hsl(330 80% 65% / 0.6), transparent)" }} />
-              </div>
-            )}
-
-            <ModelViewer modelType={modelType} />
-          </motion.div>
-        </div>
-      </main>
+      {/* Floating decorations */}
+      <div className="fixed top-20 left-10 text-2xl opacity-15 animate-bounce pointer-events-none">⭐</div>
+      <div className="fixed top-40 right-16 text-3xl opacity-10 animate-pulse pointer-events-none">🌸</div>
     </div>
   );
 }
