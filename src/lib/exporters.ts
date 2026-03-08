@@ -14,6 +14,7 @@ export function exportSTL(scene: THREE.Scene): Blob {
     if (mat.wireframe) return;
     if (mat.transparent && mat.opacity < 0.5) return;
     const mesh = obj as THREE.Mesh;
+    if (!mesh.geometry || !mesh.geometry.attributes.position) return;
     const geometry = mesh.geometry.clone();
     geometry.applyMatrix4(mesh.matrixWorld);
 
