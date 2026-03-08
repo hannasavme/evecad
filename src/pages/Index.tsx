@@ -85,30 +85,67 @@ export default function Index() {
   }, [setModels]);
 
   const handleGenerate = useCallback(
-    async (input: { mode: string; text?: string; imageFile?: File }) => {
+    async (input: { mode: InputMode; text?: string; imageFile?: File; paperFile?: File }) => {
       setIsGenerating(true);
       setProgress(0);
 
       let step = 0;
+      const paperMode = input.mode === "paper";
       const interval = setInterval(() => {
         step++;
-        if (step <= 20) {
-          setProgress(Math.min((step / 25) * 100, 80));
-          setStage(stages[Math.min(Math.floor(step / 4), stages.length - 2)]);
+        if (step <= (paperMode ? 40 : 20)) {
+          setProgress(Math.min((step / (paperMode ? 50 : 25)) * 100, 80));
+          if (paperMode) {
+            const paperStages = ["Uploading paper", "Reading content", "Extracting design info", "Analyzing structure", "Decomposing into parts", "Building mesh", "Almost done"];
+            setStage(paperStages[Math.min(Math.floor(step / 6), paperStages.length - 2)]);
+          } else {
+            setStage(stages[Math.min(Math.floor(step / 4), stages.length - 2)]);
+          }
         }
-      }, 150);
+      }, paperMode ? 200 : 150);
 
       try {
-        const body: Record<string, any> = {};
+        let data: any;
+        let error: any;
 
-        if (input.mode === "text" && input.text) {
-          body.text = input.text;
-        } else if (input.mode === "image" && input.imageFile) {
-          const base64 = await fileToBase64(input.imageFile);
-          body.imageBase64 = base64;
+        if (input.mode === "paper" && input.paperFile) {
+          // Paper mode — use FormData for the parse-paper function
+          const formData = new FormData();
+          formData.append("file", input.paperFile);
+          if (input.text) formData.append("focusArea", input.text);
+
+          const response = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-paper`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              },
+              body: formData,
+            }
+          );
+
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            error = errData.error || "Failed to analyze paper";
+            if (response.status === 429) error = "Rate limited, please try again later";
+            if (response.status === 402) error = "AI credits depleted";
+          } else {
+            data = await response.json();
+          }
+        } else {
+          // Text / Image mode
+          const body: Record<string, any> = {};
+          if (input.mode === "text" && input.text) {
+            body.text = input.text;
+          } else if (input.mode === "image" && input.imageFile) {
+            const base64 = await fileToBase64(input.imageFile);
+            body.imageBase64 = base64;
+          }
+          const result = await supabase.functions.invoke("parse-cad-text", { body });
+          data = result.data;
+          error = result.error;
         }
-
-        const { data, error } = await supabase.functions.invoke("parse-cad-text", { body });
 
         clearInterval(interval);
         setProgress(100);
