@@ -109,7 +109,17 @@ Think creatively about how to approximate complex shapes using these primitives.
 ${researchContext ? `\n\nREFERENCE RESEARCH about this object (use this for accurate proportions and structure):\n${researchContext}` : ""}
 
 You MUST call the parse_cad function.`;
-          },
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: imageBase64 ? "google/gemini-2.5-flash" : "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: systemPrompt },
           ...(userContent.length > 1
             ? [{ role: "user" as const, content: userContent }]
             : [{ role: "user" as const, content: userContent[0]?.text || text }]),
