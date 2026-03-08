@@ -13,24 +13,29 @@ export default function ImportButton({ onImport }: ImportButtonProps) {
 
   const handleFile = async (file: File) => {
     const ext = file.name.split(".").pop()?.toLowerCase();
+    console.log("[Import] File selected:", file.name, "ext:", ext, "size:", file.size);
 
     try {
       if (ext === "stl") {
         const buffer = await file.arrayBuffer();
+        console.log("[Import] STL buffer size:", buffer.byteLength);
         const models = parseSTL(buffer, file.name);
+        console.log("[Import] Parsed STL models:", models.length, models);
         onImport(models);
         toast.success(`Imported ${file.name}`, { description: "STL loaded into scene" });
       } else if (ext === "obj") {
         const text = await file.text();
+        console.log("[Import] OBJ text length:", text.length);
         const models = parseOBJ(text, file.name);
+        console.log("[Import] Parsed OBJ models:", models.length, models);
         onImport(models);
         toast.success(`Imported ${file.name}`, { description: "OBJ loaded into scene" });
       } else {
         toast.error("Unsupported format", { description: "Please upload .stl or .obj files" });
       }
     } catch (err) {
-      console.error("Import error:", err);
-      toast.error("Import failed", { description: "Could not parse the file" });
+      console.error("[Import] Error:", err);
+      toast.error("Import failed", { description: String(err) });
     }
   };
 
