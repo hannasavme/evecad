@@ -30,12 +30,12 @@ interface ShapeProfile {
   sectionProfile?: (pw: number, ph: number, cx: number, cy: number, params?: ModelParams) => JSX.Element;
 }
 
-const LINE_COLOR = "hsl(0, 0%, 15%)";
-const HIDDEN_COLOR = "hsl(0, 0%, 50%)";
-const CENTER_COLOR = "hsl(0, 0%, 40%)";
-const DIM_COLOR = "hsl(0, 0%, 35%)";
-const HATCH_COLOR = "hsl(0, 0%, 55%)";
-const SECTION_FILL = "hsl(0, 0%, 95%)";
+const LINE_COLOR = "hsl(280, 30%, 25%)";
+const HIDDEN_COLOR = "hsl(280, 20%, 50%)";
+const CENTER_COLOR = "hsl(330, 80%, 65%)";
+const DIM_COLOR = "hsl(280, 15%, 55%)";
+const HATCH_COLOR = "hsl(280, 20%, 65%)";
+const SECTION_FILL = "hsl(280, 20%, 96%)";
 
 function centerLines(cx: number, cy: number, hw: number, hh: number) {
   return (
