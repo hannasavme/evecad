@@ -127,6 +127,57 @@ const PARAM_DEFS: Record<string, ParamDef[]> = {
     { key: "wheelCount", label: "Wheels", type: "int", min: 3, max: 8, step: 1, default: 4, hasDimension: false },
     { key: "radius", label: "Wheel R", type: "number", min: 0.1, max: 0.5, step: 0.05, default: 0.2, hasDimension: true },
   ],
+  bolt: [
+    { key: "headRadius", label: "Head R", type: "number", min: 0.1, max: 1, step: 0.05, default: 0.3, hasDimension: true },
+    { key: "headHeight", label: "Head H", type: "number", min: 0.05, max: 0.5, step: 0.02, default: 0.15, hasDimension: true },
+    { key: "shaftRadius", label: "Shaft R", type: "number", min: 0.03, max: 0.5, step: 0.01, default: 0.12, hasDimension: true },
+    { key: "shaftLength", label: "Shaft L", type: "number", min: 0.3, max: 5, step: 0.1, default: 1.0, hasDimension: true },
+    { key: "threadPitch", label: "Pitch", type: "number", min: 0.03, max: 0.3, step: 0.01, default: 0.1, hasDimension: true },
+  ],
+  nut: [
+    { key: "nutRadius", label: "Radius", type: "number", min: 0.1, max: 1, step: 0.05, default: 0.3, hasDimension: true },
+    { key: "nutHeight", label: "Height", type: "number", min: 0.05, max: 0.5, step: 0.02, default: 0.2, hasDimension: true },
+    { key: "boreRadius", label: "Bore R", type: "number", min: 0.03, max: 0.5, step: 0.01, default: 0.12, hasDimension: true },
+  ],
+  screw: [
+    { key: "headRadius", label: "Head R", type: "number", min: 0.05, max: 0.5, step: 0.02, default: 0.2, hasDimension: true },
+    { key: "headHeight", label: "Head H", type: "number", min: 0.02, max: 0.3, step: 0.01, default: 0.08, hasDimension: true },
+    { key: "shaftRadius", label: "Shaft R", type: "number", min: 0.02, max: 0.3, step: 0.01, default: 0.08, hasDimension: true },
+    { key: "shaftLength", label: "Shaft L", type: "number", min: 0.2, max: 3, step: 0.05, default: 0.8, hasDimension: true },
+  ],
+  bearing: [
+    { key: "outerRadius", label: "Outer R", type: "number", min: 0.2, max: 3, step: 0.05, default: 0.5, hasDimension: true },
+    { key: "innerRadius", label: "Inner R", type: "number", min: 0.05, max: 1.5, step: 0.05, default: 0.2, hasDimension: true },
+    { key: "bearingWidth", label: "Width", type: "number", min: 0.05, max: 1, step: 0.02, default: 0.2, hasDimension: true },
+    { key: "ballCount", label: "Balls", type: "int", min: 4, max: 16, step: 1, default: 8, hasDimension: false },
+  ],
+  pulley: [
+    { key: "radius", label: "Radius", type: "number", min: 0.2, max: 3, step: 0.05, default: 0.5, hasDimension: true },
+    { key: "width", label: "Width", type: "number", min: 0.1, max: 1, step: 0.05, default: 0.3, hasDimension: true },
+    { key: "grooveDepth", label: "Groove D", type: "number", min: 0.02, max: 0.3, step: 0.01, default: 0.08, hasDimension: true },
+    { key: "grooveWidth", label: "Groove W", type: "number", min: 0.03, max: 0.5, step: 0.02, default: 0.12, hasDimension: true },
+  ],
+  shaft: [
+    { key: "radius", label: "Radius", type: "number", min: 0.03, max: 1, step: 0.01, default: 0.1, hasDimension: true },
+    { key: "height", label: "Length", type: "number", min: 0.3, max: 10, step: 0.1, default: 2.0, hasDimension: true },
+  ],
+  mug: [
+    { key: "mugRadius", label: "Radius", type: "number", min: 0.2, max: 1.5, step: 0.05, default: 0.5, hasDimension: true },
+    { key: "mugHeight", label: "Height", type: "number", min: 0.3, max: 2, step: 0.05, default: 0.8, hasDimension: true },
+    { key: "handleSize", label: "Handle", type: "number", min: 0.1, max: 0.8, step: 0.05, default: 0.3, hasDimension: true },
+    { key: "wallThickness", label: "Wall", type: "number", min: 0.02, max: 0.1, step: 0.01, default: 0.04, hasDimension: true },
+  ],
+  hammer: [
+    { key: "handleLength", label: "Handle L", type: "number", min: 0.5, max: 3, step: 0.1, default: 1.5, hasDimension: true },
+    { key: "handleRadius", label: "Handle R", type: "number", min: 0.03, max: 0.2, step: 0.01, default: 0.06, hasDimension: true },
+    { key: "headWidth", label: "Head W", type: "number", min: 0.2, max: 1.5, step: 0.05, default: 0.6, hasDimension: true },
+    { key: "headSize", label: "Head S", type: "number", min: 0.08, max: 0.5, step: 0.02, default: 0.18, hasDimension: true },
+  ],
+  handle: [
+    { key: "knobRadius", label: "Knob R", type: "number", min: 0.05, max: 0.5, step: 0.02, default: 0.2, hasDimension: true },
+    { key: "stemRadius", label: "Stem R", type: "number", min: 0.02, max: 0.2, step: 0.01, default: 0.06, hasDimension: true },
+    { key: "stemHeight", label: "Stem H", type: "number", min: 0.1, max: 1, step: 0.05, default: 0.4, hasDimension: true },
+  ],
 };
 
 interface PropertiesPanelProps {
