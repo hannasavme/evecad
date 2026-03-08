@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Scaling, Palette, X, Settings2, Ruler } from "lucide-react";
+import { Palette, X, Settings2, Ruler, Move3D } from "lucide-react";
 import type { SceneModel, ModelParams } from "@/components/ModelViewer";
 
 const KAWAII_COLORS = [
