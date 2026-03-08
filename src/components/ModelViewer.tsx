@@ -300,7 +300,7 @@ function Scene({ models, selectedModelIds, onSelectModel }: ModelViewerProps) {
 }
 
 const ModelViewer = forwardRef<ModelViewerHandle, ModelViewerProps>(
-  ({ models, selectedModelId, onSelectModel }, ref) => {
+  ({ models, selectedModelIds, onSelectModel }, ref) => {
     const sceneRef = useRef<THREE.Scene | null>(null);
     const resetRef = useRef<(() => void) | null>(null);
 
@@ -321,7 +321,7 @@ const ModelViewer = forwardRef<ModelViewerHandle, ModelViewerProps>(
               onSceneReady={(s) => { sceneRef.current = s; }}
               onControlsReady={(fn) => { resetRef.current = fn; }}
             />
-            <Scene models={models} selectedModelId={selectedModelId} onSelectModel={onSelectModel} />
+            <Scene models={models} selectedModelIds={selectedModelIds} onSelectModel={onSelectModel} />
           </Suspense>
         </Canvas>
       </div>
