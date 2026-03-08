@@ -1033,8 +1033,55 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         <text x={tbX + tbW - 50} y={tbY + tbRowH * 4 + 12} fontSize={6} fill={HIDDEN_COLOR} fontFamily="monospace">SHEET {page + 1} OF {totalPages}</text>
       </g>
 
-      {/* ─── Part Views ─── */}
-      {pageModels.map((model, idx) => {
+      {/* ─── Assembly View (all parts overlaid) ─── */}
+      {isAssemblyMode && (
+        <g>
+          <text x={margin + 10} y={viewsStartY + 10} fontSize={11} fontWeight="bold" fill={CENTER_COLOR} fontFamily="monospace">
+            ASSEMBLY DRAWING — {models.length} components
+          </text>
+          <text x={margin + 10} y={viewsStartY + 22} fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">FRONT VIEW (Assembly)</text>
+          <text x={margin + drawAreaW * 0.5} y={viewsStartY + 22} fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">RIGHT SIDE VIEW (Assembly)</text>
+          <text x={margin + 10} y={viewsStartY + 290} fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">TOP VIEW (Assembly)</text>
+
+          {models.map((model, idx) => {
+            const profile = getProfile(model.type);
+            const dims = getScaledDims(model);
+            const viewScale = scl * 0.7;
+
+            const offsetX = (model.params?.posX || 0) * viewScale * 0.3;
+            const offsetY = -(model.params?.posY || 0) * viewScale * 0.3;
+            const offsetZ = (model.params?.posZ || 0) * viewScale * 0.3;
+
+            const frontCx = margin + drawAreaW * 0.22 + offsetX;
+            const frontCy = viewsStartY + 150 + offsetY;
+            const sideCx = margin + drawAreaW * 0.55 + offsetZ;
+            const sideCy = viewsStartY + 150 + offsetY;
+            const topCx = margin + drawAreaW * 0.22 + offsetX;
+            const topCy = viewsStartY + 380 + offsetZ;
+
+            const frontFn = profile.frontProfile || defaultProfile.frontProfile;
+            const topFn = profile.topProfile || defaultProfile.topProfile;
+            const sideFn = profile.sideProfile || defaultProfile.sideProfile;
+            const fw = dims.w * viewScale;
+            const fh = dims.h * viewScale;
+
+            const colors = ["hsl(280,30%,25%)", "hsl(210,50%,40%)", "hsl(340,50%,40%)", "hsl(150,40%,35%)", "hsl(30,60%,40%)", "hsl(260,40%,50%)"];
+            const color = colors[idx % colors.length];
+
+            return (
+              <g key={model.id} opacity={0.75}>
+                <g style={{ color }}>{frontFn(dims.w * viewScale, dims.h * viewScale, frontCx, frontCy, model.params)}</g>
+                <g style={{ color }}>{sideFn(dims.d * viewScale, dims.h * viewScale, sideCx, sideCy, model.params)}</g>
+                <g style={{ color }}>{topFn(dims.w * viewScale, dims.d * viewScale, topCx, topCy, model.params)}</g>
+                <Balloon cx={frontCx + fw / 2 + 20} cy={frontCy - fh / 2 - 5} tx={frontCx + fw / 4} ty={frontCy} num={idx + 1} />
+              </g>
+            );
+          })}
+        </g>
+      )}
+
+      {/* ─── Individual Part Views ─── */}
+      {!isAssemblyMode && pageModels.map((model, idx) => {
         const globalIdx = startIdx + idx;
         const profile = getProfile(model.type);
         const dims = getScaledDims(model);
