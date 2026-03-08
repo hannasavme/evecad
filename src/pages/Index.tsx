@@ -51,6 +51,8 @@ export default function Index() {
   }, [pushImmediate]);
 
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
+  const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
+  const [editingLabelValue, setEditingLabelValue] = useState("");
   const [showDrawing, setShowDrawing] = useState(false);
   const [assemblyInstructions, setAssemblyInstructions] = useState<string | null>(null);
   const viewerRef = useRef<ModelViewerHandle>(null);
