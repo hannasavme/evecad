@@ -788,7 +788,135 @@ function Balloon({ cx, cy, tx, ty, num }: { cx: number; cy: number; tx: number; 
   );
 }
 
-// ─── Draggable Annotation ──────────
+// ─── Draggable View Panel ──────────
+
+interface ViewRect {
+  id: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+function rectsOverlap(a: ViewRect, b: ViewRect, padding = 8): boolean {
+  return !(a.x + a.w + padding < b.x || b.x + b.w + padding < a.x ||
+           a.y + a.h + padding < b.y || b.y + b.h + padding < a.y);
+}
+
+function resolveOverlap(moving: ViewRect, others: ViewRect[], svgW: number, svgH: number, padding = 8): { x: number; y: number } {
+  let { x, y } = moving;
+  // Clamp to SVG bounds
+  x = Math.max(10, Math.min(svgW - moving.w - 10, x));
+  y = Math.max(10, Math.min(svgH - moving.h - 10, y));
+  
+  const movedRect = { ...moving, x, y };
+  
+  for (const other of others) {
+    if (other.id === moving.id) continue;
+    if (rectsOverlap(movedRect, other, padding)) {
+      // Push away from the overlapping view
+      const overlapX = Math.min(movedRect.x + movedRect.w + padding, other.x + other.w + padding) - Math.max(movedRect.x, other.x);
+      const overlapY = Math.min(movedRect.y + movedRect.h + padding, other.y + other.h + padding) - Math.max(movedRect.y, other.y);
+      
+      // Push along the axis with less overlap
+      if (overlapX < overlapY) {
+        if (movedRect.x + movedRect.w / 2 < other.x + other.w / 2) {
+          x = other.x - movedRect.w - padding;
+        } else {
+          x = other.x + other.w + padding;
+        }
+      } else {
+        if (movedRect.y + movedRect.h / 2 < other.y + other.h / 2) {
+          y = other.y - movedRect.h - padding;
+        } else {
+          y = other.y + other.h + padding;
+        }
+      }
+      // Clamp again
+      x = Math.max(10, Math.min(svgW - moving.w - 10, x));
+      y = Math.max(10, Math.min(svgH - moving.h - 10, y));
+    }
+  }
+  return { x, y };
+}
+
+function DraggableViewPanel({ id, x, y, w, h, onDragEnd, children, label }: {
+  id: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  onDragEnd: (id: string, x: number, y: number) => void;
+  children: React.ReactNode;
+  label?: string;
+}) {
+  const dragging = useRef(false);
+  const startMouse = useRef({ x: 0, y: 0 });
+  const startPos = useRef({ x: 0, y: 0 });
+  const currentOffset = useRef({ dx: 0, dy: 0 });
+  const groupRef = useRef<SVGGElement>(null);
+
+  const getSVGPoint = useCallback((e: MouseEvent) => {
+    const svg = groupRef.current?.closest("svg") as SVGSVGElement;
+    if (!svg) return { x: 0, y: 0 };
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const ctm = svg.getScreenCTM()?.inverse();
+    if (!ctm) return { x: 0, y: 0 };
+    const svgPt = pt.matrixTransform(ctm);
+    return { x: svgPt.x, y: svgPt.y };
+  }, []);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if ((e.target as Element).tagName === "INPUT" || (e.target as Element).closest("foreignObject")) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragging.current = true;
+    const pt = getSVGPoint(e.nativeEvent);
+    startMouse.current = pt;
+    startPos.current = { x, y };
+    currentOffset.current = { dx: 0, dy: 0 };
+
+    const handleMove = (ev: MouseEvent) => {
+      if (!dragging.current || !groupRef.current) return;
+      const now = getSVGPoint(ev);
+      currentOffset.current = {
+        dx: now.x - startMouse.current.x,
+        dy: now.y - startMouse.current.y,
+      };
+      groupRef.current.setAttribute("transform", `translate(${currentOffset.current.dx}, ${currentOffset.current.dy})`);
+    };
+
+    const handleUp = () => {
+      dragging.current = false;
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+      if (groupRef.current) {
+        groupRef.current.setAttribute("transform", "translate(0,0)");
+      }
+      const newX = startPos.current.x + currentOffset.current.dx;
+      const newY = startPos.current.y + currentOffset.current.dy;
+      onDragEnd(id, newX, newY);
+    };
+
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleUp);
+  }, [id, x, y, onDragEnd, getSVGPoint]);
+
+  return (
+    <g ref={groupRef} style={{ cursor: "grab" }} onMouseDown={handleMouseDown}>
+      {/* Invisible hit area for dragging */}
+      <rect x={x} y={y} width={w} height={h} fill="transparent" stroke="none" />
+      {/* Drag handle indicator */}
+      <rect x={x} y={y} width={w} height={14} fill="transparent" rx={2} />
+      <g>
+        {children}
+      </g>
+    </g>
+  );
+}
+
 
 function DraggableAnnotation({ annotation: a, svgWidth, svgHeight, onMove, onUpdate, onDelete }: {
   annotation: Annotation; svgWidth: number; svgHeight: number;
