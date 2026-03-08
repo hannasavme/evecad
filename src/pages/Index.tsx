@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Star, X, Layers, Trash2, Wrench, Loader2, Ruler, Crosshair } from "lucide-react";
 import mascotImg from "@/assets/mascot.png";
