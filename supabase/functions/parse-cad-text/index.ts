@@ -32,21 +32,15 @@ serve(async (req) => {
     const userContent: any[] = [];
 
     if (imageBase64) {
-      userContent.push({
-        type: "image_url",
-        image_url: { url: imageBase64 },
-      });
+      userContent.push({ type: "image_url", image_url: { url: imageBase64 } });
       userContent.push({
         type: "text",
         text: text
-          ? `Analyze this image of a mechanical part/sketch AND this description: "${text}". Extract the shape type and geometry parameters.`
-          : "Analyze this image of a mechanical part or engineering sketch. Determine what type of CAD shape it represents and extract geometry parameters.",
+          ? `Analyze this image AND description: "${text}". Break it down into CAD parts.`
+          : "Analyze this image. Break it down into CAD parts.",
       });
     } else {
-      userContent.push({
-        type: "text",
-        text: text!,
-      });
+      userContent.push({ type: "text", text: text! });
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -60,20 +54,30 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a precise CAD geometry parser. Given a description or image of a 3D mechanical part, extract the shape type AND detailed geometry parameters.
+            content: `You are a CAD geometry decomposition engine. Given a description or image, determine if it's a simple part or a complex object.
+
+For SIMPLE parts (gear, bracket, box, cylinder, pipe, etc.), return a single part.
+For COMPLEX objects (vehicles, machines, robots, furniture, devices, etc.), decompose them into multiple simpler sub-parts that can each be represented as one of: gear, bracket, box, cylinder.
 
 Available shape types: gear, bracket, box, cylinder.
 
-For each type, extract relevant parameters:
-- gear: teeth (number of teeth, default 16), holeDiameter (0-1 range, 0=no hole, default 0.35), thickness (extrusion depth 0.1-1.0, default 0.4)
-- bracket: armLength (0.5-3.0, default 1.0), thickness (0.1-0.5, default 0.2), width (0.3-2.0, default 0.8), hasHoles (boolean, default false)
-- box: width (0.5-3.0, default 1.2), height (0.5-3.0, default 1.2), depth (0.5-3.0, default 1.2), slots (number of ventilation slots 0-8, default 0), slotDirection ("x" or "z", default "x"), hollow (boolean, is it open/hollow, default false), wallThickness (0.05-0.3 if hollow, default 0.1)
-- cylinder: radius (0.2-2.0, default 0.8), height (0.5-3.0, default 1.5), hollow (boolean, is it a pipe/tube, default false), wallThickness (0.05-0.3 if hollow, default 0.15), segments (smoothness 8-64, default 32)
+For each part, provide:
+- type: one of the available shapes
+- label: descriptive name (max 30 chars)
+- position: [x, y, z] coordinates for assembly placement
+- color: hex color string
+- params: geometry parameters specific to type:
+  - gear: teeth (6-80), holeDiameter (0-1), thickness (0.1-1.5)
+  - bracket: armLength (0.3-3), thickness (0.02-0.5), width (0.1-2)
+  - box: width (0.1-10), height (0.1-10), depth (0.1-10), slots (0-20), wallThickness (0.01-0.5)
+  - cylinder: radius (0.05-5), height (0.1-10), wallThickness (0.01-0.5), segments (8-64)
 
-Pay close attention to specifics mentioned: number of teeth, dimensions, whether something has holes/slots/is hollow, etc.
-You MUST call the parse_cad function with your result.`,
+Think creatively about how to approximate complex shapes using these primitives.
+Example: "mars rover" → chassis (box), 6 wheels (cylinders), camera mast (cylinder), solar panel (box), robotic arm (bracket+cylinder).
+
+You MUST call the parse_cad function.`,
           },
-          ...(Array.isArray(userContent) && userContent.length > 1
+          ...(userContent.length > 1
             ? [{ role: "user" as const, content: userContent }]
             : [{ role: "user" as const, content: userContent[0]?.text || text }]),
         ],
@@ -82,44 +86,47 @@ You MUST call the parse_cad function with your result.`,
             type: "function",
             function: {
               name: "parse_cad",
-              description: "Return parsed CAD shape type, label, and geometry parameters.",
+              description: "Return one or more CAD parts decomposed from the description.",
               parameters: {
                 type: "object",
                 properties: {
-                  type: {
-                    type: "string",
-                    enum: ["gear", "bracket", "box", "cylinder"],
-                  },
-                  label: {
-                    type: "string",
-                    description: "Short descriptive label (max 30 chars)",
-                  },
-                  params: {
-                    type: "object",
-                    description: "Geometry parameters specific to the shape type",
-                    properties: {
-                      // Gear
-                      teeth: { type: "number" },
-                      holeDiameter: { type: "number" },
-                      thickness: { type: "number" },
-                      // Bracket
-                      armLength: { type: "number" },
-                      width: { type: "number" },
-                      hasHoles: { type: "boolean" },
-                      // Box
-                      height: { type: "number" },
-                      depth: { type: "number" },
-                      slots: { type: "number" },
-                      slotDirection: { type: "string", enum: ["x", "z"] },
-                      hollow: { type: "boolean" },
-                      wallThickness: { type: "number" },
-                      // Cylinder
-                      radius: { type: "number" },
-                      segments: { type: "number" },
+                  parts: {
+                    type: "array",
+                    description: "Array of parts. Single-element for simple objects, multiple for complex objects.",
+                    items: {
+                      type: "object",
+                      properties: {
+                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder"] },
+                        label: { type: "string" },
+                        position: { type: "array", items: { type: "number" }, description: "[x, y, z]" },
+                        color: { type: "string", description: "Hex color" },
+                        params: {
+                          type: "object",
+                          properties: {
+                            teeth: { type: "number" },
+                            holeDiameter: { type: "number" },
+                            thickness: { type: "number" },
+                            armLength: { type: "number" },
+                            width: { type: "number" },
+                            height: { type: "number" },
+                            depth: { type: "number" },
+                            slots: { type: "number" },
+                            wallThickness: { type: "number" },
+                            radius: { type: "number" },
+                            segments: { type: "number" },
+                          },
+                        },
+                      },
+                      required: ["type", "label", "position", "color", "params"],
+                      additionalProperties: false,
                     },
                   },
+                  assemblyName: {
+                    type: "string",
+                    description: "Name of the overall assembly if complex (e.g. 'Mars Rover'), or null if simple part",
+                  },
                 },
-                required: ["type", "label", "params"],
+                required: ["parts", "assemblyName"],
                 additionalProperties: false,
               },
             },
@@ -135,14 +142,12 @@ You MUST call the parse_cad function with your result.`,
 
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limited, please try again later" }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "AI credits depleted, please add credits" }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -174,7 +179,7 @@ You MUST call the parse_cad function with your result.`,
   }
 });
 
-function localParse(text: string): { type: string; label: string; params: Record<string, any> } {
+function localParse(text: string) {
   const t = text.toLowerCase();
   let type = "box";
   const params: Record<string, any> = {};
@@ -186,15 +191,16 @@ function localParse(text: string): { type: string; label: string; params: Record
     if (t.includes("hole")) params.holeDiameter = 0.35;
   } else if (t.includes("bracket") || t.includes("l-shape") || t.includes("mount")) {
     type = "bracket";
-    if (t.includes("hole")) params.hasHoles = true;
   } else if (t.includes("cylinder") || t.includes("pipe") || t.includes("tube") || t.includes("rod")) {
     type = "cylinder";
     if (t.includes("pipe") || t.includes("tube") || t.includes("hollow")) params.hollow = true;
   } else {
-    type = "box";
     if (t.includes("ventilation") || t.includes("slot") || t.includes("vent")) params.slots = 4;
     if (t.includes("hollow") || t.includes("open")) params.hollow = true;
   }
 
-  return { type, label: text.slice(0, 30), params };
+  return {
+    parts: [{ type, label: text.slice(0, 30), position: [0, 0.5, 0], color: "#d8b4fe", params }],
+    assemblyName: null,
+  };
 }
