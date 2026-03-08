@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Star, X, Layers, Trash2, Wrench, Loader2, Ruler } from "lucide-react";
+import { Plus, Star, X, Layers, Trash2, Wrench, Loader2, Ruler, Crosshair } from "lucide-react";
 import mascotImg from "@/assets/mascot.png";
 import InputPanel from "@/components/InputPanel";
 import ModelViewer, { type SceneModel, type ModelViewerHandle } from "@/components/ModelViewer";
@@ -339,6 +339,15 @@ export default function Index() {
           )}
         </div>
       )}
+
+      {/* Recenter button */}
+      <button
+        onClick={() => viewerRef.current?.resetCamera()}
+        className="absolute bottom-6 right-24 z-40 w-10 h-10 rounded-xl bg-card/90 border-2 border-border text-muted-foreground hover:text-primary hover:border-primary/40 flex items-center justify-center transition-all"
+        title="Recenter view"
+      >
+        <Crosshair className="w-4 h-4" />
+      </button>
 
       {/* Add model FAB */}
       <button

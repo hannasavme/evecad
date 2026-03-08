@@ -1,6 +1,6 @@
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { OrbitControls, Environment, Float, Grid } from "@react-three/drei";
-import { Suspense, useMemo, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import { Suspense, useMemo, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 import * as THREE from "three";
 
 export interface SceneModel {
@@ -14,6 +14,7 @@ export interface SceneModel {
 
 export interface ModelViewerHandle {
   getScene: () => THREE.Scene | null;
+  resetCamera: () => void;
 }
 
 interface ModelViewerProps {
@@ -98,11 +99,20 @@ function SceneModelComponent({ model, isSelected, onSelect }: { model: SceneMode
   );
 }
 
-function SceneCapture({ onSceneReady }: { onSceneReady: (scene: THREE.Scene) => void }) {
-  const { scene } = useThree();
+function SceneCapture({ onSceneReady, onControlsReady }: { onSceneReady: (scene: THREE.Scene) => void; onControlsReady: (reset: () => void) => void }) {
+  const { scene, camera } = useThree();
+
   useEffect(() => {
     onSceneReady(scene);
   }, [scene, onSceneReady]);
+
+  useEffect(() => {
+    onControlsReady(() => {
+      camera.position.set(4, 3, 4);
+      camera.lookAt(0, 0, 0);
+    });
+  }, [camera, onControlsReady]);
+
   return null;
 }
 
@@ -154,9 +164,11 @@ function Scene({ models, selectedModelId, onSelectModel }: ModelViewerProps) {
 const ModelViewer = forwardRef<ModelViewerHandle, ModelViewerProps>(
   ({ models, selectedModelId, onSelectModel }, ref) => {
     const sceneRef = useRef<THREE.Scene | null>(null);
+    const resetRef = useRef<(() => void) | null>(null);
 
     useImperativeHandle(ref, () => ({
       getScene: () => sceneRef.current,
+      resetCamera: () => resetRef.current?.(),
     }));
 
     return (
@@ -167,7 +179,10 @@ const ModelViewer = forwardRef<ModelViewerHandle, ModelViewerProps>(
           onPointerMissed={() => onSelectModel(null)}
         >
           <Suspense fallback={null}>
-            <SceneCapture onSceneReady={(s) => { sceneRef.current = s; }} />
+            <SceneCapture
+              onSceneReady={(s) => { sceneRef.current = s; }}
+              onControlsReady={(fn) => { resetRef.current = fn; }}
+            />
             <Scene models={models} selectedModelId={selectedModelId} onSelectModel={onSelectModel} />
           </Suspense>
         </Canvas>
