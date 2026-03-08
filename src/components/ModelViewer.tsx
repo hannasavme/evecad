@@ -22,21 +22,41 @@ export interface ModelParams {
   // Cylinder
   radius?: number;
   segments?: number;
-  // Sphere
-  // uses radius, segments
   // Cone
   radiusTop?: number;
   radiusBottom?: number;
-  // Wedge / ramp
+  // Wedge
   angle?: number;
   // Torus
   tube?: number;
-  // Plate / disc — flat cylinder, uses radius + thickness
+  // Wheel compound
+  spokes?: number;
+  hubRadius?: number;
+  treadDepth?: number;
+  // Camera compound
+  lensRadius?: number;
+  bodyWidth?: number;
+  bodyHeight?: number;
+  bodyDepth?: number;
+  // Antenna compound
+  dishRadius?: number;
+  mastHeight?: number;
+  mastRadius?: number;
+  // Drill compound
+  bitLength?: number;
+  bitRadius?: number;
+  spirals?: number;
+  // Track compound
+  trackLength?: number;
+  trackWidth?: number;
+  wheelCount?: number;
 }
+
+export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track";
 
 export interface SceneModel {
   id: string;
-  type: "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate";
+  type: PrimitiveType;
   position: [number, number, number];
   rotation?: [number, number, number]; // degrees
   scale: [number, number, number];
