@@ -377,14 +377,40 @@ KID-ROVER GARAGE (aft zone — thermally controlled, 4 positions):
 - Garage door (top hatch): plate at [0, 1.75, 1.5] width=2.0, depth=1.4, thickness=0.03
   Color: #d4d4d8
 
-TRANSFORMER DRILLING SYSTEM (aft-mounted, modular Borebot architecture):
-- Drill tower: cylinder at [0.6, 1.8, 1.0] radius=0.08, height=1.5
+TRANSFORMER DRILLING SYSTEM (tall vertical tower — the most prominent feature on the Mother-Rover):
+*** The drill tower is the TALLEST structure on the rover, rising ~3m above the chassis. ***
+*** It should look like a tall industrial drilling derrick with guide rails, similar to the image reference. ***
+- Drill tower base mount: box at [0.6, 1.85, 1.0] width=0.5, height=0.1, depth=0.5
+  Color: #52525b (heavy-duty mounting plate)
+- Drill tower left rail: box at [0.45, 3.0, 0.85] width=0.06, height=2.2, depth=0.06
+  Color: #52525b (structural guide rail)
+- Drill tower right rail: box at [0.75, 3.0, 0.85] width=0.06, height=2.2, depth=0.06
+  Color: #52525b
+- Drill tower front rail: box at [0.6, 3.0, 0.7] width=0.06, height=2.2, depth=0.06
+  Color: #52525b
+- Drill tower back rail: box at [0.6, 3.0, 1.0] width=0.06, height=2.2, depth=0.06
+  Color: #52525b
+- Tower cross braces (3 levels): 
+  box at [0.6, 2.2, 0.85] width=0.36, height=0.04, depth=0.04 color=#71717a
+  box at [0.6, 2.8, 0.85] width=0.36, height=0.04, depth=0.04 color=#71717a
+  box at [0.6, 3.4, 0.85] width=0.36, height=0.04, depth=0.04 color=#71717a
+- Tower cross braces (side):
+  box at [0.6, 2.2, 0.85] width=0.04, height=0.04, depth=0.36 color=#71717a
+  box at [0.6, 2.8, 0.85] width=0.04, height=0.04, depth=0.36 color=#71717a
+  box at [0.6, 3.4, 0.85] width=0.04, height=0.04, depth=0.36 color=#71717a
+- Borebot carousel (top of tower): cylinder at [0.6, 4.1, 0.85] radius=0.3, height=0.2
+  Color: #52525b (stores up to 6 Borebots, rotates to select)
+- Carousel top cap: cylinder at [0.6, 4.22, 0.85] radius=0.32, height=0.04
   Color: #71717a
-- Borebot carousel: cylinder at [0.6, 2.6, 1.0] radius=0.3, height=0.15
-  Color: #52525b (stores up to 6 Borebots)
-- Active Borebot: drill at [0.6, 0.5, 1.0] rotation=[180,0,0] bitLength=0.5, bitRadius=0.06
+- Carousel motor housing: cylinder at [0.6, 3.95, 0.85] radius=0.12, height=0.1
+  Color: #27272a
+- Drill carriage (sliding unit on rails): box at [0.6, 2.5, 0.85] width=0.4, height=0.3, depth=0.4
+  Color: #71717a (moves up/down on guide rails)
+- Active Borebot (deployed, drilling into ground): drill at [0.6, 0.3, 0.85] rotation=[180,0,0] bitLength=0.8, bitRadius=0.06
   Color: #71717a (diamond-impregnated bit, 50mm diameter)
-- Ma_MISS spectrometer (integrated in drill): cylinder at [0.6, 1.5, 1.0] radius=0.04, height=0.15
+- Drill string (connecting carriage to bit): cylinder at [0.6, 1.2, 0.85] radius=0.03, height=1.5
+  Color: #a3a3a3 (segmented drill pipe)
+- Ma_MISS spectrometer (integrated in drill string): cylinder at [0.6, 0.9, 0.85] radius=0.045, height=0.15
   Color: #3b82f6 (borehole hyperspectral imager)
 
 POWER SYSTEM:
