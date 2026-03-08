@@ -419,14 +419,14 @@ export default function Index() {
         />
       </div>
 
-      {/* Properties Panel */}
+      {/* Properties Panel — only when toggled from top bar */}
       <AnimatePresence>
-        {selectedModels.length > 0 && !showInput && (
+        {showProperties && selectedModels.length > 0 && !showInput && (
           <PropertiesPanel
             models={selectedModels}
             onUpdate={handleUpdateModel}
             onBatchUpdate={handleBatchUpdate}
-            onClose={() => setSelectedModelIds(new Set())}
+            onClose={() => setShowProperties(false)}
           />
         )}
       </AnimatePresence>
