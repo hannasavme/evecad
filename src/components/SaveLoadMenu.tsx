@@ -55,7 +55,7 @@ export default function SaveLoadMenu({ models, onLoad, currentProjectId, onProje
     if (currentProjectId) {
       const { error } = await supabase
         .from("saved_models")
-        .update({ models_data: models as unknown as Record<string, unknown>[], updated_at: new Date().toISOString() })
+        .update({ models_data: JSON.parse(JSON.stringify(models)), updated_at: new Date().toISOString() })
         .eq("id", currentProjectId);
       setSaving(false);
       if (error) {
