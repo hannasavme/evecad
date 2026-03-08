@@ -375,6 +375,49 @@ const PARAM_DEFS: Record<string, ParamDef[]> = {
     { key: "avionicsDepth", label: "Depth", type: "number", min: 0.1, max: 2, step: 0.05, default: 0.5, hasDimension: true },
     { key: "avionicsSlots", label: "Slots", type: "int", min: 1, max: 8, step: 1, default: 4, hasDimension: false },
   ],
+  droneframe: [
+    { key: "droneFrameSize", label: "Size", type: "number", min: 0.5, max: 10, step: 0.1, default: 2.0, hasDimension: true },
+    { key: "droneFrameThickness", label: "Thickness", type: "number", min: 0.02, max: 0.3, step: 0.01, default: 0.06, hasDimension: true },
+    { key: "droneArmCount", label: "Arms", type: "int", min: 3, max: 8, step: 1, default: 4, hasDimension: false },
+    { key: "droneFrameSlots", label: "Cable slots", type: "int", min: 0, max: 8, step: 1, default: 4, hasDimension: false },
+  ],
+  dronearm: [
+    { key: "droneArmLength", label: "Length", type: "number", min: 0.3, max: 5, step: 0.1, default: 1.5, hasDimension: true },
+    { key: "droneArmWidth", label: "Width", type: "number", min: 0.05, max: 0.5, step: 0.02, default: 0.15, hasDimension: true },
+    { key: "droneArmThickness", label: "Thickness", type: "number", min: 0.02, max: 0.2, step: 0.01, default: 0.05, hasDimension: true },
+  ],
+  propeller: [
+    { key: "propDiameter", label: "Diameter", type: "number", min: 0.3, max: 5, step: 0.1, default: 1.2, hasDimension: true },
+    { key: "propPitch", label: "Pitch", type: "number", min: 0.1, max: 3, step: 0.1, default: 0.5, hasDimension: true },
+    { key: "propBlades", label: "Blades", type: "int", min: 2, max: 6, step: 1, default: 2, hasDimension: false },
+  ],
+  propguard: [
+    { key: "guardRadius", label: "Radius", type: "number", min: 0.2, max: 3, step: 0.05, default: 0.7, hasDimension: true },
+    { key: "guardHeight", label: "Height", type: "number", min: 0.02, max: 0.3, step: 0.01, default: 0.08, hasDimension: true },
+    { key: "guardThickness", label: "Thickness", type: "number", min: 0.01, max: 0.1, step: 0.005, default: 0.02, hasDimension: true },
+  ],
+  brushlessmotor: [
+    { key: "blMotorRadius", label: "Radius", type: "number", min: 0.05, max: 0.5, step: 0.02, default: 0.14, hasDimension: true },
+    { key: "blMotorHeight", label: "Height", type: "number", min: 0.05, max: 0.5, step: 0.02, default: 0.12, hasDimension: true },
+    { key: "blMotorBells", label: "Magnets", type: "int", min: 6, max: 24, step: 2, default: 12, hasDimension: false },
+  ],
+  fctray: [
+    { key: "fcTrayWidth", label: "Width", type: "number", min: 0.1, max: 1, step: 0.05, default: 0.3, hasDimension: true },
+    { key: "fcTrayDepth", label: "Depth", type: "number", min: 0.1, max: 1, step: 0.05, default: 0.3, hasDimension: true },
+    { key: "fcTrayThickness", label: "Thickness", type: "number", min: 0.01, max: 0.1, step: 0.005, default: 0.02, hasDimension: true },
+    { key: "fcTrayHoleSpacing", label: "Hole sp.", type: "number", min: 0.1, max: 0.5, step: 0.01, default: 0.2, hasDimension: true },
+  ],
+  batterytray: [
+    { key: "batTrayWidth", label: "Width", type: "number", min: 0.1, max: 2, step: 0.05, default: 0.5, hasDimension: true },
+    { key: "batTrayDepth", label: "Depth", type: "number", min: 0.1, max: 2, step: 0.05, default: 0.8, hasDimension: true },
+    { key: "batTrayHeight", label: "Height", type: "number", min: 0.02, max: 0.3, step: 0.01, default: 0.08, hasDimension: true },
+    { key: "batTrayStrapSlots", label: "Strap slots", type: "int", min: 0, max: 4, step: 1, default: 2, hasDimension: false },
+  ],
+  escbox: [
+    { key: "escWidth", label: "Width", type: "number", min: 0.05, max: 0.5, step: 0.02, default: 0.2, hasDimension: true },
+    { key: "escDepth", label: "Depth", type: "number", min: 0.05, max: 0.5, step: 0.02, default: 0.15, hasDimension: true },
+    { key: "escHeight", label: "Height", type: "number", min: 0.02, max: 0.2, step: 0.01, default: 0.06, hasDimension: true },
+  ],
 };
 
 interface PropertiesPanelProps {

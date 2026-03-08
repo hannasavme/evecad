@@ -2444,6 +2444,14 @@ const meshMap: Record<string, React.FC<{ color: string; params?: ModelParams }>>
   proptank: PropTankMesh,
   reactionwheel: ReactionWheelMesh,
   avionicsbox: AvionicsBoxMesh,
+  droneframe: DroneFrameMesh,
+  dronearm: DroneArmMesh,
+  propeller: PropellerMesh,
+  propguard: PropGuardMesh,
+  brushlessmotor: BrushlessMotorMesh,
+  fctray: FCTrayMesh,
+  batterytray: BatteryTrayMesh,
+  escbox: ESCBoxMesh,
 };
 
 // ─── Scene Components ──────────────────────────────────
