@@ -647,7 +647,7 @@ export default function Index() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="absolute bottom-24 right-6 z-40 w-[380px] max-h-[70vh] overflow-y-auto"
+            className="absolute bottom-20 sm:bottom-24 right-4 sm:right-6 z-40 w-[min(380px,calc(100vw-2rem))] max-h-[65vh] sm:max-h-[70vh] overflow-y-auto"
           >
             <div className="p-5 rounded-3xl border-2 border-border bg-card/95 backdrop-blur-md kawaii-shadow">
               <div className="flex items-center justify-between mb-3">
