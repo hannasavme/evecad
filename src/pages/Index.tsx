@@ -61,6 +61,22 @@ export default function Index() {
     pushImmediate(typeof updater === "function" ? updater(modelsRef.current) : updater);
   }, [pushImmediate]);
 
+  // Show sign-in prompt for returning unauthenticated users
+  useEffect(() => {
+    if (needsAuth) {
+      toast.info("Welcome back! Sign in to save your work", {
+        description: "Create a free account to save projects, export models, and more.",
+        duration: 8000,
+        action: {
+          label: "Sign in",
+          onClick: () => {
+            window.location.href = "/auth";
+          },
+        },
+      });
+    }
+  }, [needsAuth]);
+
   const [selectedModelIds, setSelectedModelIds] = useState<Set<string>>(new Set());
   const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
   const [editingLabelValue, setEditingLabelValue] = useState("");
