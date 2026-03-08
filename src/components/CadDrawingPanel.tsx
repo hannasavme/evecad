@@ -2123,6 +2123,9 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
             showSection={showSection}
             showBOM={showBOM}
             showIsometric={showIsometric}
+            showPerspective={showPerspective}
+            showDimetric={showDimetric}
+            showTrimetric={showTrimetric}
             page={drawingPage}
             partsPerPage={PARTS_PER_PAGE}
             isAssemblyMode={isAssemblyMode}
