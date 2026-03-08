@@ -32,6 +32,8 @@ export interface SceneModel {
   color: string;
   label: string;
   params?: ModelParams;
+  visible?: boolean;
+  group?: string; // assembly group name
 }
 
 export interface ModelViewerHandle {
