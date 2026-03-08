@@ -18,7 +18,7 @@ interface CadDrawingPanelProps {
   onClose: () => void;
 }
 
-type ViewType = "front" | "top" | "side";
+type ViewType = "front" | "top" | "side" | "isometric";
 
 // ─── Shape profile data for each primitive type ──────────
 
@@ -90,6 +90,107 @@ const defaultProfile: ShapeProfile = {
     </>
   ),
 };
+
+// ─── Isometric projection helpers ──────────
+
+function isometricBox(cx: number, cy: number, w: number, h: number, d: number) {
+  const cos30 = Math.cos(Math.PI / 6);
+  const sin30 = 0.5;
+  
+  const project = (x: number, y: number, z: number) => ({
+    x: cx + (x - z) * cos30,
+    y: cy - y + (x + z) * sin30,
+  });
+  
+  const hw = w / 2, hh = h / 2, hd = d / 2;
+  const fbl = project(-hw, -hh, -hd);
+  const fbr = project(hw, -hh, -hd);
+  const ftl = project(-hw, hh, -hd);
+  const ftr = project(hw, hh, -hd);
+  const bbl = project(-hw, -hh, hd);
+  const bbr = project(hw, -hh, hd);
+  const btl = project(-hw, hh, hd);
+  const btr = project(hw, hh, hd);
+  
+  return (
+    <>
+      <polygon points={`${fbl.x},${fbl.y} ${fbr.x},${fbr.y} ${ftr.x},${ftr.y} ${ftl.x},${ftl.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <polygon points={`${ftl.x},${ftl.y} ${ftr.x},${ftr.y} ${btr.x},${btr.y} ${btl.x},${btl.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.2} />
+      <polygon points={`${fbr.x},${fbr.y} ${bbr.x},${bbr.y} ${btr.x},${btr.y} ${ftr.x},${ftr.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.2} />
+      <line x1={bbl.x} y1={bbl.y} x2={bbr.x} y2={bbr.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={bbl.x} y1={bbl.y} x2={btl.x} y2={btl.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={bbl.x} y1={bbl.y} x2={fbl.x} y2={fbl.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+    </>
+  );
+}
+
+function isometricCylinder(cx: number, cy: number, w: number, h: number) {
+  const r = w / 2;
+  const hh = h / 2;
+  const ry = r * 0.35;
+  
+  return (
+    <>
+      <ellipse cx={cx} cy={cy - hh} rx={r} ry={ry} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <path d={`M${cx - r},${cy + hh} A${r},${ry} 0 0,0 ${cx + r},${cy + hh}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <path d={`M${cx - r},${cy + hh} A${r},${ry} 0 0,1 ${cx + r},${cy + hh}`} fill="none" stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={cx - r} y1={cy - hh} x2={cx - r} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+      <line x1={cx + r} y1={cy - hh} x2={cx + r} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+      {centerLines(cx, cy, r, hh + ry)}
+    </>
+  );
+}
+
+function isometricSphere(cx: number, cy: number, r: number) {
+  return (
+    <>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <ellipse cx={cx} cy={cy} rx={r} ry={r * 0.35} fill="none" stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <ellipse cx={cx} cy={cy} rx={r * 0.35} ry={r} fill="none" stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      {centerLines(cx, cy, r, r)}
+    </>
+  );
+}
+
+function getIsometricView(type: string, pw: number, ph: number, pd: number, cx: number, cy: number): JSX.Element {
+  const roundTypes = ["cylinder", "tube", "shaft", "drill"];
+  const sphereTypes = ["sphere"];
+  const discTypes = ["gear", "bearing", "pulley", "wheel"];
+  
+  if (roundTypes.includes(type)) return isometricCylinder(cx, cy, pw, ph);
+  if (sphereTypes.includes(type)) return isometricSphere(cx, cy, pw / 2);
+  if (discTypes.includes(type)) return isometricCylinder(cx, cy, pw, pd);
+  if (type === "cone") {
+    const topR = pw * 0.15;
+    const botR = pw / 2;
+    const hh = ph / 2;
+    const topRy = topR * 0.35;
+    const botRy = botR * 0.35;
+    return (
+      <>
+        <ellipse cx={cx} cy={cy - hh} rx={topR} ry={topRy} fill="none" stroke={LINE_COLOR} strokeWidth={1} />
+        <path d={`M${cx - botR},${cy + hh} A${botR},${botRy} 0 0,0 ${cx + botR},${cy + hh}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+        <path d={`M${cx - botR},${cy + hh} A${botR},${botRy} 0 0,1 ${cx + botR},${cy + hh}`} fill="none" stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+        <line x1={cx - topR} y1={cy - hh} x2={cx - botR} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+        <line x1={cx + topR} y1={cy - hh} x2={cx + botR} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+        {centerLines(cx, cy, botR, hh + botRy)}
+      </>
+    );
+  }
+  if (type === "torus") {
+    const r = pw / 2;
+    const tubeR = r * 0.2;
+    return (
+      <>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+        <circle cx={cx} cy={cy} r={r - tubeR * 2} fill="none" stroke={LINE_COLOR} strokeWidth={1} />
+        <ellipse cx={cx} cy={cy} rx={r} ry={r * 0.35} fill="none" stroke={LINE_COLOR} strokeWidth={0.8} />
+        {centerLines(cx, cy, r, r)}
+      </>
+    );
+  }
+  return isometricBox(cx, cy, pw, ph, pd);
+}
 
 const PROFILES: Record<string, Partial<ShapeProfile>> = {
   box: { w: 1.2, h: 1.2, d: 1.2 },
@@ -1022,14 +1123,14 @@ function dimStr(val: number) {
   return (val * 25.4).toFixed(1);
 }
 
-function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotation, onMoveAnnotation, titleText, onUpdateTitle, showSection, showBOM, page, partsPerPage, isAssemblyMode }: {
+function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotation, onMoveAnnotation, titleText, onUpdateTitle, showSection, showBOM, showIsometric, page, partsPerPage, isAssemblyMode }: {
   models: SceneModel[];
   annotations: Annotation[];
   onUpdateAnnotation: (id: string, text: string) => void;
   onDeleteAnnotation: (id: string) => void;
   onMoveAnnotation: (id: string, x: number, y: number) => void;
   titleText: string; onUpdateTitle: (t: string) => void;
-  showSection: boolean; showBOM: boolean;
+  showSection: boolean; showBOM: boolean; showIsometric: boolean;
   page: number; partsPerPage: number;
   isAssemblyMode: boolean;
 }) {
@@ -1197,11 +1298,13 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const topRowH = drawH * 0.58;
         const bottomRowH = drawH * 0.38;
 
-        // Column widths (front gets more space for balloons)
-        const numCols = showSection ? 3 : 2;
-        const frontZoneW = drawAreaW * (showSection ? 0.40 : 0.55);
-        const sideZoneW = drawAreaW * (showSection ? 0.28 : 0.42);
-        const sectionZoneW = showSection ? drawAreaW * 0.28 : 0;
+        // Column widths
+        const numViewCols = 2 + (showSection ? 1 : 0) + (showIsometric ? 1 : 0);
+        const totalZoneW = drawAreaW;
+        const frontZoneW = totalZoneW * (showIsometric ? 0.30 : showSection ? 0.40 : 0.55);
+        const sideZoneW = totalZoneW * (showIsometric ? 0.22 : showSection ? 0.28 : 0.42);
+        const sectionZoneW = showSection ? totalZoneW * (showIsometric ? 0.22 : 0.28) : 0;
+        const isoZoneW = showIsometric ? totalZoneW * 0.26 : 0;
         const viewH = topRowH - gap;
         const topViewH = bottomRowH - gap;
 
@@ -1214,22 +1317,23 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const topScaleH = (topViewH - 50) / totalD;
         const asmScale = Math.min(frontScaleW, frontScaleH, sideScaleW, sideScaleH, topScaleW, topScaleH, 35);
 
-        // Default view positions — clamped inside the drawing border
+        // Default view positions
         const defaultPositions: Record<string, { x: number; y: number }> = {
           front: { x: margin + gap, y: viewsStartY },
           side: { x: margin + gap + frontZoneW + gap, y: viewsStartY },
           top: { x: margin + gap, y: viewsStartY + topRowH + gap },
           section: { x: margin + gap + frontZoneW + gap + sideZoneW + gap, y: viewsStartY },
+          isometric: { x: margin + gap + frontZoneW + gap + sideZoneW + gap + (showSection ? sectionZoneW + gap : 0), y: viewsStartY },
         };
 
-        // Use stored positions or defaults
         const getViewPos = (id: string) => viewPositions[id] || defaultPositions[id];
         const frontPos = getViewPos("front");
         const sidePos = getViewPos("side");
         const topPos = getViewPos("top");
         const sectionPos = getViewPos("section");
+        const isoPos = getViewPos("isometric");
 
-        // View dimensions for collision detection — sized to fit within zones
+        // View dimensions
         const frontVW = frontZoneW - gap * 2;
         const frontVH = viewH;
         const sideVW = sideZoneW - gap * 2;
@@ -1238,8 +1342,10 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const topVH = topViewH;
         const sectionVW = sectionZoneW > 0 ? sectionZoneW - gap * 2 : 0;
         const sectionVH = viewH;
+        const isoVW = isoZoneW > 0 ? isoZoneW - gap * 2 : 0;
+        const isoVH = viewH;
 
-        // View centers (computed from positions)
+        // View centers
         const frontCx = frontPos.x + frontVW / 2;
         const frontCy = frontPos.y + frontVH / 2 + 15;
         const sideCx = sidePos.x + sideVW / 2;
@@ -1248,6 +1354,8 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const topCy = topPos.y + topVH / 2 + 15;
         const sectionCx = sectionPos.x + sectionVW / 2;
         const sectionCy = sectionPos.y + sectionVH / 2 + 15;
+        const isoCx = isoPos.x + isoVW / 2;
+        const isoCy = isoPos.y + isoVH / 2 + 15;
 
         const overallWmm = (totalW * 25.4).toFixed(1);
         const overallHmm = (totalH * 25.4).toFixed(1);
@@ -1270,6 +1378,9 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
           if (showSection) {
             rects.push({ id: "section", x: sectionPos.x, y: sectionPos.y, w: sectionVW, h: sectionVH });
           }
+          if (showIsometric) {
+            rects.push({ id: "isometric", x: isoPos.x, y: isoPos.y, w: isoVW, h: isoVH });
+          }
           return rects;
         };
 
@@ -1279,6 +1390,7 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
             side: { w: sideVW, h: sideVH },
             top: { w: topVW, h: topVH },
             section: { w: sectionVW, h: sectionVH },
+            isometric: { w: isoVW, h: isoVH },
           };
           const movingRect: ViewRect = { id, x: newX, y: newY, w: viewSizes[id].w, h: viewSizes[id].h };
           const otherRects = buildViewRects().filter(r => r.id !== id);
@@ -1286,31 +1398,14 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
           setViewPositions(prev => ({ ...prev, [id]: { x: resolved.x, y: resolved.y } }));
         };
 
-        // Render parts into a specific view
-        const renderPartsInView = (
-          viewCx: number, viewCy: number,
-          projFn: (data: { px: number; py: number; pz: number }) => { x: number; y: number },
-          sizeFn: (dims: { w: number; h: number; d: number }) => { pw: number; ph: number },
-          profileFn: (profile: ShapeProfile) => ((pw: number, ph: number, cx: number, cy: number, params?: ModelParams) => JSX.Element),
-          opacity = 0.9
-        ) => partData.map(({ model, dims, px, py, pz }) => {
-          const profile = getProfile(model.type);
-          const fn = profileFn(profile);
-          const pos = projFn({ px, py, pz });
-          const size = sizeFn(dims);
-          return <g key={model.id} opacity={opacity}>{fn(size.pw, size.ph, pos.x, pos.y, model.params)}</g>;
-        });
-
         return (
           <g>
             {/* ─── FRONT VIEW (draggable) ─── */}
             <DraggableViewPanel id="front" x={frontPos.x} y={frontPos.y} w={frontVW} h={frontVH} onDragEnd={handleViewDragEnd} label="FRONT VIEW">
               <text x={frontCx} y={frontPos.y + 10} textAnchor="middle" fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">FRONT VIEW</text>
               <rect x={frontPos.x} y={frontPos.y + 12} width={frontVW} height={frontVH - 15} fill="none" stroke="#d0d0d0" strokeWidth={0.4} strokeDasharray="4 3" rx={2} />
-              {/* Center lines */}
               <line x1={frontCx - frontBBoxW / 2 - 12} y1={frontCy} x2={frontCx + frontBBoxW / 2 + 12} y2={frontCy} stroke={CENTER_COLOR} strokeWidth={0.3} strokeDasharray="10 3 2 3" />
               <line x1={frontCx} y1={frontCy - frontBBoxH / 2 - 12} x2={frontCx} y2={frontCy + frontBBoxH / 2 + 12} stroke={CENTER_COLOR} strokeWidth={0.3} strokeDasharray="10 3 2 3" />
-              {/* Section cut line */}
               {showSection && (
                 <>
                   <line x1={frontCx} y1={frontCy - frontBBoxH / 2 - 18} x2={frontCx} y2={frontCy + frontBBoxH / 2 + 18} stroke={LINE_COLOR} strokeWidth={0.7} strokeDasharray="10 3 2 3" />
@@ -1320,10 +1415,8 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
                   <polygon points={`${frontCx - 6},${frontCy + frontBBoxH / 2 + 15} ${frontCx + 6},${frontCy + frontBBoxH / 2 + 15} ${frontCx},${frontCy + frontBBoxH / 2 + 8}`} fill={LINE_COLOR} />
                 </>
               )}
-              {/* Dimensions */}
               <DimensionH x1={frontCx - frontBBoxW / 2} x2={frontCx + frontBBoxW / 2} y={frontCy + frontBBoxH / 2 + 30} value={`${overallWmm} mm`} />
               <DimensionV y1={frontCy - frontBBoxH / 2} y2={frontCy + frontBBoxH / 2} x={frontCx + frontBBoxW / 2 + 25} value={`${overallHmm} mm`} />
-              {/* Parts */}
               {partData.map(({ model, dims, px, py }, idx) => {
                 const profile = getProfile(model.type);
                 const fn = profile.frontProfile || defaultProfile.frontProfile;
@@ -1331,7 +1424,6 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
                 const fy = frontCy - (py - centerY) * asmScale;
                 const pw = dims.w * asmScale;
                 const ph = dims.h * asmScale;
-                // Balloon
                 const balloonAngle = (idx / models.length) * Math.PI * 2 - Math.PI / 2;
                 const balloonR = Math.max(frontBBoxW, frontBBoxH) / 2 + 30 + (idx % 3) * 18;
                 const bx = frontCx + Math.cos(balloonAngle) * balloonR;
@@ -1395,7 +1487,25 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
               </DraggableViewPanel>
             )}
 
-            {/* Projection lines between views (dynamic based on positions) */}
+            {/* ─── ISOMETRIC VIEW (draggable) ─── */}
+            {showIsometric && (
+              <DraggableViewPanel id="isometric" x={isoPos.x} y={isoPos.y} w={isoVW} h={isoVH} onDragEnd={handleViewDragEnd} label="ISOMETRIC VIEW">
+                <text x={isoCx} y={isoPos.y + 10} textAnchor="middle" fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">ISOMETRIC VIEW</text>
+                <rect x={isoPos.x} y={isoPos.y + 12} width={isoVW} height={isoVH - 15} fill="none" stroke="#d0d0d0" strokeWidth={0.4} strokeDasharray="4 3" rx={2} />
+                {partData.map(({ model, dims, px, py, pz }) => {
+                  const cos30 = Math.cos(Math.PI / 6);
+                  const sin30 = 0.5;
+                  const isoX = isoCx + ((px - centerX) - (pz - centerZ)) * cos30 * asmScale;
+                  const isoY = isoCy - (py - centerY) * asmScale + ((px - centerX) + (pz - centerZ)) * sin30 * asmScale;
+                  const pw = dims.w * asmScale;
+                  const ph = dims.h * asmScale;
+                  const pd = dims.d * asmScale;
+                  return <g key={model.id} opacity={0.85}>{getIsometricView(model.type, pw, ph, pd, isoX, isoY)}</g>;
+                })}
+              </DraggableViewPanel>
+            )}
+
+            {/* Projection lines between views */}
             <line x1={frontCx + frontBBoxW / 2 + 8} y1={frontCy} x2={sideCx - sideBBoxW / 2 - 8} y2={sideCy} stroke={HIDDEN_COLOR} strokeWidth={0.3} strokeDasharray="6 3" />
             <line x1={frontCx} y1={frontCy + frontBBoxH / 2 + 8} x2={topCx} y2={topCy - topBBoxH / 2 - 8} stroke={HIDDEN_COLOR} strokeWidth={0.3} strokeDasharray="6 3" />
 
@@ -1407,7 +1517,7 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         );
       })()}
 
-      {/* ─── Individual Part Views ─── */}
+      {/* ─── Individual Part Views (draggable) ─── */}
       {!isAssemblyMode && pageModels.map((model, idx) => {
         const globalIdx = startIdx + idx;
         const profile = getProfile(model.type);
@@ -1415,22 +1525,65 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const partY = viewsStartY + idx * partRowH;
         const viewScale = scl;
 
-        const frontCx = margin + drawAreaW * 0.2;
-        const frontCy = partY + 110;
-        const sideCx = margin + drawAreaW * 0.45;
-        const sideCy = frontCy;
-        const topCx = frontCx;
-        const topCy = frontCy + 120;
-        const sectionCx = showSection ? margin + drawAreaW * 0.65 : 0;
-        const sectionCy = frontCy;
-
         const fw = dims.w * viewScale;
         const fh = dims.h * viewScale;
+
+        // View zone widths
+        const numViews = 3 + (showSection ? 1 : 0) + (showIsometric ? 1 : 0);
+        const viewZoneW = (drawAreaW - 20) / Math.min(numViews, showIsometric ? 4 : 3);
+        const viewZoneH = 180;
+
+        // Default positions for each view
+        const partDefaults: Record<string, { x: number; y: number }> = {
+          [`part-${globalIdx}-front`]: { x: margin + 10, y: partY + 20 },
+          [`part-${globalIdx}-side`]: { x: margin + 10 + viewZoneW, y: partY + 20 },
+          [`part-${globalIdx}-top`]: { x: margin + 10, y: partY + 20 + viewZoneH + 5 },
+          [`part-${globalIdx}-section`]: { x: margin + 10 + viewZoneW * 2, y: partY + 20 },
+          [`part-${globalIdx}-iso`]: { x: margin + 10 + viewZoneW * (showSection ? 3 : 2), y: partY + 20 },
+        };
+
+        const getPartViewPos = (key: string) => viewPositions[key] || partDefaults[key];
+
+        const partViewRects = (): ViewRect[] => {
+          const rects: ViewRect[] = [
+            { id: `part-${globalIdx}-front`, ...getPartViewPos(`part-${globalIdx}-front`), w: viewZoneW - 10, h: viewZoneH },
+            { id: `part-${globalIdx}-side`, ...getPartViewPos(`part-${globalIdx}-side`), w: viewZoneW - 10, h: viewZoneH },
+            { id: `part-${globalIdx}-top`, ...getPartViewPos(`part-${globalIdx}-top`), w: viewZoneW - 10, h: viewZoneH },
+          ];
+          if (showSection) rects.push({ id: `part-${globalIdx}-section`, ...getPartViewPos(`part-${globalIdx}-section`), w: viewZoneW - 10, h: viewZoneH });
+          if (showIsometric) rects.push({ id: `part-${globalIdx}-iso`, ...getPartViewPos(`part-${globalIdx}-iso`), w: viewZoneW - 10, h: viewZoneH });
+          return rects;
+        };
+
+        const handlePartViewDrag = (id: string, newX: number, newY: number) => {
+          const movingRect: ViewRect = { id, x: newX, y: newY, w: viewZoneW - 10, h: viewZoneH };
+          const otherRects = partViewRects().filter(r => r.id !== id);
+          const resolved = resolveOverlap(movingRect, otherRects, svgWidth, svgHeight);
+          setViewPositions(prev => ({ ...prev, [id]: { x: resolved.x, y: resolved.y } }));
+        };
 
         const frontFn = profile.frontProfile || defaultProfile.frontProfile;
         const topFn = profile.topProfile || defaultProfile.topProfile;
         const sideFn = profile.sideProfile || defaultProfile.sideProfile;
         const sectionFn = profile.sectionProfile || defaultProfile.sectionProfile;
+
+        const fPos = getPartViewPos(`part-${globalIdx}-front`);
+        const sPos = getPartViewPos(`part-${globalIdx}-side`);
+        const tPos = getPartViewPos(`part-${globalIdx}-top`);
+        const secPos = getPartViewPos(`part-${globalIdx}-section`);
+        const iPos = getPartViewPos(`part-${globalIdx}-iso`);
+
+        const vw = viewZoneW - 10;
+        const frontCx = fPos.x + vw / 2;
+        const frontCy = fPos.y + viewZoneH / 2 + 10;
+        const sideCx = sPos.x + vw / 2;
+        const sideCy = sPos.y + viewZoneH / 2 + 10;
+        const topCx = tPos.x + vw / 2;
+        const topCy = tPos.y + viewZoneH / 2 + 10;
+        const sectionCx = secPos.x + vw / 2;
+        const sectionCy = secPos.y + viewZoneH / 2 + 10;
+        const isoCx = iPos.x + vw / 2;
+        const isoCy = iPos.y + viewZoneH / 2 + 10;
 
         return (
           <g key={model.id}>
@@ -1439,45 +1592,60 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
               Part {globalIdx + 1}: {model.label} ({model.type})
             </text>
 
-            {/* View labels */}
-            <text x={frontCx} y={partY + 22} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">FRONT VIEW</text>
-            <text x={sideCx} y={partY + 22} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">RIGHT SIDE VIEW</text>
-            <text x={topCx} y={frontCy + 65} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">TOP VIEW</text>
+            {/* FRONT VIEW */}
+            <DraggableViewPanel id={`part-${globalIdx}-front`} x={fPos.x} y={fPos.y} w={vw} h={viewZoneH} onDragEnd={handlePartViewDrag} label="FRONT">
+              <text x={frontCx} y={fPos.y + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">FRONT VIEW</text>
+              <rect x={fPos.x} y={fPos.y + 12} width={vw} height={viewZoneH - 15} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" rx={2} />
+              {frontFn(dims.w * viewScale, dims.h * viewScale, frontCx, frontCy, model.params)}
+              <DimensionH x1={frontCx - fw / 2} x2={frontCx + fw / 2} y={frontCy + fh / 2 + 25} value={`${dimStr(dims.w)} mm`} />
+              <DimensionV y1={frontCy - fh / 2} y2={frontCy + fh / 2} x={frontCx + fw / 2 + 20} value={`${dimStr(dims.h)} mm`} />
+              {showSection && (
+                <>
+                  <line x1={frontCx} y1={frontCy - fh / 2 - 15} x2={frontCx} y2={frontCy + fh / 2 + 15} stroke={LINE_COLOR} strokeWidth={0.6} strokeDasharray="8 3 2 3" />
+                  <text x={frontCx - 8} y={frontCy - fh / 2 - 18} fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">A</text>
+                  <text x={frontCx - 8} y={frontCy + fh / 2 + 25} fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">A</text>
+                  <polygon points={`${frontCx - 5},${frontCy - fh / 2 - 12} ${frontCx + 5},${frontCy - fh / 2 - 12} ${frontCx},${frontCy - fh / 2 - 6}`} fill={LINE_COLOR} />
+                  <polygon points={`${frontCx - 5},${frontCy + fh / 2 + 12} ${frontCx + 5},${frontCy + fh / 2 + 12} ${frontCx},${frontCy + fh / 2 + 6}`} fill={LINE_COLOR} />
+                </>
+              )}
+              <Balloon cx={frontCx + fw / 2 + 45} cy={frontCy - fh / 2 - 10} tx={frontCx + fw / 4} ty={frontCy} num={globalIdx + 1} />
+            </DraggableViewPanel>
+
+            {/* SIDE VIEW */}
+            <DraggableViewPanel id={`part-${globalIdx}-side`} x={sPos.x} y={sPos.y} w={vw} h={viewZoneH} onDragEnd={handlePartViewDrag} label="SIDE">
+              <text x={sideCx} y={sPos.y + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">RIGHT SIDE VIEW</text>
+              <rect x={sPos.x} y={sPos.y + 12} width={vw} height={viewZoneH - 15} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" rx={2} />
+              {sideFn(dims.d * viewScale, dims.h * viewScale, sideCx, sideCy, model.params)}
+            </DraggableViewPanel>
+
+            {/* TOP VIEW */}
+            <DraggableViewPanel id={`part-${globalIdx}-top`} x={tPos.x} y={tPos.y} w={vw} h={viewZoneH} onDragEnd={handlePartViewDrag} label="TOP">
+              <text x={topCx} y={tPos.y + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">TOP VIEW</text>
+              <rect x={tPos.x} y={tPos.y + 12} width={vw} height={viewZoneH - 15} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" rx={2} />
+              {topFn(dims.w * viewScale, dims.d * viewScale, topCx, topCy, model.params)}
+            </DraggableViewPanel>
+
+            {/* SECTION VIEW */}
             {showSection && sectionFn && (
-              <text x={sectionCx} y={partY + 22} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">SECTION A-A</text>
+              <DraggableViewPanel id={`part-${globalIdx}-section`} x={secPos.x} y={secPos.y} w={vw} h={viewZoneH} onDragEnd={handlePartViewDrag} label="SECTION">
+                <text x={sectionCx} y={secPos.y + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">SECTION A-A</text>
+                <rect x={secPos.x} y={secPos.y + 12} width={vw} height={viewZoneH - 15} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" rx={2} />
+                {sectionFn(dims.w * viewScale, dims.h * viewScale, sectionCx, sectionCy, model.params)}
+              </DraggableViewPanel>
             )}
 
-            {/* Front view */}
-            {frontFn(dims.w * viewScale, dims.h * viewScale, frontCx, frontCy, model.params)}
-            {/* Side view */}
-            {sideFn(dims.d * viewScale, dims.h * viewScale, sideCx, sideCy, model.params)}
-            {/* Top view */}
-            {topFn(dims.w * viewScale, dims.d * viewScale, topCx, topCy, model.params)}
-            {/* Section view */}
-            {showSection && sectionFn && sectionFn(dims.w * viewScale, dims.h * viewScale, sectionCx, sectionCy, model.params)}
-
-            {/* Section cut line on front view */}
-            {showSection && (
-              <>
-                <line x1={frontCx} y1={frontCy - fh / 2 - 15} x2={frontCx} y2={frontCy + fh / 2 + 15} stroke={LINE_COLOR} strokeWidth={0.6} strokeDasharray="8 3 2 3" />
-                <text x={frontCx - 8} y={frontCy - fh / 2 - 18} fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">A</text>
-                <text x={frontCx - 8} y={frontCy + fh / 2 + 25} fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">A</text>
-                {/* Section arrows */}
-                <polygon points={`${frontCx - 5},${frontCy - fh / 2 - 12} ${frontCx + 5},${frontCy - fh / 2 - 12} ${frontCx},${frontCy - fh / 2 - 6}`} fill={LINE_COLOR} />
-                <polygon points={`${frontCx - 5},${frontCy + fh / 2 + 12} ${frontCx + 5},${frontCy + fh / 2 + 12} ${frontCx},${frontCy + fh / 2 + 6}`} fill={LINE_COLOR} />
-              </>
+            {/* ISOMETRIC VIEW */}
+            {showIsometric && (
+              <DraggableViewPanel id={`part-${globalIdx}-iso`} x={iPos.x} y={iPos.y} w={vw} h={viewZoneH} onDragEnd={handlePartViewDrag} label="ISOMETRIC">
+                <text x={isoCx} y={iPos.y + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">ISOMETRIC VIEW</text>
+                <rect x={iPos.x} y={iPos.y + 12} width={vw} height={viewZoneH - 15} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" rx={2} />
+                {getIsometricView(model.type, dims.w * viewScale, dims.h * viewScale, dims.d * viewScale, isoCx, isoCy)}
+              </DraggableViewPanel>
             )}
 
             {/* Projection lines */}
             <line x1={frontCx + fw / 2 + 10} y1={frontCy} x2={sideCx - dims.d * viewScale / 2 - 10} y2={sideCy} stroke={HIDDEN_COLOR} strokeWidth={0.2} strokeDasharray="4 3" />
             <line x1={frontCx} y1={frontCy + fh / 2 + 10} x2={topCx} y2={topCy - dims.d * viewScale / 2 - 10} stroke={HIDDEN_COLOR} strokeWidth={0.2} strokeDasharray="4 3" />
-
-            {/* Dimension lines — front view */}
-            <DimensionH x1={frontCx - fw / 2} x2={frontCx + fw / 2} y={frontCy + fh / 2 + 25} value={`${dimStr(dims.w)} mm`} />
-            <DimensionV y1={frontCy - fh / 2} y2={frontCy + fh / 2} x={frontCx + fw / 2 + 20} value={`${dimStr(dims.h)} mm`} />
-
-            {/* Balloon callout */}
-            <Balloon cx={frontCx + fw / 2 + 45} cy={frontCy - fh / 2 - 10} tx={frontCx + fw / 4} ty={frontCy} num={globalIdx + 1} />
 
             {/* Part separator */}
             {idx < pageModels.length - 1 && (
@@ -1502,6 +1670,7 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [titleText, setTitleText] = useState("EveCAD Drawing");
   const [showSection, setShowSection] = useState(true);
+  const [showIsometric, setShowIsometric] = useState(false);
   const [showBOM, setShowBOM] = useState(true);
   const [visibleIds, setVisibleIds] = useState<Set<string>>(() => new Set(models.map(m => m.id)));
   const [showComponentDropdown, setShowComponentDropdown] = useState(false);
@@ -1644,6 +1813,9 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
             <button onClick={() => setShowSection(!showSection)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showSection ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
               <Crosshair className="w-3 h-3 inline mr-1" />Section
             </button>
+            <button onClick={() => setShowIsometric(!showIsometric)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showIsometric ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+              <Layers className="w-3 h-3 inline mr-1" />Isometric
+            </button>
             <button onClick={() => setShowBOM(!showBOM)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showBOM ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
               <List className="w-3 h-3 inline mr-1" />BOM
             </button>
@@ -1689,6 +1861,7 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
             onUpdateTitle={setTitleText}
             showSection={showSection}
             showBOM={showBOM}
+            showIsometric={showIsometric}
             page={drawingPage}
             partsPerPage={PARTS_PER_PAGE}
             isAssemblyMode={isAssemblyMode}
