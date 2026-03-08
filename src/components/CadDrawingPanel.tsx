@@ -1102,10 +1102,10 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
             <DimensionV y1={frontCy - fh / 2} y2={frontCy + fh / 2} x={frontCx + fw / 2 + 20} value={`${dimStr(dims.h)} mm`} />
 
             {/* Balloon callout */}
-            <Balloon cx={frontCx + fw / 2 + 45} cy={frontCy - fh / 2 - 10} tx={frontCx + fw / 4} ty={frontCy} num={idx + 1} />
+            <Balloon cx={frontCx + fw / 2 + 45} cy={frontCy - fh / 2 - 10} tx={frontCx + fw / 4} ty={frontCy} num={globalIdx + 1} />
 
             {/* Part separator */}
-            {idx < models.length - 1 && (
+            {idx < pageModels.length - 1 && (
               <line x1={margin + 4} y1={partY + partRowH - 10} x2={svgWidth - margin - 4} y2={partY + partRowH - 10} stroke="#ddd" strokeWidth={0.5} strokeDasharray="4 3" />
             )}
           </g>
