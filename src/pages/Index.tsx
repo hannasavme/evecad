@@ -624,16 +624,16 @@ export default function Index() {
       {/* Add model FAB */}
       <button
         onClick={() => setShowInput(!showInput)}
-        className="absolute bottom-6 right-6 z-40 w-14 h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center kawaii-shadow hover:scale-105 transition-transform"
+        className="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 z-40 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center kawaii-shadow hover:scale-105 transition-transform"
       >
         <AnimatePresence mode="wait">
           {showInput ? (
             <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </motion.div>
           ) : (
             <motion.div key="add" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
-              <Plus className="w-6 h-6" />
+              <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
             </motion.div>
           )}
         </AnimatePresence>
