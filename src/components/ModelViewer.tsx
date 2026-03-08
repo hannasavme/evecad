@@ -159,6 +159,52 @@ export interface ModelParams {
   baffleRadius?: number;
   baffleThickness?: number;
   baffleHoles?: number;
+  // Space - Solar Panel
+  panelWidth?: number;
+  panelLength?: number;
+  panelThickness?: number;
+  cellRows?: number;
+  cellCols?: number;
+  // Space - Battery
+  batteryWidth?: number;
+  batteryLength?: number;
+  batteryHeight?: number;
+  cellCount?: number;
+  // Space - RTG
+  rtgRadius?: number;
+  rtgLength?: number;
+  rtgFinCount?: number;
+  // Space - SBC (Single Board Computer)
+  sbcWidth?: number;
+  sbcLength?: number;
+  sbcHeight?: number;
+  // Space - Transceiver
+  transceiverWidth?: number;
+  transceiverHeight?: number;
+  transceiverDepth?: number;
+  // Space - Radiator
+  radiatorWidth?: number;
+  radiatorHeight?: number;
+  radiatorPipes?: number;
+  // Space - Gripper
+  gripperWidth?: number;
+  gripperFingers?: number;
+  gripperOpenAngle?: number;
+  // Space - LiDAR
+  lidarRadius?: number;
+  lidarHeight?: number;
+  // Space - Heat Pipe
+  heatpipeRadius?: number;
+  heatpipeLength?: number;
+  // Space - Harness (cable bundle)
+  harnessRadius?: number;
+  harnessLength?: number;
+  harnessWires?: number;
+  // Space - IMU
+  imuSize?: number;
+  // Space - Proximity Sensor
+  proxRadius?: number;
+  proxLength?: number;
 }
 
 export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track" | "bolt" | "nut" | "screw" | "bearing" | "pulley" | "shaft" | "mug" | "hammer" | "handle" | "chassis" | "rocker" | "bogie" | "knuckle" | "motor" | "standoff" | "nosecone" | "bodytube" | "fin" | "centeringring" | "bulkhead" | "coupler" | "launchguide" | "motortube" | "thrustplate" | "retainer" | "nozzle" | "ebay" | "baffle";
