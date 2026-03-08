@@ -1,1 +1,4 @@
 project_id = "pkhbtiasttmydkqgtzsy"
+
+[functions.parse-cad-text]
+verify_jwt = false
