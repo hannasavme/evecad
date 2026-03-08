@@ -120,11 +120,11 @@ export default function Index() {
                 {hasModel ? `${modelType.toUpperCase()} ✅` : "Ready to create~ ✨"}
               </span>
               <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground">
-                <span>🖱️ Orbit</span>
+                <span>🖱️ Left-drag: Orbit</span>
                 <span className="text-border">·</span>
-                <span>🔍 Zoom</span>
+                <span>🔍 Scroll: Zoom</span>
                 <span className="text-border">·</span>
-                <span>✋ Pan</span>
+                <span>✋ Right-drag: Pan</span>
               </div>
             </div>
 
