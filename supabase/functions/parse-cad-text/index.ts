@@ -120,7 +120,7 @@ For SIMPLE parts (single gear, bracket, etc.), return 1-3 parts.
 For COMPLEX objects (vehicles, machines, robots, devices), decompose into 40-80+ sub-parts for maximum detail.
 For MULTI-VEHICLE systems (swarms, fleets, convoys), model EACH vehicle separately with full detail.
 
-Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track, bolt, nut, screw, bearing, pulley, shaft, mug, hammer, handle, chassis, rocker, bogie, knuckle, motor, standoff, nosecone, bodytube, fin, centeringring, bulkhead, coupler, launchguide, motortube, thrustplate, retainer, nozzle, ebay, baffle, solarpanel, battery, rtg, sbc, transceiver, radiator, gripper, lidar, heatpipe, harness, imu, proxsensor.
+Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track, bolt, nut, screw, bearing, pulley, shaft, mug, hammer, handle, chassis, rocker, bogie, knuckle, motor, standoff, nosecone, bodytube, fin, centeringring, bulkhead, coupler, launchguide, motortube, thrustplate, retainer, nozzle, ebay, baffle, solarpanel, battery, rtg, sbc, transceiver, radiator, gripper, lidar, heatpipe, harness, imu, proxsensor, fuselage, wing, enginebell, omspod, rcsthruster, proptank, reactionwheel, avionicsbox.
 
 COMPOUND TYPE RULES (HIGHEST PRIORITY — ALWAYS FOLLOW):
 - "wheel": ANY wheel — auto-renders with tire, spoked rim, hub cap, axle hole, treads.

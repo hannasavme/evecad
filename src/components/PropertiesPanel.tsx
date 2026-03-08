@@ -331,9 +331,51 @@ const PARAM_DEFS: Record<string, ParamDef[]> = {
     { key: "proxRadius", label: "Radius", type: "number", min: 0.02, max: 0.3, step: 0.01, default: 0.08, hasDimension: true },
     { key: "proxLength", label: "Length", type: "number", min: 0.05, max: 0.5, step: 0.02, default: 0.15, hasDimension: true },
   ],
+  fuselage: [
+    { key: "fuselageLength", label: "Length", type: "number", min: 1, max: 20, step: 0.5, default: 5.0, hasDimension: true },
+    { key: "fuselageWidth", label: "Width", type: "number", min: 0.5, max: 8, step: 0.1, default: 1.5, hasDimension: true },
+    { key: "fuselageHeight", label: "Height", type: "number", min: 0.3, max: 6, step: 0.1, default: 1.2, hasDimension: true },
+    { key: "fuselageNoseRatio", label: "Nose ratio", type: "number", min: 0.1, max: 0.5, step: 0.05, default: 0.25, hasDimension: false },
+  ],
+  wing: [
+    { key: "wingSpan", label: "Span", type: "number", min: 0.5, max: 15, step: 0.5, default: 3.0, hasDimension: true },
+    { key: "wingRoot", label: "Root", type: "number", min: 0.3, max: 10, step: 0.1, default: 2.5, hasDimension: true },
+    { key: "wingTip", label: "Tip", type: "number", min: 0.1, max: 5, step: 0.1, default: 0.8, hasDimension: true },
+    { key: "wingSweep", label: "Sweep", type: "number", min: 0, max: 5, step: 0.1, default: 1.5, hasDimension: true },
+    { key: "wingThickness", label: "Thickness", type: "number", min: 0.02, max: 0.5, step: 0.01, default: 0.08, hasDimension: true },
+    { key: "wingDihedral", label: "Dihedral °", type: "number", min: -10, max: 15, step: 1, default: 3, hasDimension: false },
+  ],
+  enginebell: [
+    { key: "engineBellThroat", label: "Throat R", type: "number", min: 0.02, max: 1, step: 0.02, default: 0.15, hasDimension: true },
+    { key: "engineBellExit", label: "Exit R", type: "number", min: 0.1, max: 3, step: 0.05, default: 0.5, hasDimension: true },
+    { key: "engineBellLength", label: "Length", type: "number", min: 0.2, max: 5, step: 0.1, default: 1.2, hasDimension: true },
+    { key: "engineBellGimbal", label: "Gimbal °", type: "number", min: -10, max: 10, step: 1, default: 0, hasDimension: false },
+  ],
+  omspod: [
+    { key: "omsPodLength", label: "Length", type: "number", min: 0.5, max: 5, step: 0.1, default: 1.5, hasDimension: true },
+    { key: "omsPodRadius", label: "Radius", type: "number", min: 0.1, max: 2, step: 0.05, default: 0.4, hasDimension: true },
+  ],
+  rcsthruster: [
+    { key: "rcsRadius", label: "Radius", type: "number", min: 0.02, max: 0.3, step: 0.01, default: 0.06, hasDimension: true },
+    { key: "rcsLength", label: "Length", type: "number", min: 0.03, max: 0.5, step: 0.02, default: 0.12, hasDimension: true },
+    { key: "rcsNozzleCount", label: "Nozzles", type: "int", min: 1, max: 4, step: 1, default: 1, hasDimension: false },
+  ],
+  proptank: [
+    { key: "propTankRadius", label: "Radius", type: "number", min: 0.2, max: 5, step: 0.1, default: 0.8, hasDimension: true },
+    { key: "propTankLength", label: "Length", type: "number", min: 0.5, max: 15, step: 0.5, default: 2.5, hasDimension: true },
+  ],
+  reactionwheel: [
+    { key: "rwRadius", label: "Radius", type: "number", min: 0.05, max: 1, step: 0.02, default: 0.25, hasDimension: true },
+    { key: "rwHeight", label: "Height", type: "number", min: 0.03, max: 0.5, step: 0.02, default: 0.12, hasDimension: true },
+    { key: "rwRimThickness", label: "Rim", type: "number", min: 0.01, max: 0.1, step: 0.005, default: 0.03, hasDimension: true },
+  ],
+  avionicsbox: [
+    { key: "avionicsWidth", label: "Width", type: "number", min: 0.1, max: 3, step: 0.05, default: 0.6, hasDimension: true },
+    { key: "avionicsHeight", label: "Height", type: "number", min: 0.1, max: 2, step: 0.05, default: 0.4, hasDimension: true },
+    { key: "avionicsDepth", label: "Depth", type: "number", min: 0.1, max: 2, step: 0.05, default: 0.5, hasDimension: true },
+    { key: "avionicsSlots", label: "Slots", type: "int", min: 1, max: 8, step: 1, default: 4, hasDimension: false },
+  ],
 };
-
-interface PropertiesPanelProps {
   models: SceneModel[];
   onUpdate: (id: string, updates: Partial<SceneModel>) => void;
   onBatchUpdate: (ids: string[], updates: Partial<SceneModel>) => void;
