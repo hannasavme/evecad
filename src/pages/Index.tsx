@@ -4,6 +4,7 @@ import { Box, Layers, Zap, Heart, Star, Sparkles } from "lucide-react";
 import InputPanel from "@/components/InputPanel";
 import ModelViewer from "@/components/ModelViewer";
 import ExportPanel from "@/components/ExportPanel";
+import ExportDropdown from "@/components/ExportDropdown";
 import GenerationProgress from "@/components/GenerationProgress";
 
 type ModelType = "gear" | "bracket" | "box" | "cylinder" | "default";
