@@ -62,12 +62,29 @@ export default function Index() {
 
   const selectedModels = models.filter((m) => selectedModelIds.has(m.id));
 
-  const handleSelectModel = useCallback((id: string | null, additive?: boolean) => {
+  const handleSelectModel = useCallback((id: string | null, additive?: boolean, rangeSelect?: boolean) => {
     if (id === null) {
       setSelectedModelIds(new Set());
       return;
     }
     setSelectedModelIds((prev) => {
+      // Shift+click: select range between last selected and clicked
+      if (rangeSelect && prev.size > 0) {
+        const currentModels = modelsRef.current;
+        const ids = currentModels.map((m) => m.id);
+        const clickedIndex = ids.indexOf(id);
+        const lastSelectedId = Array.from(prev).pop()!;
+        const lastIndex = ids.indexOf(lastSelectedId);
+        if (clickedIndex >= 0 && lastIndex >= 0) {
+          const start = Math.min(clickedIndex, lastIndex);
+          const end = Math.max(clickedIndex, lastIndex);
+          const next = new Set(prev);
+          for (let i = start; i <= end; i++) {
+            next.add(ids[i]);
+          }
+          return next;
+        }
+      }
       if (additive) {
         const next = new Set(prev);
         if (next.has(id)) next.delete(id);
@@ -515,8 +532,9 @@ export default function Index() {
                 </button>
                 <button
                   onClick={(e) => {
-                    const additive = e.ctrlKey || e.metaKey || e.shiftKey;
-                    handleSelectModel(m.id, additive);
+                    const shift = e.shiftKey;
+                    const additive = e.ctrlKey || e.metaKey;
+                    handleSelectModel(m.id, additive, shift);
                   }}
                   className={`flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs font-bold transition-all border-2 flex-1 min-w-0 ${
                     selectedModelIds.has(m.id)

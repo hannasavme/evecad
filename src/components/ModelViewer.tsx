@@ -107,7 +107,7 @@ export interface ModelViewerHandle {
 interface ModelViewerProps {
   models: SceneModel[];
   selectedModelIds: Set<string>;
-  onSelectModel: (id: string | null, additive?: boolean) => void;
+  onSelectModel: (id: string | null, additive?: boolean, rangeSelect?: boolean) => void;
 }
 
 function degToRad(d: number) { return (d * Math.PI) / 180; }
@@ -887,7 +887,7 @@ function Scene({ models, selectedModelIds, onSelectModel }: ModelViewerProps) {
       <pointLight position={[5, 2, 3]} intensity={0.3} color="#a5f3fc" />
 
       {models.filter(m => m.visible !== false).map((m) => (
-        <SceneModelComponent key={m.id} model={m} isSelected={selectedModelIds.has(m.id)} onSelect={(e) => onSelectModel(m.id, e.ctrlKey || e.metaKey || e.shiftKey)} />
+        <SceneModelComponent key={m.id} model={m} isSelected={selectedModelIds.has(m.id)} onSelect={(e) => onSelectModel(m.id, e.ctrlKey || e.metaKey, e.shiftKey)} />
       ))}
 
       {models.length === 0 && (
