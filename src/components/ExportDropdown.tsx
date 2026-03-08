@@ -90,17 +90,23 @@ export default function ExportDropdown({ hasModel, getScene, onAuthRequired }: E
             transition={{ duration: 0.15 }}
             className="absolute right-0 top-full mt-1.5 z-50 bg-card border-2 border-border rounded-2xl p-2 kawaii-shadow-sm min-w-[160px]"
           >
-            {formats.map((f) => (
-              <button
-                key={f.id}
-                onClick={() => handleExport(f.id)}
-                className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-xs font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-              >
-                <f.icon className="w-3.5 h-3.5" />
-                <span>{f.label}</span>
-                <span className="ml-auto text-[10px] text-muted-foreground">{f.desc}</span>
-              </button>
-            ))}
+            {hasModel ? (
+              formats.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => handleExport(f.id)}
+                  className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-xs font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                >
+                  <f.icon className="w-3.5 h-3.5" />
+                  <span>{f.label}</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground">{f.desc}</span>
+                </button>
+              ))
+            ) : (
+              <p className="px-3 py-2 text-[10px] text-muted-foreground text-center">
+                Generate a model first to export
+              </p>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
