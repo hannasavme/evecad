@@ -168,19 +168,141 @@ Shape guide for BASIC types:
 - wedge: ramps, angled armor, turbine/impeller blades, sloped panels
 - torus: seals, o-rings, circular rails
 - tube: generic hollow pipes (NOT for rocket tubes — use bodytube/motortube)
-- plate: solar panels, flat mounting plates, fins, wings, shelves
+- plate: flat mounting plates, fins, wings, shelves (NOT for detailed solar panels — use solarpanel type)
 - gear: drive gears, sprockets, cogs
 - bracket: L-shaped mounts, suspension arms, support struts, motor brackets
 
-ROVER ASSEMBLY REFERENCE (use when building Mars/planetary rovers):
-- Chassis at center [0, chassisH, 0]. Electronics bay on top of chassis.
-- Differential bar: cylinder spanning between left/right rocker pivots, mounted on top of chassis center.
-- Rocker arms: connect to chassis differential at inner pivot, extend outward. Middle wheel mounts on rocker.
-- Bogie arms: pivot at outer end of each rocker. Front and rear wheels on bogie ends.
-- Steering knuckles: on the 4 corner wheels (front-left, front-right, rear-left, rear-right).
-- Motors: one per wheel, mounted on knuckles or directly on bogie/rocker wheel mounts.
-- 6 wheels total: 2 on rockers (middle), 4 on bogies (corners).
-- Camera/antenna on mast above chassis. PCB standoffs inside electronics bay.
+MARS ROVER ASSEMBLY REFERENCE (CRITICAL — use when building ANY Mars/planetary/exploration rover):
+Based on NASA JPL Perseverance, Curiosity, Sojourner, and open-source OSR/Sawppy designs.
+
+PROPORTIONS (use these ratios, scale uniformly):
+- Chassis body: width=2.8, depth=3.8, height=0.8 (flat rectangular box, wider than tall)
+- Wheel radius: ~0.5 (relative to chassis width of 2.8)
+- Rocker arm length: ~2.0 (extends from chassis side pivot down to bogie pivot)
+- Bogie arm length: ~1.2 (shorter than rocker, connects front/rear wheels)
+- Total width (wheel to wheel): ~4.5
+- Total length (front wheel to rear wheel): ~4.0
+- Ground clearance: wheels touch ground at y=0, chassis bottom at y≈1.0
+
+CHASSIS STRUCTURE (the bus/body):
+- Main body: chassis type at [0, 1.4, 0] — the warm electronics box (WEB)
+  chassisLength=3.8, chassisWidth=2.8, chassisThickness=0.15, mountHoles=8
+- Top deck plate: plate at [0, 1.85, 0] — flat equipment mounting surface
+  width=2.8, depth=3.8, thickness=0.05
+- Side panels: 2x box at [±1.4, 1.2, 0] — structural side walls
+  width=0.08, height=0.7, depth=3.5
+- Electronics bay cover: box at [0, 1.9, -0.8] — raised housing for avionics
+  width=1.5, height=0.3, depth=1.2, slots=3
+
+ROCKER-BOGIE SUSPENSION (the key differentiator of Mars rovers):
+- Differential pivot bar: cylinder at [0, 1.95, 0] rotation=[0,0,90]
+  radius=0.08, height=1.8 — spans between L/R rocker pivots on top of chassis
+- Differential pivot sphere: sphere at [0, 1.95, 0] radius=0.12 — center pivot ball
+- Left rocker pivot: sphere at [-1.4, 1.5, 0] radius=0.1
+- Right rocker pivot: sphere at [1.4, 1.5, 0] radius=0.1
+- Left rocker arm: rocker at [-1.8, 0.9, 0.3] rotation=[0,0,-25]
+  rockerLength=2.0, rockerWidth=0.3, rockerThickness=0.12
+- Right rocker arm: rocker at [1.8, 0.9, 0.3] rotation=[0,0,25]
+  rockerLength=2.0, rockerWidth=0.3, rockerThickness=0.12
+- Left bogie arm: bogie at [-1.8, 0.6, -1.0] rotation=[0,0,-10]
+  bogieLength=1.2, bogieWidth=0.25, bogieThickness=0.1
+- Right bogie arm: bogie at [1.8, 0.6, -1.0] rotation=[0,0,10]
+  bogieLength=1.2, bogieWidth=0.25, bogieThickness=0.1
+- Bogie pivot spheres: sphere at each rocker-bogie junction, radius=0.08
+- Additional structural tubes: cylinder connecting rocker to chassis at angle
+
+WHEELS (6 total — aluminum with grousers/treads):
+- Wheel params: radius=0.5, width=0.35, spokes=6, treadDepth=0.06
+- Left front: wheel at [-2.2, 0.5, -1.6] — on left bogie front
+- Left middle: wheel at [-2.2, 0.5, 0.3] — on left rocker middle
+- Left rear: wheel at [-2.2, 0.5, 1.5] — on left bogie rear
+- Right front: wheel at [2.2, 0.5, -1.6]
+- Right middle: wheel at [2.2, 0.5, 0.3]
+- Right rear: wheel at [2.2, 0.5, 1.5]
+- Steering knuckles: knuckle on each of the 4 corner wheels
+- Motors: motor on each wheel (6 drive motors)
+- Corner steering motors: 4 additional motors for steering on corner knuckles
+
+CAMERA MAST (Remote Sensing Mast — RSM):
+- Mast base: box at [0.3, 2.0, -1.2] width=0.2, height=0.15, depth=0.2
+- Mast lower segment: cylinder at [0.3, 2.5, -1.2] radius=0.06, height=0.8
+- Mast joint: sphere at [0.3, 2.9, -1.2] radius=0.08
+- Mast upper segment: cylinder at [0.3, 3.2, -1.2] radius=0.05, height=0.5
+- Mast head: box at [0.3, 3.5, -1.2] width=0.4, height=0.2, depth=0.15
+- NavCam L: camera at [0.15, 3.55, -1.28] — navigation camera left
+- NavCam R: camera at [0.45, 3.55, -1.28] — navigation camera right
+- MastCam: camera at [0.3, 3.45, -1.32] lensRadius=0.06 — main science camera
+- Mast head joint: sphere at [0.3, 3.4, -1.2] radius=0.06 — pan-tilt actuator
+
+HIGH-GAIN ANTENNA (HGA):
+- Antenna on rear deck: antenna at [0.8, 2.3, 1.2]
+  dishRadius=0.4, mastHeight=0.3, mastRadius=0.04
+
+LOW-GAIN ANTENNA (LGA):
+- Vertical mast antenna: transceiver at [-0.5, 2.3, 1.0]
+  transceiverWidth=0.08, transceiverHeight=0.5, transceiverDepth=0.08
+
+ROBOTIC ARM (for sample collection):
+- Shoulder joint: sphere at [-0.8, 1.5, -1.9] radius=0.1
+- Upper arm: bracket at [-0.8, 1.2, -2.3] rotation=[30,0,0]
+  armLength=0.8, thickness=0.08, width=0.15
+- Elbow joint: sphere at [-0.8, 0.9, -2.7] radius=0.08
+- Forearm: bracket at [-0.8, 0.7, -3.0] rotation=[15,0,0]
+  armLength=0.6, thickness=0.06, width=0.12
+- Wrist joint: sphere at [-0.8, 0.5, -3.3] radius=0.06
+- End effector turret: cylinder at [-0.8, 0.4, -3.5] radius=0.12, height=0.15
+- Drill tool: drill at [-0.8, 0.3, -3.6] bitLength=0.3, bitRadius=0.04
+
+POWER SYSTEM:
+- For Curiosity/Perseverance style: RTG at rear
+  rtg at [0, 1.6, 2.2] rotation=[-30,0,0] rtgRadius=0.2, rtgLength=0.8, rtgFinCount=8
+  RTG heat rejection fin: radiator at [0, 1.8, 2.5] radiatorWidth=0.6, radiatorHeight=0.4
+- For Sojourner/Spirit style: Solar panel on top deck
+  solarpanel at [0, 2.0, 0] panelWidth=2.6, panelLength=3.5, panelThickness=0.03
+- Battery inside chassis: battery at [0.5, 1.4, 0.5]
+  batteryWidth=0.6, batteryLength=0.8, batteryHeight=0.3
+
+ELECTRONICS INSIDE CHASSIS:
+- SBC (flight computer): sbc at [0, 1.5, -0.3]
+- IMU (navigation): imu at [0, 1.35, 0] imuSize=0.1
+- Transceiver (UHF radio): transceiver at [-0.5, 1.5, 0.5]
+- Harness bundles: harness routed along rocker arms and inside chassis
+  harness at [0, 1.2, 0] harnessLength=3.0, harnessWires=6
+
+SENSORS:
+- HazCams (front pair): 2x camera at [±0.4, 1.2, -1.9] — forward-facing hazard cameras
+- Rear HazCams: 2x camera at [±0.4, 1.2, 1.9] — rear hazard cameras
+- LIDAR (if equipped): lidar at [0, 2.0, -1.5] lidarRadius=0.1
+- Proximity sensors: proxsensor at front corners for obstacle detection
+
+THERMAL:
+- Heat pipes: heatpipe connecting RTG/hot components to radiators
+  heatpipe at various positions, routed along chassis
+- Radiator panels: radiator on shaded side of chassis
+
+COLOR SCHEME FOR MARS ROVERS:
+- Chassis/structural: #d4d4d8 (silver-gray aluminum)
+- Wheels: #71717a (dark gray with #d4d4d8 spokes)
+- Rocker/bogie arms: #52525b (dark structural tubes)
+- Solar panels: #1e3a5f (deep blue cells on #d4d4d8 substrate)
+- RTG: #a1a1aa (metallic gray)
+- Gold MLI insulation: #d4a017 (gold foil on electronics)
+- Camera/sensors: #27272a (dark instruments)
+- Antenna dish: #e5e5e5 (white HGA)
+- Wiring/harness: #78350f (copper brown)
+- Joint spheres: #a3a3a3 (medium gray)
+- Accent/labels: #fde68a (yellow-gold)
+
+PART COUNT GUIDELINES:
+- Simple rover (6 wheels + chassis): 25-35 parts
+- Detailed rover (Sojourner-class): 40-55 parts
+- Full Mars rover (Perseverance-class): 60-80+ parts including:
+  chassis, top deck, 2 side panels, differential bar+sphere,
+  2 rockers, 2 bogies, 6 wheels, 6 knuckles, 10 motors,
+  mast (4 segments + 3 joints), 4 cameras on mast, antenna,
+  robotic arm (3 segments + 3 joints + drill), RTG or solar panel,
+  battery, SBC, IMU, transceiver, 4 hazcams, harness bundles,
+  radiator, heat pipes, bolts/fasteners at key joints
 
 ROCKET ASSEMBLY REFERENCE (use when building model/high-power rockets):
 - Build BOTTOM-UP: retainer at y=0, then nozzle, motortube, centering rings, body tube, ebay, coupler, upper body, nosecone on top.
