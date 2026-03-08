@@ -788,6 +788,58 @@ function Balloon({ cx, cy, tx, ty, num }: { cx: number; cy: number; tx: number; 
   );
 }
 
+// ─── Draggable Annotation ──────────
+
+function DraggableAnnotation({ annotation: a, svgWidth, svgHeight, onMove, onUpdate, onDelete }: {
+  annotation: Annotation; svgWidth: number; svgHeight: number;
+  onMove: (id: string, x: number, y: number) => void;
+  onUpdate: (id: string, text: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  const dragging = useRef(false);
+  const offset = useRef({ dx: 0, dy: 0 });
+
+  const getSVGPoint = (e: React.MouseEvent | MouseEvent) => {
+    const svg = (e.target as Element).closest("svg");
+    if (!svg) return { x: 0, y: 0 };
+    const pt = (svg as SVGSVGElement).createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const ctm = (svg as SVGSVGElement).getScreenCTM()?.inverse();
+    if (!ctm) return { x: 0, y: 0 };
+    const svgPt = pt.matrixTransform(ctm);
+    return { x: svgPt.x, y: svgPt.y };
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as Element).tagName === "INPUT" || (e.target as Element).tagName === "foreignObject") return;
+    e.preventDefault();
+    dragging.current = true;
+    const pt = getSVGPoint(e);
+    offset.current = { dx: pt.x - a.x, dy: pt.y - a.y };
+    const handleMouseMove = (me: MouseEvent) => {
+      if (!dragging.current) return;
+      const p = getSVGPoint(me as any);
+      onMove(a.id, p.x - offset.current.dx, p.y - offset.current.dy);
+    };
+    const handleMouseUp = () => {
+      dragging.current = false;
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const rectW = Math.max(a.text.length * 5.5, 30);
+  return (
+    <g onMouseDown={handleMouseDown} style={{ cursor: "grab" }}>
+      <rect x={a.x - 2} y={a.y - 11} width={rectW} height={14} rx={2} fill="#fefce8" stroke="#d4a574" strokeWidth={0.5} />
+      <EditableText x={a.x} y={a.y} text={a.text} fontSize={9} fill={LINE_COLOR} fontFamily="monospace"
+        onUpdate={(t) => { if (t.trim() === "") onDelete(a.id); else onUpdate(a.id, t); }} />
+    </g>
+  );
+}
+
 // ─── Editable text ──────────
 
 function EditableText({ x, y, text, fontSize, fill, fontWeight, fontFamily, textAnchor, onUpdate }: {
@@ -842,11 +894,12 @@ function dimStr(val: number) {
   return (val * 25.4).toFixed(1);
 }
 
-function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotation, titleText, onUpdateTitle, showSection, showBOM }: {
+function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotation, onMoveAnnotation, titleText, onUpdateTitle, showSection, showBOM }: {
   models: SceneModel[];
   annotations: Annotation[];
   onUpdateAnnotation: (id: string, text: string) => void;
   onDeleteAnnotation: (id: string) => void;
+  onMoveAnnotation: (id: string, x: number, y: number) => void;
   titleText: string; onUpdateTitle: (t: string) => void;
   showSection: boolean; showBOM: boolean;
 }) {
@@ -1047,12 +1100,10 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         );
       })}
 
-      {/* User annotations */}
+      {/* User annotations — draggable */}
       {annotations.map((a) => (
-        <g key={a.id}>
-          <rect x={a.x - 2} y={a.y - 11} width={Math.max(a.text.length * 5.5, 30)} height={14} rx={2} fill="#fefce8" stroke="#d4a574" strokeWidth={0.5} />
-          <EditableText x={a.x} y={a.y} text={a.text} fontSize={9} fill={LINE_COLOR} fontFamily="monospace" onUpdate={(t) => { if (t.trim() === "") onDeleteAnnotation(a.id); else onUpdateAnnotation(a.id, t); }} />
-        </g>
+        <DraggableAnnotation key={a.id} annotation={a} svgWidth={svgWidth} svgHeight={svgHeight}
+          onMove={onMoveAnnotation} onUpdate={onUpdateAnnotation} onDelete={onDeleteAnnotation} />
       ))}
     </svg>
   );
@@ -1077,6 +1128,10 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
 
   const deleteAnnotation = useCallback((id: string) => {
     setAnnotations((prev) => prev.filter((a) => a.id !== id));
+  }, []);
+
+  const moveAnnotation = useCallback((id: string, x: number, y: number) => {
+    setAnnotations((prev) => prev.map((a) => (a.id === id ? { ...a, x, y } : a)));
   }, []);
 
   const handleExportSVG = () => {
@@ -1167,6 +1222,7 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
             annotations={annotations}
             onUpdateAnnotation={updateAnnotation}
             onDeleteAnnotation={deleteAnnotation}
+            onMoveAnnotation={moveAnnotation}
             titleText={titleText}
             onUpdateTitle={setTitleText}
             showSection={showSection}
