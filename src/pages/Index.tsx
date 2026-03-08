@@ -51,17 +51,37 @@ export default function Index() {
     pushImmediate(typeof updater === "function" ? updater(modelsRef.current) : updater);
   }, [pushImmediate]);
 
-  const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
+  const [selectedModelIds, setSelectedModelIds] = useState<Set<string>>(new Set());
   const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
   const [editingLabelValue, setEditingLabelValue] = useState("");
   const [showDrawing, setShowDrawing] = useState(false);
   const [assemblyInstructions, setAssemblyInstructions] = useState<string | null>(null);
   const viewerRef = useRef<ModelViewerHandle>(null);
 
-  const selectedModel = models.find((m) => m.id === selectedModelId) || null;
+  const selectedModels = models.filter((m) => selectedModelIds.has(m.id));
+
+  const handleSelectModel = useCallback((id: string | null, additive?: boolean) => {
+    if (id === null) {
+      setSelectedModelIds(new Set());
+      return;
+    }
+    setSelectedModelIds((prev) => {
+      if (additive) {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      }
+      return new Set([id]);
+    });
+  }, []);
 
   const handleUpdateModel = useCallback((id: string, updates: Partial<SceneModel>) => {
     setModels((prev) => prev.map((m) => (m.id === id ? { ...m, ...updates } : m)));
+  }, [setModels]);
+
+  const handleBatchUpdate = useCallback((ids: string[], updates: Partial<SceneModel>) => {
+    setModels((prev) => prev.map((m) => ids.includes(m.id) ? { ...m, ...updates } : m));
   }, [setModels]);
 
   const handleGenerate = useCallback(
@@ -109,7 +129,7 @@ export default function Index() {
           };
           setTimeout(() => {
             setModelsImmediate((prev) => [...prev, newModel]);
-            setSelectedModelId(newModel.id);
+            handleSelectModel(newModel.id);
             setShowInput(false);
             setIsGenerating(false);
             toast.success(`${type} generated!`);
@@ -131,7 +151,7 @@ export default function Index() {
 
         setTimeout(() => {
           setModelsImmediate((prev) => [...prev, ...parts]);
-          if (parts.length > 0) setSelectedModelId(parts[0].id);
+          if (parts.length > 0) handleSelectModel(parts[0].id);
           setShowInput(false);
           setIsGenerating(false);
           if (parts.length > 1) {
@@ -154,7 +174,7 @@ export default function Index() {
           visible: true,
         };
         setModelsImmediate((prev) => [...prev, newModel]);
-        setSelectedModelId(newModel.id);
+        handleSelectModel(newModel.id);
         setShowInput(false);
         setIsGenerating(false);
         toast.success(`${type} generated!`);
@@ -254,9 +274,9 @@ export default function Index() {
   };
 
   const handleDeleteSelected = () => {
-    if (!selectedModelId) return;
-    setModelsImmediate((prev) => prev.filter((m) => m.id !== selectedModelId));
-    setSelectedModelId(null);
+    if (selectedModelIds.size === 0) return;
+    setModelsImmediate((prev) => prev.filter((m) => !selectedModelIds.has(m.id)));
+    setSelectedModelIds(new Set());
   };
 
   const getScene = () => viewerRef.current?.getScene() ?? null;
@@ -309,18 +329,19 @@ export default function Index() {
         <ModelViewer
           ref={viewerRef}
           models={models}
-          selectedModelId={selectedModelId}
-          onSelectModel={setSelectedModelId}
+          selectedModelIds={selectedModelIds}
+          onSelectModel={handleSelectModel}
         />
       </div>
 
       {/* Properties Panel */}
       <AnimatePresence>
-        {selectedModel && !showInput && (
+        {selectedModels.length > 0 && !showInput && (
           <PropertiesPanel
-            model={selectedModel}
+            models={selectedModels}
             onUpdate={handleUpdateModel}
-            onClose={() => setSelectedModelId(null)}
+            onBatchUpdate={handleBatchUpdate}
+            onClose={() => setSelectedModelIds(new Set())}
           />
         )}
       </AnimatePresence>
@@ -408,9 +429,12 @@ export default function Index() {
                   {m.visible !== false ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                 </button>
                 <button
-                  onClick={() => setSelectedModelId(m.id === selectedModelId ? null : m.id)}
+                  onClick={(e) => {
+                    const additive = e.ctrlKey || e.metaKey || e.shiftKey;
+                    handleSelectModel(m.id, additive);
+                  }}
                   className={`flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs font-bold transition-all border-2 flex-1 min-w-0 ${
-                    selectedModelId === m.id
+                    selectedModelIds.has(m.id)
                       ? "bg-primary/15 border-primary/40 text-primary"
                       : m.visible !== false
                         ? "bg-card/80 backdrop-blur-sm border-border text-foreground hover:border-primary/30"
@@ -444,7 +468,7 @@ export default function Index() {
                     <span className="text-muted-foreground truncate max-w-[70px]">{m.label}</span>
                   )}
                 </button>
-                {selectedModelId === m.id && editingLabelId !== m.id && (
+                {selectedModelIds.has(m.id) && selectedModelIds.size === 1 && editingLabelId !== m.id && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -474,12 +498,12 @@ export default function Index() {
               </>
             );
           })()}
-          {selectedModelId && (
+          {selectedModelIds.size > 0 && (
             <button
               onClick={handleDeleteSelected}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-destructive/10 border-2 border-destructive/30 text-destructive hover:bg-destructive/20 transition-all"
             >
-              <Trash2 className="w-3 h-3" /> Remove
+              <Trash2 className="w-3 h-3" /> Remove {selectedModelIds.size > 1 ? `(${selectedModelIds.size})` : ""}
             </button>
           )}
         </div>

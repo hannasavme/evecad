@@ -82,14 +82,16 @@ const PARAM_DEFS: Record<string, ParamDef[]> = {
 };
 
 interface PropertiesPanelProps {
-  model: SceneModel;
+  models: SceneModel[];  // selected models (1 or more)
   onUpdate: (id: string, updates: Partial<SceneModel>) => void;
+  onBatchUpdate: (ids: string[], updates: Partial<SceneModel>) => void;
   onClose: () => void;
 }
 
-export default function PropertiesPanel({ model, onUpdate, onClose }: PropertiesPanelProps) {
+export default function PropertiesPanel({ models: selectedModels, onUpdate, onBatchUpdate, onClose }: PropertiesPanelProps) {
   const [unit, setUnit] = useState<Unit>("mm");
-
+  const isMulti = selectedModels.length > 1;
+  const model = selectedModels[0]; // primary model for single-select editing
   const handlePositionChange = (axis: 0 | 1 | 2, value: number) => {
     const newPos: [number, number, number] = [...model.position];
     newPos[axis] = toInternal(value, unit);
@@ -114,7 +116,7 @@ export default function PropertiesPanel({ model, onUpdate, onClose }: Properties
       <div className="p-4 rounded-2xl border-2 border-border bg-card/95 backdrop-blur-md kawaii-shadow space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-sm font-extrabold text-foreground capitalize flex items-center gap-1.5">
-            {model.type}
+            {isMulti ? `${selectedModels.length} selected` : model.type}
           </span>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="w-4 h-4" />
@@ -142,8 +144,8 @@ export default function PropertiesPanel({ model, onUpdate, onClose }: Properties
           </div>
         </div>
 
-        {/* Geometry / Dimensions */}
-        {paramDefs.length > 0 && (
+        {/* Geometry / Dimensions — only for single select */}
+        {!isMulti && paramDefs.length > 0 && (
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
               <Settings2 className="w-3 h-3" /> Dimensions
@@ -179,22 +181,30 @@ export default function PropertiesPanel({ model, onUpdate, onClose }: Properties
           </div>
         )}
 
-        {/* Position Controls */}
-        <div className="space-y-2">
-          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-            <Move3D className="w-3 h-3" /> Position
-          </label>
-          <div className="space-y-1.5">
-            {(["X", "Y", "Z"] as const).map((axis, i) => (
-              <div key={axis} className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-muted-foreground w-6">{axis}</span>
+        {/* Multi-select: shared dimension overrides */}
+        {isMulti && (
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <Settings2 className="w-3 h-3" /> Batch Dimensions
+            </label>
+            <p className="text-[10px] text-muted-foreground">Set shared dimensions for all selected parts</p>
+            {[
+              { key: "width" as keyof ModelParams, label: "Width", dim: true },
+              { key: "height" as keyof ModelParams, label: "Height", dim: true },
+              { key: "depth" as keyof ModelParams, label: "Depth", dim: true },
+            ].map((p) => (
+              <div key={p.key} className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-muted-foreground w-16 shrink-0">{p.label}</span>
                 <input
                   type="number"
                   step={unit === "mm" ? 1 : 0.1}
-                  value={parseFloat(toDisplay(model.position[i], unit).toFixed(3))}
+                  placeholder="—"
                   onChange={(e) => {
                     const v = parseFloat(e.target.value);
-                    if (!isNaN(v)) handlePositionChange(i as 0 | 1 | 2, v);
+                    if (isNaN(v)) return;
+                    const ids = selectedModels.map((m) => m.id);
+                    const internal = toInternal(v, unit);
+                    ids.forEach((id) => onUpdate(id, { params: { ...selectedModels.find((m) => m.id === id)?.params, [p.key]: internal } }));
                   }}
                   className="flex-1 h-7 rounded-lg bg-muted border border-border text-xs font-bold text-foreground text-center px-2 focus:border-primary focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
@@ -202,21 +212,54 @@ export default function PropertiesPanel({ model, onUpdate, onClose }: Properties
               </div>
             ))}
           </div>
-        </div>
+        )}
 
-        {/* Color Picker */}
+        {/* Position Controls — only for single select */}
+        {!isMulti && (
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <Move3D className="w-3 h-3" /> Position
+            </label>
+            <div className="space-y-1.5">
+              {(["X", "Y", "Z"] as const).map((axis, i) => (
+                <div key={axis} className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-muted-foreground w-6">{axis}</span>
+                  <input
+                    type="number"
+                    step={unit === "mm" ? 1 : 0.1}
+                    value={parseFloat(toDisplay(model.position[i], unit).toFixed(3))}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      if (!isNaN(v)) handlePositionChange(i as 0 | 1 | 2, v);
+                    }}
+                    className="flex-1 h-7 rounded-lg bg-muted border border-border text-xs font-bold text-foreground text-center px-2 focus:border-primary focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <span className="text-[10px] font-bold text-muted-foreground w-6 text-right">{unit}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Color Picker — works for both single and multi */}
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-            <Palette className="w-3 h-3" /> Color
+            <Palette className="w-3 h-3" /> Color {isMulti && "(apply to all)"}
           </label>
           <div className="grid grid-cols-6 gap-1.5">
             {KAWAII_COLORS.map((c) => (
               <button
                 key={c.hex}
-                onClick={() => onUpdate(model.id, { color: c.hex })}
+                onClick={() => {
+                  if (isMulti) {
+                    onBatchUpdate(selectedModels.map((m) => m.id), { color: c.hex });
+                  } else {
+                    onUpdate(model.id, { color: c.hex });
+                  }
+                }}
                 title={c.name}
                 className={`w-7 h-7 rounded-xl border-2 transition-all hover:scale-110 ${
-                  model.color === c.hex
+                  !isMulti && model.color === c.hex
                     ? "border-foreground scale-110 ring-2 ring-primary/30"
                     : "border-transparent"
                 }`}
@@ -227,7 +270,7 @@ export default function PropertiesPanel({ model, onUpdate, onClose }: Properties
         </div>
 
         <p className="text-[10px] text-muted-foreground text-center">
-          {model.label}
+          {isMulti ? selectedModels.map((m) => m.label).join(", ") : model.label}
         </p>
       </div>
     </motion.div>

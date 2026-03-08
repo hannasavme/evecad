@@ -43,8 +43,8 @@ export interface ModelViewerHandle {
 
 interface ModelViewerProps {
   models: SceneModel[];
-  selectedModelId: string | null;
-  onSelectModel: (id: string | null) => void;
+  selectedModelIds: Set<string>;
+  onSelectModel: (id: string | null, additive?: boolean) => void;
 }
 
 function GearMesh({ color, params }: { color: string; params?: ModelParams }) {
@@ -215,7 +215,7 @@ const meshMap: Record<string, React.FC<{ color: string; params?: ModelParams }>>
   cylinder: CylinderMesh,
 };
 
-function SceneModelComponent({ model, isSelected, onSelect }: { model: SceneModel; isSelected: boolean; onSelect: () => void }) {
+function SceneModelComponent({ model, isSelected, onSelect }: { model: SceneModel; isSelected: boolean; onSelect: (e: MouseEvent) => void }) {
   const groupRef = useRef<THREE.Group>(null);
   const MeshComp = meshMap[model.type] || BoxMesh;
 
@@ -224,7 +224,7 @@ function SceneModelComponent({ model, isSelected, onSelect }: { model: SceneMode
       ref={groupRef}
       position={model.position}
       scale={model.scale}
-      onClick={(e) => { e.stopPropagation(); onSelect(); }}
+      onClick={(e) => { e.stopPropagation(); onSelect(e.nativeEvent); }}
     >
       <MeshComp color={model.color} params={model.params} />
       {isSelected && (
@@ -254,7 +254,7 @@ function SceneCapture({ onSceneReady, onControlsReady }: { onSceneReady: (scene:
   return null;
 }
 
-function Scene({ models, selectedModelId, onSelectModel }: ModelViewerProps) {
+function Scene({ models, selectedModelIds, onSelectModel }: ModelViewerProps) {
   return (
     <>
       <ambientLight intensity={0.6} />
@@ -266,8 +266,8 @@ function Scene({ models, selectedModelId, onSelectModel }: ModelViewerProps) {
         <SceneModelComponent
           key={m.id}
           model={m}
-          isSelected={selectedModelId === m.id}
-          onSelect={() => onSelectModel(m.id)}
+          isSelected={selectedModelIds.has(m.id)}
+          onSelect={(e) => onSelectModel(m.id, e.ctrlKey || e.metaKey || e.shiftKey)}
         />
       ))}
 
@@ -300,7 +300,7 @@ function Scene({ models, selectedModelId, onSelectModel }: ModelViewerProps) {
 }
 
 const ModelViewer = forwardRef<ModelViewerHandle, ModelViewerProps>(
-  ({ models, selectedModelId, onSelectModel }, ref) => {
+  ({ models, selectedModelIds, onSelectModel }, ref) => {
     const sceneRef = useRef<THREE.Scene | null>(null);
     const resetRef = useRef<(() => void) | null>(null);
 
@@ -321,7 +321,7 @@ const ModelViewer = forwardRef<ModelViewerHandle, ModelViewerProps>(
               onSceneReady={(s) => { sceneRef.current = s; }}
               onControlsReady={(fn) => { resetRef.current = fn; }}
             />
-            <Scene models={models} selectedModelId={selectedModelId} onSelectModel={onSelectModel} />
+            <Scene models={models} selectedModelIds={selectedModelIds} onSelectModel={onSelectModel} />
           </Suspense>
         </Canvas>
       </div>
