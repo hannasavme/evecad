@@ -1734,20 +1734,26 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const fh = dims.h * viewScale;
 
         // View zone widths
-        const numViews = 3 + (showSection ? 1 : 0) + (showIsometric ? 1 : 0);
-        const viewZoneW = (drawAreaW - 20) / Math.min(numViews, showIsometric ? 4 : 3);
+        const extraViewCount = (showSection ? 1 : 0) + (showIsometric ? 1 : 0) + (showPerspective ? 1 : 0) + (showDimetric ? 1 : 0) + (showTrimetric ? 1 : 0);
+        const numViews = 3 + extraViewCount;
+        const viewZoneW = (drawAreaW - 20) / Math.min(numViews, 4);
         const viewZoneH = 180;
 
         // Default positions for each view
+        let colIdx = 0;
         const partDefaults: Record<string, { x: number; y: number }> = {
           [`part-${globalIdx}-front`]: { x: margin + 10, y: partY + 20 },
           [`part-${globalIdx}-side`]: { x: margin + 10 + viewZoneW, y: partY + 20 },
           [`part-${globalIdx}-top`]: { x: margin + 10, y: partY + 20 + viewZoneH + 5 },
-          [`part-${globalIdx}-section`]: { x: margin + 10 + viewZoneW * 2, y: partY + 20 },
-          [`part-${globalIdx}-iso`]: { x: margin + 10 + viewZoneW * (showSection ? 3 : 2), y: partY + 20 },
         };
+        colIdx = 2;
+        if (showSection) { partDefaults[`part-${globalIdx}-section`] = { x: margin + 10 + viewZoneW * colIdx, y: partY + 20 }; colIdx++; }
+        if (showIsometric) { partDefaults[`part-${globalIdx}-iso`] = { x: margin + 10 + viewZoneW * (colIdx % 4), y: partY + 20 + (colIdx >= 4 ? viewZoneH + 5 : 0) }; colIdx++; }
+        if (showPerspective) { partDefaults[`part-${globalIdx}-perspective`] = { x: margin + 10 + viewZoneW * (colIdx % 4), y: partY + 20 + (colIdx >= 4 ? viewZoneH + 5 : 0) }; colIdx++; }
+        if (showDimetric) { partDefaults[`part-${globalIdx}-dimetric`] = { x: margin + 10 + viewZoneW * (colIdx % 4), y: partY + 20 + (colIdx >= 4 ? viewZoneH + 5 : 0) }; colIdx++; }
+        if (showTrimetric) { partDefaults[`part-${globalIdx}-trimetric`] = { x: margin + 10 + viewZoneW * (colIdx % 4), y: partY + 20 + (colIdx >= 4 ? viewZoneH + 5 : 0) }; colIdx++; }
 
-        const getPartViewPos = (key: string) => viewPositions[key] || partDefaults[key];
+        const getPartViewPos = (key: string) => viewPositions[key] || partDefaults[key] || { x: margin + 10, y: partY + 20 };
 
         const partViewRects = (): ViewRect[] => {
           const rects: ViewRect[] = [
@@ -1757,6 +1763,9 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
           ];
           if (showSection) rects.push({ id: `part-${globalIdx}-section`, ...getPartViewPos(`part-${globalIdx}-section`), w: viewZoneW - 10, h: viewZoneH });
           if (showIsometric) rects.push({ id: `part-${globalIdx}-iso`, ...getPartViewPos(`part-${globalIdx}-iso`), w: viewZoneW - 10, h: viewZoneH });
+          if (showPerspective) rects.push({ id: `part-${globalIdx}-perspective`, ...getPartViewPos(`part-${globalIdx}-perspective`), w: viewZoneW - 10, h: viewZoneH });
+          if (showDimetric) rects.push({ id: `part-${globalIdx}-dimetric`, ...getPartViewPos(`part-${globalIdx}-dimetric`), w: viewZoneW - 10, h: viewZoneH });
+          if (showTrimetric) rects.push({ id: `part-${globalIdx}-trimetric`, ...getPartViewPos(`part-${globalIdx}-trimetric`), w: viewZoneW - 10, h: viewZoneH });
           return rects;
         };
 
@@ -1777,6 +1786,9 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const tPos = getPartViewPos(`part-${globalIdx}-top`);
         const secPos = getPartViewPos(`part-${globalIdx}-section`);
         const iPos = getPartViewPos(`part-${globalIdx}-iso`);
+        const perspPos = getPartViewPos(`part-${globalIdx}-perspective`);
+        const dimPos = getPartViewPos(`part-${globalIdx}-dimetric`);
+        const trimPos = getPartViewPos(`part-${globalIdx}-trimetric`);
 
         const vw = viewZoneW - 10;
         const frontCx = fPos.x + vw / 2;
@@ -1789,6 +1801,12 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const sectionCy = secPos.y + viewZoneH / 2 + 10;
         const isoCx = iPos.x + vw / 2;
         const isoCy = iPos.y + viewZoneH / 2 + 10;
+        const perspCx = perspPos.x + vw / 2;
+        const perspCy = perspPos.y + viewZoneH / 2 + 10;
+        const dimCx = dimPos.x + vw / 2;
+        const dimCy = dimPos.y + viewZoneH / 2 + 10;
+        const trimCx = trimPos.x + vw / 2;
+        const trimCy = trimPos.y + viewZoneH / 2 + 10;
 
         return (
           <g key={model.id}>
