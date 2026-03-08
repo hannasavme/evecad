@@ -122,24 +122,27 @@ For MULTI-VEHICLE systems (swarms, fleets, convoys), model EACH vehicle separate
 
 Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track.
 
-Shape guide with DETAILED usage:
-- box: chassis bodies, panels, frames, housings, blocks, covers, instrument boxes, docking bays
+COMPOUND TYPE RULES (HIGHEST PRIORITY — ALWAYS FOLLOW):
+- "wheel" type: Use for ANY kind of wheel — car wheel, rover wheel, bicycle wheel, cart wheel, etc. The compound "wheel" type auto-renders with detailed tire, spoked rim, hub cap, axle hole, and tread pattern. NEVER build wheels from cylinder+torus — always use "wheel" type.
+- "camera" type: Use for ANY camera or optical sensor. Auto-renders with body, lens barrel, glass element, LED indicator, and mounting bracket.
+- "antenna" type: Use for ANY antenna, satellite dish, or communication dish. Auto-renders with parabolic dish, mast, feed horn, and support struts.
+- "drill" type: Use for ANY drill, boring tool, or auger. Auto-renders with motor housing, chuck, helical spiral bit, and tapered tip.
+- "track" type: Use for ANY tank/caterpillar track system. Auto-renders with road wheels, drive sprocket, idler wheel, and track pads.
+
+If user asks to "generate a wheel" → use type "wheel" (it IS a wheel).
+If user asks for an impeller/turbine/fan → use wedges/plates arranged radially around a cylinder hub.
+
+Shape guide for BASIC types:
+- box: chassis bodies, panels, frames, housings, blocks, covers
 - cylinder: axles, shafts, rods, masts, poles, barrels, rollers, hubs, pistons
 - sphere: domes, ball joints, pressure vessels
 - cone: nozzles, funnels, tapered connectors, nose cones
-- wedge: ramps, angled armor, aerodynamic noses, sloped panels, plow blades
+- wedge: ramps, angled armor, blades (turbine/impeller blades), sloped panels
 - torus: seals, o-rings, circular rails, rings
-- tube: hollow pipes, exhaust tubes, cable conduits, structural tubes, handles, roll cages
-- plate: solar panels, flat mounting plates, fins, wings, shelves, flanges, ground plates, skid plates
+- tube: hollow pipes, exhaust tubes, cable conduits, structural tubes
+- plate: solar panels, flat mounting plates, fins, wings, shelves, flanges
 - gear: drive gears, sprockets, cogs, reduction gears
 - bracket: L-shaped mounts, suspension arms, support struts, hinged arms
-- **wheel**: DETAILED wheel with tire, rim, hub, spokes, and treads — use for ANY wheel
-- **camera**: DETAILED camera with body, lens barrel, glass, LED indicator, mount — use for cameras/sensors
-- **antenna**: DETAILED antenna with parabolic dish, mast, feed horn, support struts — use for antennas/dishes
-- **drill**: DETAILED drill with motor housing, chuck, spiral bit, tip — use for drills/boring tools
-- **track**: DETAILED tank track with road wheels, drive sprocket, idler, track pads — use for tracked vehicles
-
-IMPORTANT: ALWAYS use compound types (wheel, camera, antenna, drill, track) instead of basic cylinders/spheres for these components. They render with much higher visual detail automatically.
 
 For each part, provide:
 - type: one of the available shapes
@@ -169,11 +172,12 @@ Params:
   - track: trackLength (1-6), trackWidth (0.1-0.8), wheelCount (3-8), radius (0.1-0.5)
 
 CRITICAL RULES:
-1. ALWAYS use wheel for wheels, camera for cameras, antenna for antennas, drill for drills, track for tracked vehicles.
+1. ALWAYS use compound types (wheel, camera, antenna, drill, track) when the object IS one of those things. NEVER substitute with basic primitives.
 2. Use 30-60+ parts for complex objects.
 3. For MULTI-VEHICLE scenes: position each vehicle separately (offset by 5-8 units).
 4. Position with PRECISION: wheels touch ground, axles align, panels connect flush.
 5. Use ROTATION for realism: suspension arms, tilted panels, angled cameras.
+6. When user says "wheel" they mean a WHEEL — use type "wheel". Only use wedges for impeller/turbine blades.
 ${researchContext ? `\n\nREFERENCE RESEARCH (use for accurate proportions and structure):\n${researchContext}` : ""}
 
 You MUST call the parse_cad function.`;
