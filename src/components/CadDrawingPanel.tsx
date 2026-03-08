@@ -1866,7 +1866,33 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
               </DraggableViewPanel>
             )}
 
-            {/* Projection lines */}
+            {/* PERSPECTIVE VIEW */}
+            {showPerspective && (
+              <DraggableViewPanel id={`part-${globalIdx}-perspective`} x={perspPos.x} y={perspPos.y} w={vw} h={viewZoneH} onDragEnd={handlePartViewDrag} label="PERSPECTIVE">
+                <text x={perspCx} y={perspPos.y + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">PERSPECTIVE VIEW</text>
+                <rect x={perspPos.x} y={perspPos.y + 12} width={vw} height={viewZoneH - 15} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" rx={2} />
+                {getPerspectiveView(model.type, dims.w * viewScale, dims.h * viewScale, dims.d * viewScale, perspCx, perspCy)}
+              </DraggableViewPanel>
+            )}
+
+            {/* DIMETRIC VIEW */}
+            {showDimetric && (
+              <DraggableViewPanel id={`part-${globalIdx}-dimetric`} x={dimPos.x} y={dimPos.y} w={vw} h={viewZoneH} onDragEnd={handlePartViewDrag} label="DIMETRIC">
+                <text x={dimCx} y={dimPos.y + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">DIMETRIC VIEW</text>
+                <rect x={dimPos.x} y={dimPos.y + 12} width={vw} height={viewZoneH - 15} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" rx={2} />
+                {getDimetricView(model.type, dims.w * viewScale, dims.h * viewScale, dims.d * viewScale, dimCx, dimCy)}
+              </DraggableViewPanel>
+            )}
+
+            {/* TRIMETRIC VIEW */}
+            {showTrimetric && (
+              <DraggableViewPanel id={`part-${globalIdx}-trimetric`} x={trimPos.x} y={trimPos.y} w={vw} h={viewZoneH} onDragEnd={handlePartViewDrag} label="TRIMETRIC">
+                <text x={trimCx} y={trimPos.y + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">TRIMETRIC VIEW</text>
+                <rect x={trimPos.x} y={trimPos.y + 12} width={vw} height={viewZoneH - 15} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" rx={2} />
+                {getTrimetricView(model.type, dims.w * viewScale, dims.h * viewScale, dims.d * viewScale, trimCx, trimCy)}
+              </DraggableViewPanel>
+            )}
+
             <line x1={frontCx + fw / 2 + 10} y1={frontCy} x2={sideCx - dims.d * viewScale / 2 - 10} y2={sideCy} stroke={HIDDEN_COLOR} strokeWidth={0.2} strokeDasharray="4 3" />
             <line x1={frontCx} y1={frontCy + fh / 2 + 10} x2={topCx} y2={topCy - dims.d * viewScale / 2 - 10} stroke={HIDDEN_COLOR} strokeWidth={0.2} strokeDasharray="4 3" />
 
