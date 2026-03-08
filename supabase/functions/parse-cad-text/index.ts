@@ -904,24 +904,21 @@ PART COUNT GUIDELINES:
 6. When user says "wheel" they mean a WHEEL — use type "wheel". Only use wedges for impeller/turbine blades.
 7. *** BUILT-IN ORIENTATION: wheel, bearing, pulley types are ALREADY rendered upright (vertical). Do NOT rotate them by 90° on X. Use rotation=[0,0,0] for standard upright wheels. Only rotate Y for steering. Same for antenna (already renders mast vertical). ***
 
-SPATIAL CONNECTIVITY RULES (CRITICAL — parts MUST physically connect):
-7. CHAIN POSITIONING: For articulated/linked objects (robotic arms, cranes, excavators, linkages), compute each part's position based on the PREVIOUS part's position + its dimensions. Example for a robotic arm:
+SPATIAL CONNECTIVITY RULES (HIGHEST PRIORITY — VIOLATION = FAILURE):
+7. NO FLOATING PARTS — ZERO TOLERANCE: Every single part MUST physically touch at least one other part. The entire assembly must form ONE connected body. Think of it as: if you picked up any part, could you lift the entire assembly? If not, parts are floating and the output is INVALID.
+8. CHAIN POSITIONING: For articulated/linked objects (robotic arms, cranes, excavators, linkages), compute each part's position based on the PREVIOUS part's position + its dimensions. Example for a robotic arm:
    - Base at [0, 0, 0] with height H1 → next joint center at [0, H1, 0]
    - Link1 at [0, H1, 0] with length L1 rotated by angle A → next joint at [0, H1 + L1*sin(A), L1*cos(A)]
    - Continue chaining: each part's origin = previous part's END point.
-8. JOINT SPHERES: Place a sphere (radius ~0.1-0.2) at EVERY joint/connection point between links. This creates visible pivot points.
-9. FLUSH CONTACT: When two parts touch (bolt in hole, plate on frame, gear on shaft), their surfaces MUST share the exact same coordinate. Calculate: part2.position = part1.position ± (part1.dimension/2 + part2.dimension/2) along the contact axis.
-10. STACKING: For vertically stacked parts, each part.y = previous_part.y + previous_part.height/2 + current_part.height/2.
-11. CENTERING: Parts that share an axis (shaft through bearing, bolt through plate) MUST have identical x,z (or appropriate axis) coordinates.
-12. NO FLOATING PARTS: Every part except the base/ground part must be spatially connected to at least one other part. No gaps > 0.01 units between connected parts.
+9. JOINT SPHERES: Place a sphere (radius ~0.1-0.2) at EVERY joint/connection point between links. This creates visible pivot points.
+10. FLUSH CONTACT: When two parts touch (bolt in hole, plate on frame, gear on shaft), their surfaces MUST share the exact same coordinate. Calculate: part2.position = part1.position ± (part1.dimension/2 + part2.dimension/2) along the contact axis.
+11. STACKING: For vertically stacked parts, each part.y = previous_part.y + previous_part.height/2 + current_part.height/2.
+12. CENTERING: Parts that share an axis (shaft through bearing, bolt through plate) MUST have identical x,z (or appropriate axis) coordinates.
 13. SIZE CONSISTENCY: Use real-world proportional sizing. A robotic arm base should be wider than the links. End effectors should be smaller than the arm segments. Joints should match the link diameters.
 14. GROUND CONTACT: The lowest part of any assembly should have its bottom at y=0 (position.y = height/2).
-
-POSITIONING MATH EXAMPLES:
-- Cylinder (r=0.5, h=2) at [0,1,0] → top face at y=2, bottom at y=0
-- Box on top: box.y = 2 + box.height/2
-- Shaft through cylinder center: shaft.x = cylinder.x, shaft.z = cylinder.z
-- Rotated link (45°): endpoint.y = start.y + length * sin(45°), endpoint.z = start.z + length * cos(45°)
+15. MATHEMATICAL VERIFICATION: Before outputting positions, mentally verify: for EACH part, does its bounding box overlap or touch at least ONE other part's bounding box? If |pos_A[axis] - pos_B[axis]| > (size_A[axis]/2 + size_B[axis]/2 + 0.1) on ANY axis, they are NOT connected.
+16. WHEELS TOUCH GROUND: Wheel parts must have position.y = wheel_radius (so bottom of wheel is at y=0). Chassis must sit ABOVE the wheels.
+17. SUSPENSION CONNECTS: Rocker/bogie arms must physically bridge between chassis pivot points and wheel mounts — no floating suspension members.
 ${researchContext ? `\n\nREFERENCE RESEARCH (use for accurate proportions and structure):\n${researchContext}` : ""}
 
 You MUST call the parse_cad function.`;
