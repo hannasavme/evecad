@@ -129,7 +129,7 @@ export default function Index() {
           };
           setTimeout(() => {
             setModelsImmediate((prev) => [...prev, newModel]);
-            setSelectedModelId(newModel.id);
+            handleSelectModel(newModel.id);
             setShowInput(false);
             setIsGenerating(false);
             toast.success(`${type} generated!`);
