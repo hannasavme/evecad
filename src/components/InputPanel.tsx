@@ -77,7 +77,7 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <m.icon className="w-3.5 h-3.5" />
+            
             {m.label}
           </button>
         ))}
