@@ -1061,7 +1061,7 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
           <g key={model.id}>
             {/* Part label */}
             <text x={margin + 10} y={partY + 10} fontSize={10} fontWeight="bold" fill={CENTER_COLOR} fontFamily="monospace">
-              Part {idx + 1}: {model.label} ({model.type})
+              Part {globalIdx + 1}: {model.label} ({model.type})
             </text>
 
             {/* View labels */}
