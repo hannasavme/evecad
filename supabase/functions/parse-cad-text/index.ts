@@ -156,6 +156,14 @@ COMPOUND TYPE RULES (HIGHEST PRIORITY — ALWAYS FOLLOW):
 - "nozzle": ANY rocket nozzle — auto-renders convergent-divergent bell shape with exit ring.
 - "ebay": ANY avionics bay — auto-renders semi-transparent tube with internal PCB sled, switch band, threaded rods.
 - "baffle": ANY ejection baffle — auto-renders perforated disk with gas vent holes.
+- "fuselage": ANY orbiter/shuttle/aircraft fuselage section — auto-renders streamlined body with rounded-rect cross-section, nose taper, window band, belly heat shield, ring frames.
+- "wing": ANY delta/swept wing pair — auto-renders left+right wings with leading-edge RCC panels, aileron hinge lines, dihedral angle.
+- "enginebell": ANY large rocket engine (RS-25, RL-10, Merlin) — auto-renders convergent-divergent bell nozzle with combustion chamber, turbopump, feed lines, gimbal mount.
+- "omspod": ANY OMS/orbital maneuvering pod — auto-renders streamlined pod with OMS nozzle and RCS thruster cluster.
+- "rcsthruster": ANY RCS thruster — auto-renders small mounting block with 1-4 nozzles and fuel feed line.
+- "proptank": ANY propellant/oxidizer tank — auto-renders cylindrical pressure vessel with domed ends, stringers, ring frames, feed ports.
+- "reactionwheel": ANY reaction/momentum wheel — auto-renders flywheel with housing, hub motor, spokes, encoder, mounting base.
+- "avionicsbox": ANY avionics/electronics enclosure — auto-renders box with front-panel connectors, heat sink fins, EMI gasket, mounting ears, cable harness connector.
 
 If user asks to "generate a wheel" → use type "wheel" (NOT impeller).
 If user asks for an impeller/turbine/fan → use wedges/plates radially around a cylinder hub.
