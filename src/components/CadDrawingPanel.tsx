@@ -192,6 +192,210 @@ function getIsometricView(type: string, pw: number, ph: number, pd: number, cx: 
   return isometricBox(cx, cy, pw, ph, pd);
 }
 
+// ─── Dimetric projection helpers (unequal foreshortening) ──────────
+
+function dimetricProject(cx: number, cy: number, x: number, y: number, z: number) {
+  // Dimetric: 7° and 42° axes, x foreshortened to ~0.5
+  const cosA = Math.cos(Math.PI / 26); // ~7°
+  const sinA = Math.sin(Math.PI / 26);
+  const cosB = Math.cos(Math.PI / 4.3); // ~42°
+  const sinB = Math.sin(Math.PI / 4.3);
+  return {
+    x: cx + x * cosA * 0.5 - z * cosB,
+    y: cy - y + x * sinA * 0.5 + z * sinB,
+  };
+}
+
+function dimetricBox(cx: number, cy: number, w: number, h: number, d: number) {
+  const hw = w / 2, hh = h / 2, hd = d / 2;
+  const p = (x: number, y: number, z: number) => dimetricProject(cx, cy, x, y, z);
+  const fbl = p(-hw, -hh, -hd), fbr = p(hw, -hh, -hd), ftl = p(-hw, hh, -hd), ftr = p(hw, hh, -hd);
+  const bbl = p(-hw, -hh, hd), bbr = p(hw, -hh, hd), btl = p(-hw, hh, hd), btr = p(hw, hh, hd);
+  return (
+    <>
+      <polygon points={`${fbl.x},${fbl.y} ${fbr.x},${fbr.y} ${ftr.x},${ftr.y} ${ftl.x},${ftl.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <polygon points={`${ftl.x},${ftl.y} ${ftr.x},${ftr.y} ${btr.x},${btr.y} ${btl.x},${btl.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.2} />
+      <polygon points={`${fbr.x},${fbr.y} ${bbr.x},${bbr.y} ${btr.x},${btr.y} ${ftr.x},${ftr.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.2} />
+      <line x1={bbl.x} y1={bbl.y} x2={bbr.x} y2={bbr.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={bbl.x} y1={bbl.y} x2={btl.x} y2={btl.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={bbl.x} y1={bbl.y} x2={fbl.x} y2={fbl.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+    </>
+  );
+}
+
+function dimetricCylinder(cx: number, cy: number, w: number, h: number) {
+  const r = w / 2;
+  const hh = h / 2;
+  const ry = r * 0.25;
+  return (
+    <>
+      <ellipse cx={cx} cy={cy - hh} rx={r} ry={ry} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <path d={`M${cx - r},${cy + hh} A${r},${ry} 0 0,0 ${cx + r},${cy + hh}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <path d={`M${cx - r},${cy + hh} A${r},${ry} 0 0,1 ${cx + r},${cy + hh}`} fill="none" stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={cx - r} y1={cy - hh} x2={cx - r} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+      <line x1={cx + r} y1={cy - hh} x2={cx + r} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+      {centerLines(cx, cy, r, hh + ry)}
+    </>
+  );
+}
+
+function getDimetricView(type: string, pw: number, ph: number, pd: number, cx: number, cy: number): JSX.Element {
+  const roundTypes = ["cylinder", "tube", "shaft", "drill"];
+  const sphereTypes = ["sphere"];
+  const discTypes = ["gear", "bearing", "pulley", "wheel"];
+  if (roundTypes.includes(type)) return dimetricCylinder(cx, cy, pw, ph);
+  if (sphereTypes.includes(type)) return isometricSphere(cx, cy, pw / 2); // sphere looks same
+  if (discTypes.includes(type)) return dimetricCylinder(cx, cy, pw, pd);
+  return dimetricBox(cx, cy, pw, ph, pd);
+}
+
+// ─── Trimetric projection helpers (all axes different) ──────────
+
+function trimetricProject(cx: number, cy: number, x: number, y: number, z: number) {
+  // Trimetric: ~15° and ~35° axes
+  const cosA = Math.cos(Math.PI / 12);  // 15°
+  const sinA = Math.sin(Math.PI / 12);
+  const cosB = Math.cos(Math.PI / 5.1); // ~35°
+  const sinB = Math.sin(Math.PI / 5.1);
+  return {
+    x: cx + x * cosA - z * cosB * 0.7,
+    y: cy - y + x * sinA + z * sinB * 0.7,
+  };
+}
+
+function trimetricBox(cx: number, cy: number, w: number, h: number, d: number) {
+  const hw = w / 2, hh = h / 2, hd = d / 2;
+  const p = (x: number, y: number, z: number) => trimetricProject(cx, cy, x, y, z);
+  const fbl = p(-hw, -hh, -hd), fbr = p(hw, -hh, -hd), ftl = p(-hw, hh, -hd), ftr = p(hw, hh, -hd);
+  const bbl = p(-hw, -hh, hd), bbr = p(hw, -hh, hd), btl = p(-hw, hh, hd), btr = p(hw, hh, hd);
+  return (
+    <>
+      <polygon points={`${fbl.x},${fbl.y} ${fbr.x},${fbr.y} ${ftr.x},${ftr.y} ${ftl.x},${ftl.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <polygon points={`${ftl.x},${ftl.y} ${ftr.x},${ftr.y} ${btr.x},${btr.y} ${btl.x},${btl.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.2} />
+      <polygon points={`${fbr.x},${fbr.y} ${bbr.x},${bbr.y} ${btr.x},${btr.y} ${ftr.x},${ftr.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.2} />
+      <line x1={bbl.x} y1={bbl.y} x2={bbr.x} y2={bbr.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={bbl.x} y1={bbl.y} x2={btl.x} y2={btl.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={bbl.x} y1={bbl.y} x2={fbl.x} y2={fbl.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+    </>
+  );
+}
+
+function trimetricCylinder(cx: number, cy: number, w: number, h: number) {
+  const r = w / 2;
+  const hh = h / 2;
+  const ry = r * 0.3;
+  return (
+    <>
+      <ellipse cx={cx - r * 0.1} cy={cy - hh} rx={r} ry={ry} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <path d={`M${cx - r * 1.1},${cy + hh} A${r},${ry} 0 0,0 ${cx + r * 0.9},${cy + hh}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <path d={`M${cx - r * 1.1},${cy + hh} A${r},${ry} 0 0,1 ${cx + r * 0.9},${cy + hh}`} fill="none" stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={cx - r * 1.1} y1={cy - hh} x2={cx - r * 1.1} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+      <line x1={cx + r * 0.9} y1={cy - hh} x2={cx + r * 0.9} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+      {centerLines(cx, cy, r * 1.1, hh + ry)}
+    </>
+  );
+}
+
+function getTrimetricView(type: string, pw: number, ph: number, pd: number, cx: number, cy: number): JSX.Element {
+  const roundTypes = ["cylinder", "tube", "shaft", "drill"];
+  const sphereTypes = ["sphere"];
+  const discTypes = ["gear", "bearing", "pulley", "wheel"];
+  if (roundTypes.includes(type)) return trimetricCylinder(cx, cy, pw, ph);
+  if (sphereTypes.includes(type)) return isometricSphere(cx, cy, pw / 2);
+  if (discTypes.includes(type)) return trimetricCylinder(cx, cy, pw, pd);
+  return trimetricBox(cx, cy, pw, ph, pd);
+}
+
+// ─── Perspective projection helpers (1-point perspective) ──────────
+
+function perspectiveProject(cx: number, cy: number, x: number, y: number, z: number, focalLength: number = 300) {
+  const d = focalLength / (focalLength + z);
+  return {
+    x: cx + x * d,
+    y: cy - y * d,
+  };
+}
+
+function perspectiveBox(cx: number, cy: number, w: number, h: number, d: number) {
+  const hw = w / 2, hh = h / 2, hd = d / 2;
+  const fl = 250;
+  const p = (x: number, y: number, z: number) => perspectiveProject(cx, cy, x, y, z, fl);
+  const fbl = p(-hw, -hh, -hd), fbr = p(hw, -hh, -hd), ftl = p(-hw, hh, -hd), ftr = p(hw, hh, -hd);
+  const bbl = p(-hw, -hh, hd), bbr = p(hw, -hh, hd), btl = p(-hw, hh, hd), btr = p(hw, hh, hd);
+  return (
+    <>
+      {/* Front face */}
+      <polygon points={`${fbl.x},${fbl.y} ${fbr.x},${fbr.y} ${ftr.x},${ftr.y} ${ftl.x},${ftl.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      {/* Top face */}
+      <polygon points={`${ftl.x},${ftl.y} ${ftr.x},${ftr.y} ${btr.x},${btr.y} ${btl.x},${btl.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.0} />
+      {/* Right face */}
+      <polygon points={`${fbr.x},${fbr.y} ${bbr.x},${bbr.y} ${btr.x},${btr.y} ${ftr.x},${ftr.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.0} />
+      {/* Hidden edges */}
+      <line x1={bbl.x} y1={bbl.y} x2={bbr.x} y2={bbr.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={bbl.x} y1={bbl.y} x2={btl.x} y2={btl.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={bbl.x} y1={bbl.y} x2={fbl.x} y2={fbl.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+    </>
+  );
+}
+
+function perspectiveCylinder(cx: number, cy: number, w: number, h: number) {
+  const r = w / 2;
+  const hh = h / 2;
+  // Front ellipse is larger (closer), back is smaller (farther)
+  const frontScale = 250 / (250 - hh * 0.4);
+  const backScale = 250 / (250 + hh * 0.4);
+  const frontR = r * Math.min(frontScale, 1.15);
+  const backR = r * Math.max(backScale, 0.75);
+  const frontRy = frontR * 0.35;
+  const backRy = backR * 0.35;
+  return (
+    <>
+      <ellipse cx={cx} cy={cy - hh} rx={backR} ry={backRy} fill="none" stroke={LINE_COLOR} strokeWidth={1.2} />
+      <path d={`M${cx - frontR},${cy + hh} A${frontR},${frontRy} 0 0,0 ${cx + frontR},${cy + hh}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <path d={`M${cx - frontR},${cy + hh} A${frontR},${frontRy} 0 0,1 ${cx + frontR},${cy + hh}`} fill="none" stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={cx - backR} y1={cy - hh} x2={cx - frontR} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+      <line x1={cx + backR} y1={cy - hh} x2={cx + frontR} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+      {centerLines(cx, cy, frontR, hh + frontRy)}
+    </>
+  );
+}
+
+function perspectiveSphere(cx: number, cy: number, r: number) {
+  return (
+    <>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <ellipse cx={cx} cy={cy + r * 0.05} rx={r * 0.95} ry={r * 0.32} fill="none" stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      {centerLines(cx, cy, r, r)}
+    </>
+  );
+}
+
+function getPerspectiveView(type: string, pw: number, ph: number, pd: number, cx: number, cy: number): JSX.Element {
+  const roundTypes = ["cylinder", "tube", "shaft", "drill"];
+  const sphereTypes = ["sphere"];
+  const discTypes = ["gear", "bearing", "pulley", "wheel"];
+  if (roundTypes.includes(type)) return perspectiveCylinder(cx, cy, pw, ph);
+  if (sphereTypes.includes(type)) return perspectiveSphere(cx, cy, pw / 2);
+  if (discTypes.includes(type)) return perspectiveCylinder(cx, cy, pw, pd);
+  if (type === "cone") {
+    const topR = pw * 0.15;
+    const botR = pw / 2;
+    const hh = ph / 2;
+    const frontScale = Math.min(250 / (250 - hh * 0.3), 1.1);
+    const backScale = Math.max(250 / (250 + hh * 0.3), 0.8);
+    return (
+      <>
+        <ellipse cx={cx} cy={cy - hh} rx={topR * backScale} ry={topR * backScale * 0.35} fill="none" stroke={LINE_COLOR} strokeWidth={1} />
+        <path d={`M${cx - botR * frontScale},${cy + hh} A${botR * frontScale},${botR * frontScale * 0.35} 0 0,0 ${cx + botR * frontScale},${cy + hh}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+        <line x1={cx - topR * backScale} y1={cy - hh} x2={cx - botR * frontScale} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+        <line x1={cx + topR * backScale} y1={cy - hh} x2={cx + botR * frontScale} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+        {centerLines(cx, cy, botR * frontScale, hh + botR * frontScale * 0.35)}
+      </>
+    );
+  }
+  return perspectiveBox(cx, cy, pw, ph, pd);
+}
+
 const PROFILES: Record<string, Partial<ShapeProfile>> = {
   box: { w: 1.2, h: 1.2, d: 1.2 },
   cylinder: {
