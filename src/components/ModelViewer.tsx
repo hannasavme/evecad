@@ -7,6 +7,8 @@ export interface SceneModel {
   id: string;
   type: "gear" | "bracket" | "box" | "cylinder";
   position: [number, number, number];
+  scale: [number, number, number];
+  color: string;
   label: string;
 }
 
@@ -20,7 +22,7 @@ interface ModelViewerProps {
   onSelectModel: (id: string | null) => void;
 }
 
-function GearMesh() {
+function GearMesh({ color }: { color: string }) {
   const geometry = useMemo(() => {
     const shape = new THREE.Shape();
     const teeth = 16;
@@ -44,45 +46,50 @@ function GearMesh() {
     shape.holes.push(hole);
     return new THREE.ExtrudeGeometry(shape, { depth: 0.4, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 3 });
   }, []);
-  return <mesh geometry={geometry} rotation={[Math.PI / 2, 0, 0]}><meshStandardMaterial color="#f9a8d4" metalness={0.3} roughness={0.4} /></mesh>;
+  return <mesh geometry={geometry} rotation={[Math.PI / 2, 0, 0]}><meshStandardMaterial color={color} metalness={0.3} roughness={0.4} /></mesh>;
 }
 
-function BracketMesh() {
+function BracketMesh({ color }: { color: string }) {
   return (
     <group>
-      <mesh><boxGeometry args={[2, 0.2, 0.8]} /><meshStandardMaterial color="#c4b5fd" metalness={0.3} roughness={0.4} /></mesh>
-      <mesh position={[-0.8, 0.5, 0]}><boxGeometry args={[0.2, 1, 0.8]} /><meshStandardMaterial color="#c4b5fd" metalness={0.3} roughness={0.4} /></mesh>
-      <mesh position={[0.8, 0.5, 0]}><boxGeometry args={[0.2, 1, 0.8]} /><meshStandardMaterial color="#c4b5fd" metalness={0.3} roughness={0.4} /></mesh>
+      <mesh><boxGeometry args={[2, 0.2, 0.8]} /><meshStandardMaterial color={color} metalness={0.3} roughness={0.4} /></mesh>
+      <mesh position={[-0.8, 0.5, 0]}><boxGeometry args={[0.2, 1, 0.8]} /><meshStandardMaterial color={color} metalness={0.3} roughness={0.4} /></mesh>
+      <mesh position={[0.8, 0.5, 0]}><boxGeometry args={[0.2, 1, 0.8]} /><meshStandardMaterial color={color} metalness={0.3} roughness={0.4} /></mesh>
     </group>
   );
 }
 
-function CylinderMesh() {
+function CylinderMesh({ color }: { color: string }) {
   return (
     <group>
-      <mesh><cylinderGeometry args={[0.8, 0.8, 1.5, 32]} /><meshStandardMaterial color="#a5f3fc" metalness={0.3} roughness={0.4} /></mesh>
-      <mesh><cylinderGeometry args={[0.3, 0.3, 1.6, 32]} /><meshStandardMaterial color="#fef3c7" metalness={0.2} roughness={0.5} /></mesh>
+      <mesh><cylinderGeometry args={[0.8, 0.8, 1.5, 32]} /><meshStandardMaterial color={color} metalness={0.3} roughness={0.4} /></mesh>
+      <mesh><cylinderGeometry args={[0.3, 0.3, 1.6, 32]} /><meshStandardMaterial color={color} metalness={0.2} roughness={0.5} opacity={0.3} transparent /></mesh>
     </group>
   );
 }
 
-function BoxMesh() {
+function BoxMesh({ color }: { color: string }) {
   return (
-    <mesh><boxGeometry args={[1.2, 1.2, 1.2]} /><meshStandardMaterial color="#d8b4fe" metalness={0.2} roughness={0.4} /></mesh>
+    <mesh><boxGeometry args={[1.2, 1.2, 1.2]} /><meshStandardMaterial color={color} metalness={0.2} roughness={0.4} /></mesh>
   );
 }
 
-const meshMap: Record<string, React.FC> = { gear: GearMesh, bracket: BracketMesh, box: BoxMesh, cylinder: CylinderMesh };
+const meshMap: Record<string, React.FC<{ color: string }>> = { gear: GearMesh, bracket: BracketMesh, box: BoxMesh, cylinder: CylinderMesh };
 
 function SceneModelComponent({ model, isSelected, onSelect }: { model: SceneModel; isSelected: boolean; onSelect: () => void }) {
   const groupRef = useRef<THREE.Group>(null);
   const MeshComp = meshMap[model.type] || BoxMesh;
 
   return (
-    <group ref={groupRef} position={model.position} onClick={(e) => { e.stopPropagation(); onSelect(); }}>
-      <MeshComp />
+    <group
+      ref={groupRef}
+      position={model.position}
+      scale={model.scale}
+      onClick={(e) => { e.stopPropagation(); onSelect(); }}
+    >
+      <MeshComp color={model.color} />
       {isSelected && (
-        <mesh position={[0, 0, 0]}>
+        <mesh>
           <sphereGeometry args={[2, 16, 16]} />
           <meshBasicMaterial color="#f9a8d4" transparent opacity={0.05} wireframe />
         </mesh>
@@ -91,7 +98,6 @@ function SceneModelComponent({ model, isSelected, onSelect }: { model: SceneMode
   );
 }
 
-// Component inside Canvas to capture scene ref
 function SceneCapture({ onSceneReady }: { onSceneReady: (scene: THREE.Scene) => void }) {
   const { scene } = useThree();
   useEffect(() => {
