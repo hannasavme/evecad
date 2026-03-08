@@ -430,7 +430,7 @@ export default function Index() {
             </button>
           )}
           <ImportButton onImport={(imported) => setModelsImmediate((prev) => [...prev, ...imported])} />
-          <ExportDropdown hasModel={models.length > 0} getScene={getScene} />
+          <ExportDropdown hasModel={models.length > 0} getScene={getScene} onAuthRequired={() => requireAuth("export")} />
           {user && (
             <SaveLoadMenu
               models={models}
