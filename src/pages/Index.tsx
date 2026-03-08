@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Star, X, Layers, Trash2, Wrench, Loader2, Ruler, Crosshair } from "lucide-react";
 import mascotImg from "@/assets/mascot.png";
@@ -10,6 +10,7 @@ import PropertiesPanel from "@/components/PropertiesPanel";
 import CadDrawingPanel from "@/components/CadDrawingPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useUndoHistory } from "@/hooks/use-undo-history";
 
 const DEFAULT_COLORS: Record<string, string> = {
   gear: "#f9a8d4",
@@ -34,7 +35,11 @@ export default function Index() {
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState("");
   const [showInput, setShowInput] = useState(false);
-  const [models, setModels] = useState<SceneModel[]>([]);
+  const { current: models, push: pushModels, undo, redo, canUndo, canRedo } = useUndoHistory<SceneModel[]>([]);
+
+  const setModels = useCallback((updater: SceneModel[] | ((prev: SceneModel[]) => SceneModel[])) => {
+    pushModels(typeof updater === "function" ? updater(models) : updater);
+  }, [models, pushModels]);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
   const [showDrawing, setShowDrawing] = useState(false);
   const [assemblyInstructions, setAssemblyInstructions] = useState<string | null>(null);
