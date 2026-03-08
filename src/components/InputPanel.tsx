@@ -35,10 +35,10 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
   };
 
   const examples = [
-    "A cute spur gear with 20 teeth ⚙️",
-    "An L-shaped bracket, 50mm × 30mm ✨",
-    "A cylinder pipe with threaded ends 🔧",
-    "A little box with ventilation slots 📦",
+    "A spur gear with 20 teeth",
+    "An L-shaped bracket, 50mm x 30mm",
+    "A cylinder pipe with threaded ends",
+    "A box with ventilation slots",
   ];
 
   return (
@@ -56,7 +56,7 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
             }`}
           >
             {m === "text" ? <Type className="w-4 h-4" /> : <Image className="w-4 h-4" />}
-            {m === "text" ? "Text → CAD ✏️" : "Image → CAD 🖼️"}
+            {m === "text" ? "Text to CAD" : "Image to CAD"}
           </button>
         ))}
       </div>
@@ -77,11 +77,11 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
             <Textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="e.g., A cute gear with 20 teeth and a little hole in the middle~ ✨"
+              placeholder="e.g., A gear with 20 teeth and a hole in the middle"
               className="flex-1 min-h-[120px] resize-none bg-muted/50 border-2 border-border focus:border-primary rounded-2xl text-sm p-4"
             />
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground font-bold">Try these! 💡</p>
+              <p className="text-xs text-muted-foreground font-bold">Try these</p>
               <div className="flex flex-wrap gap-1.5">
                 {examples.map((ex, i) => (
                   <button
@@ -125,8 +125,8 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
                   <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-primary/30">
                     <img src={URL.createObjectURL(imageFile)} alt="Preview" className="w-full h-full object-cover" />
                   </div>
-                  <p className="text-sm text-foreground font-bold">{imageFile.name} ✅</p>
-                  <p className="text-xs text-muted-foreground">Click to replace~</p>
+                  <p className="text-sm text-foreground font-bold">{imageFile.name}</p>
+                  <p className="text-xs text-muted-foreground">Click to replace</p>
                 </>
               ) : (
                 <>
@@ -134,7 +134,7 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
                     <Upload className="w-6 h-6 text-primary" />
                   </div>
                   <p className="text-sm text-muted-foreground font-semibold">
-                    Drop here or <span className="text-primary">browse</span> 📎
+                    Drop here or <span className="text-primary">browse</span>
                   </p>
                   <p className="text-xs text-muted-foreground">PNG, JPG, SVG up to 20MB</p>
                 </>
@@ -153,12 +153,12 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
         {isGenerating ? (
           <span className="flex items-center gap-2">
             <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-            Making magic~ ✨
+            Generating...
           </span>
         ) : (
           <span className="flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
-            Generate 3D Model ✨
+            Generate 3D Model
           </span>
         )}
       </Button>

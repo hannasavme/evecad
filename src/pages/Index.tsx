@@ -18,11 +18,11 @@ const DEFAULT_COLORS: Record<string, string> = {
 };
 
 const stages = [
-  "Asking AI to understand~ ✨",
-  "Parsing geometry~ 📐",
-  "Building mesh~ 🏗️",
-  "Adding details~ ✨",
-  "Almost done~ 🎀",
+  "Asking AI to understand",
+  "Parsing geometry",
+  "Building mesh",
+  "Adding details",
+  "Almost done",
 ];
 
 let modelIdCounter = 0;
@@ -98,7 +98,7 @@ export default function Index() {
         setSelectedModelId(newModel.id);
         setShowInput(false);
         setIsGenerating(false);
-        toast.success(`${type} generated! 🎉`);
+        toast.success(`${type} generated!`);
       }, 300);
     },
     [models.length]
@@ -106,7 +106,7 @@ export default function Index() {
 
   const handleAssemble = useCallback(async () => {
     if (models.length < 2) {
-      toast.error("Need at least 2 parts to assemble! 🔧");
+      toast.error("Need at least 2 parts to assemble");
       return;
     }
 
@@ -120,7 +120,7 @@ export default function Index() {
 
       if (error) {
         console.error("Assembly error:", error);
-        toast.error("Assembly failed 😿");
+        toast.error("Assembly failed");
         setIsAssembling(false);
         return;
       }
@@ -129,7 +129,6 @@ export default function Index() {
       if (data?.parts) {
         setModels((prev) =>
           prev.map((m, index) => {
-            // Match by id or by index (AI may return "Part 1" instead of actual id)
             const update = data.parts.find((p: any) => p.id === m.id) || data.parts[index];
             if (update) {
               return {
@@ -142,17 +141,15 @@ export default function Index() {
           })
         );
 
-        // Show modifications as toasts
         for (let i = 0; i < data.parts.length; i++) {
           const part = data.parts[i];
           if (part.modification && part.modification !== "Aligned for assembly") {
             const model = models[i];
-            toast.info(`🔧 ${model?.type || "Part"}: ${part.modification}`);
+            toast.info(`${model?.type || "Part"}: ${part.modification}`);
           }
         }
       }
 
-      // Add any additional parts
       if (data?.additional_parts?.length > 0) {
         const newParts: SceneModel[] = data.additional_parts.map((p: any) => ({
           id: `model-${++modelIdCounter}`,
@@ -163,17 +160,17 @@ export default function Index() {
           label: p.label,
         }));
         setModels((prev) => [...prev, ...newParts]);
-        toast.success(`Added ${newParts.length} extra part(s) for assembly! ✨`);
+        toast.success(`Added ${newParts.length} extra part(s) for assembly`);
       }
 
       if (data?.instructions) {
         setAssemblyInstructions(data.instructions);
       }
 
-      toast.success("Assembly complete! 🎉");
+      toast.success("Assembly complete!");
     } catch (err) {
       console.error("Assembly error:", err);
-      toast.error("Assembly failed 😿");
+      toast.error("Assembly failed");
     }
 
     setIsAssembling(false);
@@ -208,7 +205,6 @@ export default function Index() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Assemble Button */}
           {models.length >= 2 && (
             <button
               onClick={handleAssemble}
@@ -220,7 +216,7 @@ export default function Index() {
               ) : (
                 <Wrench className="w-3 h-3" />
               )}
-              Assemble 🔧
+              Assemble
             </button>
           )}
           <ExportDropdown hasModel={models.length > 0} getScene={getScene} />
@@ -353,7 +349,7 @@ export default function Index() {
             <div className="p-5 rounded-3xl border-2 border-border bg-card/95 backdrop-blur-md kawaii-shadow">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-extrabold text-foreground flex items-center gap-1.5">
-                  <Star className="w-4 h-4 text-primary" /> Add a Part ✨
+                  <Star className="w-4 h-4 text-primary" /> Add a Part
                 </span>
                 <button onClick={() => setShowInput(false)} className="text-muted-foreground hover:text-foreground">
                   <X className="w-4 h-4" />
@@ -364,10 +360,6 @@ export default function Index() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Floating decorations */}
-      <div className="fixed top-20 left-10 text-2xl opacity-15 animate-bounce pointer-events-none">⭐</div>
-      <div className="fixed top-40 right-16 text-3xl opacity-10 animate-pulse pointer-events-none">🌸</div>
     </div>
   );
 }

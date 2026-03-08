@@ -44,7 +44,7 @@ export default function PropertiesPanel({ model, onUpdate, onClose }: Properties
       <div className="p-4 rounded-2xl border-2 border-border bg-card/95 backdrop-blur-md kawaii-shadow space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-sm font-extrabold text-foreground capitalize flex items-center gap-1.5">
-            ✨ {model.type}
+            {model.type}
           </span>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="w-4 h-4" />
