@@ -205,9 +205,46 @@ export interface ModelParams {
   // Space - Proximity Sensor
   proxRadius?: number;
   proxLength?: number;
+  // Orbiter - Fuselage
+  fuselageLength?: number;
+  fuselageWidth?: number;
+  fuselageHeight?: number;
+  fuselageNoseRatio?: number;
+  // Orbiter - Wing
+  wingSpan?: number;
+  wingRoot?: number;
+  wingTip?: number;
+  wingSweep?: number;
+  wingThickness?: number;
+  wingDihedral?: number;
+  // Orbiter - Engine Bell
+  engineBellThroat?: number;
+  engineBellExit?: number;
+  engineBellLength?: number;
+  engineBellGimbal?: number;
+  // Orbiter - OMS Pod
+  omsPodLength?: number;
+  omsPodRadius?: number;
+  // Orbiter - RCS Thruster
+  rcsRadius?: number;
+  rcsLength?: number;
+  rcsNozzleCount?: number;
+  // Orbiter - Propellant Tank
+  propTankRadius?: number;
+  propTankLength?: number;
+  propTankDomed?: boolean;
+  // Orbiter - Reaction Wheel
+  rwRadius?: number;
+  rwHeight?: number;
+  rwRimThickness?: number;
+  // Orbiter - Avionics Box
+  avionicsWidth?: number;
+  avionicsHeight?: number;
+  avionicsDepth?: number;
+  avionicsSlots?: number;
 }
 
-export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track" | "bolt" | "nut" | "screw" | "bearing" | "pulley" | "shaft" | "mug" | "hammer" | "handle" | "chassis" | "rocker" | "bogie" | "knuckle" | "motor" | "standoff" | "nosecone" | "bodytube" | "fin" | "centeringring" | "bulkhead" | "coupler" | "launchguide" | "motortube" | "thrustplate" | "retainer" | "nozzle" | "ebay" | "baffle" | "solarpanel" | "battery" | "rtg" | "sbc" | "transceiver" | "radiator" | "gripper" | "lidar" | "heatpipe" | "harness" | "imu" | "proxsensor";
+export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track" | "bolt" | "nut" | "screw" | "bearing" | "pulley" | "shaft" | "mug" | "hammer" | "handle" | "chassis" | "rocker" | "bogie" | "knuckle" | "motor" | "standoff" | "nosecone" | "bodytube" | "fin" | "centeringring" | "bulkhead" | "coupler" | "launchguide" | "motortube" | "thrustplate" | "retainer" | "nozzle" | "ebay" | "baffle" | "solarpanel" | "battery" | "rtg" | "sbc" | "transceiver" | "radiator" | "gripper" | "lidar" | "heatpipe" | "harness" | "imu" | "proxsensor" | "fuselage" | "wing" | "enginebell" | "omspod" | "rcsthruster" | "proptank" | "reactionwheel" | "avionicsbox";
 
 export interface SceneModel {
   id: string;
