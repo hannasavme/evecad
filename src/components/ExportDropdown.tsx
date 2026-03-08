@@ -71,15 +71,18 @@ export default function ExportDropdown({ hasModel, getScene, onAuthRequired }: E
     >
       <button
         onClick={() => setOpen((v) => !v)}
-        disabled={!hasModel}
-        className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed px-2.5 py-1.5 rounded-xl border-2 border-border hover:border-primary/40 bg-card/60"
+        className={`flex items-center gap-1.5 text-[10px] font-bold transition-colors px-2.5 py-1.5 rounded-xl border-2 bg-card/60 ${
+          hasModel
+            ? "text-muted-foreground hover:text-primary border-border hover:border-primary/40 cursor-pointer"
+            : "text-muted-foreground/40 border-border/40 cursor-not-allowed"
+        }`}
       >
         <Download className="w-3 h-3" />
         Export
       </button>
 
       <AnimatePresence>
-        {open && hasModel && (
+        {open && (
           <motion.div
             initial={{ opacity: 0, y: -4, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
