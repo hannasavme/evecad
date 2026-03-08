@@ -429,9 +429,12 @@ export default function Index() {
                   {m.visible !== false ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                 </button>
                 <button
-                  onClick={() => setSelectedModelId(m.id === selectedModelId ? null : m.id)}
+                  onClick={(e) => {
+                    const additive = e.ctrlKey || e.metaKey || e.shiftKey;
+                    handleSelectModel(m.id, additive);
+                  }}
                   className={`flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs font-bold transition-all border-2 flex-1 min-w-0 ${
-                    selectedModelId === m.id
+                    selectedModelIds.has(m.id)
                       ? "bg-primary/15 border-primary/40 text-primary"
                       : m.visible !== false
                         ? "bg-card/80 backdrop-blur-sm border-border text-foreground hover:border-primary/30"
