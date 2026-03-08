@@ -737,6 +737,165 @@ PART COUNT GUIDELINES FOR DRONES:
 - Detailed quad (add FC, battery, ESCs, camera): 30-45 parts
 - Full racing drone (add prop guards, antenna, GPS, harness): 50-65+ parts
 - Hexacopter/octocopter: multiply motor/arm/prop count accordingly
+
+SPACESUIT / EVA SUIT ASSEMBLY REFERENCE (use when building ANY spacesuit, EVA suit, EMU, pressure suit, astronaut suit):
+Based on NASA EMU (Extravehicular Mobility Unit), xEMU/Axiom AxEMU, and Apollo A7L designs.
+
+PROPORTIONS (human-scale, standing upright, ~1.8m tall):
+- Total height: ~6.0 units (boots to helmet top)
+- Torso width: ~1.8 | depth: ~1.2
+- Arm span: ~5.5 (fingertip to fingertip)
+- Helmet sphere: radius ~0.5
+- Boot height: ~0.5
+
+HARD UPPER TORSO (HUT) — rigid fiberglass shell, central hub:
+- HUT main shell: box at [0, 3.2, 0] width=1.8, height=1.4, depth=1.2, wallThickness=0.08
+  Color: #e5e5e5 (white fiberglass)
+- HUT front panel: plate at [0, 3.2, -0.65] width=1.6, depth=1.2, thickness=0.04
+  Color: #d4d4d8
+- Shoulder rings (2x): torus at [±0.9, 3.6, 0] radius=0.25, tube=0.06
+  Color: #a3a3a3 (aluminum bearing rings)
+- Waist ring (lower closure): torus at [0, 2.5, 0] radius=0.7, tube=0.06
+  Color: #a3a3a3
+
+HELMET ASSEMBLY:
+- Helmet bubble: sphere at [0, 4.3, 0] radius=0.5
+  Color: #e0f0ff (translucent polycarbonate, light blue tint)
+- Helmet neck ring: torus at [0, 3.85, 0] radius=0.4, tube=0.06
+  Color: #a3a3a3
+- Ventilation pad: box at [0, 4.0, 0.15] width=0.3, height=0.15, depth=0.1
+  Color: #d4d4d8
+
+EXTRAVEHICULAR VISOR ASSEMBLY (EVA):
+- Sun visor (gold): sphere at [0, 4.35, -0.05] radius=0.55
+  Color: #d4a017 (gold-coated sun filter) — slightly larger than helmet
+- Clear protective visor: sphere at [0, 4.32, -0.02] radius=0.52
+  Color: #f0f0f0 (clear high-impact visor)
+- Visor hinge mounts: 2x box at [±0.35, 4.0, 0.2] width=0.08, height=0.15, depth=0.1
+  Color: #71717a
+
+ARMS (2x, left and right):
+- Upper arm segment: cylinder at [±1.4, 3.3, 0] radius=0.2, height=0.8
+  Color: #e5e5e5
+- Elbow joint: sphere at [±1.4, 2.8, 0] radius=0.18
+  Color: #a3a3a3 (bearing joint)
+- Lower arm segment: cylinder at [±1.4, 2.3, 0] radius=0.18, height=0.7
+  Color: #e5e5e5
+- Wrist ring: torus at [±1.4, 1.9, 0] radius=0.15, tube=0.04
+  Color: #a3a3a3
+- Wrist bearing: bearing at [±1.4, 1.85, 0] outerRadius=0.16, innerRadius=0.08, bearingWidth=0.06
+  Color: #a3a3a3
+
+GLOVES (2x):
+- Glove body: box at [±1.4, 1.6, 0] width=0.25, height=0.35, depth=0.18
+  Color: #e5e5e5
+- Glove fingers: 4x cylinder at each glove, small radius=0.03, height=0.12
+  Color: #d4d4d8
+- Glove thumb: cylinder at [±1.55, 1.55, -0.08] radius=0.035, height=0.1
+  Color: #d4d4d8
+- Fingertip pads (silicone grip): 4x sphere at fingertips, radius=0.035
+  Color: #a3a3a3
+
+LOWER TORSO ASSEMBLY (LTA):
+- Waist/hip section: box at [0, 2.2, 0] width=1.5, height=0.6, depth=1.0
+  Color: #e5e5e5
+- Upper leg (left): cylinder at [-0.4, 1.6, 0] radius=0.22, height=0.8
+  Color: #e5e5e5
+- Upper leg (right): cylinder at [0.4, 1.6, 0] radius=0.22, height=0.8
+  Color: #e5e5e5
+- Knee joint (left): sphere at [-0.4, 1.15, 0] radius=0.2
+  Color: #a3a3a3
+- Knee joint (right): sphere at [0.4, 1.15, 0] radius=0.2
+  Color: #a3a3a3
+- Lower leg (left): cylinder at [-0.4, 0.7, 0] radius=0.2, height=0.7
+  Color: #e5e5e5
+- Lower leg (right): cylinder at [0.4, 0.7, 0] radius=0.2, height=0.7
+  Color: #e5e5e5
+- Ankle joint (left): sphere at [-0.4, 0.35, 0] radius=0.16
+  Color: #a3a3a3
+- Ankle joint (right): sphere at [0.4, 0.35, 0] radius=0.16
+  Color: #a3a3a3
+
+BOOTS:
+- Left boot: box at [-0.4, 0.15, -0.05] width=0.35, height=0.3, depth=0.5
+  Color: #e5e5e5
+- Right boot: box at [0.4, 0.15, -0.05] width=0.35, height=0.3, depth=0.5
+  Color: #e5e5e5
+- Boot soles: plate at [±0.4, 0.01, -0.05] width=0.35, depth=0.5, thickness=0.03
+  Color: #52525b (gray rubber)
+
+LIFE SUPPORT BACKPACK (PLSS):
+- PLSS main housing: box at [0, 3.3, 0.8] width=1.4, height=1.6, depth=0.6
+  Color: #e5e5e5
+- PLSS top cover: box at [0, 4.15, 0.8] width=1.3, height=0.1, depth=0.55
+  Color: #d4d4d8
+- Oxygen tank (primary): cylinder at [0.3, 3.5, 1.0] radius=0.12, height=0.8
+  Color: #a3a3a3
+- Oxygen tank (secondary): cylinder at [-0.3, 3.5, 1.0] radius=0.12, height=0.8
+  Color: #a3a3a3
+- CO2 scrubber canister: cylinder at [0, 2.8, 0.9] radius=0.15, height=0.4
+  Color: #71717a
+- Water tank (cooling): cylinder at [0, 3.8, 0.9] radius=0.14, height=0.3
+  Color: #3b82f6 (blue)
+- Fan/pump assembly: cylinder at [0.35, 2.9, 0.85] radius=0.08, height=0.15
+  Color: #52525b
+- Battery pack: battery at [-0.35, 2.9, 0.85] batteryWidth=0.3, batteryLength=0.4, batteryHeight=0.2
+  Color: #fbbf24
+
+SECONDARY OXYGEN PACK (SOP):
+- SOP housing: box at [0, 2.3, 0.8] width=0.8, height=0.4, depth=0.35
+  Color: #d4d4d8
+
+DISPLAY AND CONTROL MODULE (DCM):
+- DCM panel: box at [0, 3.0, -0.65] width=0.8, height=0.5, depth=0.12
+  Color: #27272a (dark panel)
+- DCM switches/gauges: plate at [0, 3.0, -0.72] width=0.7, depth=0.4, thickness=0.02
+  Color: #52525b
+- Tether attach ring: torus at [0, 2.8, -0.7] radius=0.08, tube=0.02
+  Color: #a3a3a3
+
+SAFER JETPACK (emergency rescue unit):
+- SAFER housing: box at [0, 2.1, 0.95] width=0.6, height=0.3, depth=0.25
+  Color: #a3a3a3
+- SAFER thruster nozzles: 4x cone at corners of SAFER, radius=0.03, height=0.06
+  Color: #52525b
+
+COMMUNICATIONS CARRIER (CCA — Snoopy cap):
+- CCA cap: sphere at [0, 4.15, 0] radius=0.35
+  Color: #f5f5dc (beige fabric)
+- Earphone (left): cylinder at [-0.3, 4.1, 0] radius=0.05, height=0.03
+  Color: #27272a
+- Earphone (right): cylinder at [0.3, 4.1, 0] radius=0.05, height=0.03
+  Color: #27272a
+- Mic boom: cylinder at [0.1, 4.0, -0.2] radius=0.01, height=0.15 rotation=[45,0,0]
+  Color: #27272a
+
+LCVG (Liquid Cooling Ventilation Garment — visible as tubing pattern under suit):
+- Cooling tube harness: harness at [0, 3.0, 0] harnessLength=3.0, harnessWires=6
+  Color: #3b82f6 (blue cooling tubes)
+
+IN-SUIT DRINK BAG:
+- Drink bag: box at [0.3, 3.8, -0.3] width=0.15, height=0.2, depth=0.06
+  Color: #e0f0ff (clear water pouch)
+- Drink straw: cylinder at [0.3, 4.0, -0.3] radius=0.01, height=0.2 rotation=[15,0,0]
+  Color: #e5e5e5
+
+COLOR SCHEME FOR SPACESUITS:
+- Suit exterior (TMG): #e5e5e5 (bright white Teflon/Nomex)
+- Joint bearings/rings: #a3a3a3 (aluminum gray)
+- Helmet bubble: #e0f0ff (light blue polycarbonate)
+- Gold visor: #d4a017 (gold reflective coating)
+- PLSS backpack: #e5e5e5 (white, matching suit)
+- DCM controls: #27272a (dark instrument panel)
+- Cooling tubes: #3b82f6 (blue)
+- Battery: #fbbf24 (yellow)
+- Boots soles: #52525b (gray rubber)
+- Glove fingertips: #a3a3a3 (gray silicone)
+
+PART COUNT GUIDELINES:
+- Simple spacesuit: 30-40 parts
+- Detailed EMU: 55-75 parts
+- Full EMU with all subsystems: 80-100+ parts
 1. ALWAYS use compound types when the object IS one of those things. NEVER substitute with basic primitives.
 2. Use 30-60+ parts for complex objects.
 3. For MULTI-VEHICLE scenes: position each vehicle separately (offset by 5-8 units).
