@@ -1517,7 +1517,7 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         );
       })()}
 
-      {/* ─── Individual Part Views ─── */}
+      {/* ─── Individual Part Views (draggable) ─── */}
       {!isAssemblyMode && pageModels.map((model, idx) => {
         const globalIdx = startIdx + idx;
         const profile = getProfile(model.type);
@@ -1525,22 +1525,65 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const partY = viewsStartY + idx * partRowH;
         const viewScale = scl;
 
-        const frontCx = margin + drawAreaW * 0.2;
-        const frontCy = partY + 110;
-        const sideCx = margin + drawAreaW * 0.45;
-        const sideCy = frontCy;
-        const topCx = frontCx;
-        const topCy = frontCy + 120;
-        const sectionCx = showSection ? margin + drawAreaW * 0.65 : 0;
-        const sectionCy = frontCy;
-
         const fw = dims.w * viewScale;
         const fh = dims.h * viewScale;
+
+        // View zone widths
+        const numViews = 3 + (showSection ? 1 : 0) + (showIsometric ? 1 : 0);
+        const viewZoneW = (drawAreaW - 20) / Math.min(numViews, showIsometric ? 4 : 3);
+        const viewZoneH = 180;
+
+        // Default positions for each view
+        const partDefaults: Record<string, { x: number; y: number }> = {
+          [`part-${globalIdx}-front`]: { x: margin + 10, y: partY + 20 },
+          [`part-${globalIdx}-side`]: { x: margin + 10 + viewZoneW, y: partY + 20 },
+          [`part-${globalIdx}-top`]: { x: margin + 10, y: partY + 20 + viewZoneH + 5 },
+          [`part-${globalIdx}-section`]: { x: margin + 10 + viewZoneW * 2, y: partY + 20 },
+          [`part-${globalIdx}-iso`]: { x: margin + 10 + viewZoneW * (showSection ? 3 : 2), y: partY + 20 },
+        };
+
+        const getPartViewPos = (key: string) => viewPositions[key] || partDefaults[key];
+
+        const partViewRects = (): ViewRect[] => {
+          const rects: ViewRect[] = [
+            { id: `part-${globalIdx}-front`, ...getPartViewPos(`part-${globalIdx}-front`), w: viewZoneW - 10, h: viewZoneH },
+            { id: `part-${globalIdx}-side`, ...getPartViewPos(`part-${globalIdx}-side`), w: viewZoneW - 10, h: viewZoneH },
+            { id: `part-${globalIdx}-top`, ...getPartViewPos(`part-${globalIdx}-top`), w: viewZoneW - 10, h: viewZoneH },
+          ];
+          if (showSection) rects.push({ id: `part-${globalIdx}-section`, ...getPartViewPos(`part-${globalIdx}-section`), w: viewZoneW - 10, h: viewZoneH });
+          if (showIsometric) rects.push({ id: `part-${globalIdx}-iso`, ...getPartViewPos(`part-${globalIdx}-iso`), w: viewZoneW - 10, h: viewZoneH });
+          return rects;
+        };
+
+        const handlePartViewDrag = (id: string, newX: number, newY: number) => {
+          const movingRect: ViewRect = { id, x: newX, y: newY, w: viewZoneW - 10, h: viewZoneH };
+          const otherRects = partViewRects().filter(r => r.id !== id);
+          const resolved = resolveOverlap(movingRect, otherRects, svgWidth, svgHeight);
+          setViewPositions(prev => ({ ...prev, [id]: { x: resolved.x, y: resolved.y } }));
+        };
 
         const frontFn = profile.frontProfile || defaultProfile.frontProfile;
         const topFn = profile.topProfile || defaultProfile.topProfile;
         const sideFn = profile.sideProfile || defaultProfile.sideProfile;
         const sectionFn = profile.sectionProfile || defaultProfile.sectionProfile;
+
+        const fPos = getPartViewPos(`part-${globalIdx}-front`);
+        const sPos = getPartViewPos(`part-${globalIdx}-side`);
+        const tPos = getPartViewPos(`part-${globalIdx}-top`);
+        const secPos = getPartViewPos(`part-${globalIdx}-section`);
+        const iPos = getPartViewPos(`part-${globalIdx}-iso`);
+
+        const vw = viewZoneW - 10;
+        const frontCx = fPos.x + vw / 2;
+        const frontCy = fPos.y + viewZoneH / 2 + 10;
+        const sideCx = sPos.x + vw / 2;
+        const sideCy = sPos.y + viewZoneH / 2 + 10;
+        const topCx = tPos.x + vw / 2;
+        const topCy = tPos.y + viewZoneH / 2 + 10;
+        const sectionCx = secPos.x + vw / 2;
+        const sectionCy = secPos.y + viewZoneH / 2 + 10;
+        const isoCx = iPos.x + vw / 2;
+        const isoCy = iPos.y + viewZoneH / 2 + 10;
 
         return (
           <g key={model.id}>
@@ -1549,45 +1592,60 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
               Part {globalIdx + 1}: {model.label} ({model.type})
             </text>
 
-            {/* View labels */}
-            <text x={frontCx} y={partY + 22} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">FRONT VIEW</text>
-            <text x={sideCx} y={partY + 22} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">RIGHT SIDE VIEW</text>
-            <text x={topCx} y={frontCy + 65} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">TOP VIEW</text>
+            {/* FRONT VIEW */}
+            <DraggableViewPanel id={`part-${globalIdx}-front`} x={fPos.x} y={fPos.y} w={vw} h={viewZoneH} onDragEnd={handlePartViewDrag} label="FRONT">
+              <text x={frontCx} y={fPos.y + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">FRONT VIEW</text>
+              <rect x={fPos.x} y={fPos.y + 12} width={vw} height={viewZoneH - 15} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" rx={2} />
+              {frontFn(dims.w * viewScale, dims.h * viewScale, frontCx, frontCy, model.params)}
+              <DimensionH x1={frontCx - fw / 2} x2={frontCx + fw / 2} y={frontCy + fh / 2 + 25} value={`${dimStr(dims.w)} mm`} />
+              <DimensionV y1={frontCy - fh / 2} y2={frontCy + fh / 2} x={frontCx + fw / 2 + 20} value={`${dimStr(dims.h)} mm`} />
+              {showSection && (
+                <>
+                  <line x1={frontCx} y1={frontCy - fh / 2 - 15} x2={frontCx} y2={frontCy + fh / 2 + 15} stroke={LINE_COLOR} strokeWidth={0.6} strokeDasharray="8 3 2 3" />
+                  <text x={frontCx - 8} y={frontCy - fh / 2 - 18} fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">A</text>
+                  <text x={frontCx - 8} y={frontCy + fh / 2 + 25} fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">A</text>
+                  <polygon points={`${frontCx - 5},${frontCy - fh / 2 - 12} ${frontCx + 5},${frontCy - fh / 2 - 12} ${frontCx},${frontCy - fh / 2 - 6}`} fill={LINE_COLOR} />
+                  <polygon points={`${frontCx - 5},${frontCy + fh / 2 + 12} ${frontCx + 5},${frontCy + fh / 2 + 12} ${frontCx},${frontCy + fh / 2 + 6}`} fill={LINE_COLOR} />
+                </>
+              )}
+              <Balloon cx={frontCx + fw / 2 + 45} cy={frontCy - fh / 2 - 10} tx={frontCx + fw / 4} ty={frontCy} num={globalIdx + 1} />
+            </DraggableViewPanel>
+
+            {/* SIDE VIEW */}
+            <DraggableViewPanel id={`part-${globalIdx}-side`} x={sPos.x} y={sPos.y} w={vw} h={viewZoneH} onDragEnd={handlePartViewDrag} label="SIDE">
+              <text x={sideCx} y={sPos.y + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">RIGHT SIDE VIEW</text>
+              <rect x={sPos.x} y={sPos.y + 12} width={vw} height={viewZoneH - 15} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" rx={2} />
+              {sideFn(dims.d * viewScale, dims.h * viewScale, sideCx, sideCy, model.params)}
+            </DraggableViewPanel>
+
+            {/* TOP VIEW */}
+            <DraggableViewPanel id={`part-${globalIdx}-top`} x={tPos.x} y={tPos.y} w={vw} h={viewZoneH} onDragEnd={handlePartViewDrag} label="TOP">
+              <text x={topCx} y={tPos.y + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">TOP VIEW</text>
+              <rect x={tPos.x} y={tPos.y + 12} width={vw} height={viewZoneH - 15} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" rx={2} />
+              {topFn(dims.w * viewScale, dims.d * viewScale, topCx, topCy, model.params)}
+            </DraggableViewPanel>
+
+            {/* SECTION VIEW */}
             {showSection && sectionFn && (
-              <text x={sectionCx} y={partY + 22} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">SECTION A-A</text>
+              <DraggableViewPanel id={`part-${globalIdx}-section`} x={secPos.x} y={secPos.y} w={vw} h={viewZoneH} onDragEnd={handlePartViewDrag} label="SECTION">
+                <text x={sectionCx} y={secPos.y + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">SECTION A-A</text>
+                <rect x={secPos.x} y={secPos.y + 12} width={vw} height={viewZoneH - 15} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" rx={2} />
+                {sectionFn(dims.w * viewScale, dims.h * viewScale, sectionCx, sectionCy, model.params)}
+              </DraggableViewPanel>
             )}
 
-            {/* Front view */}
-            {frontFn(dims.w * viewScale, dims.h * viewScale, frontCx, frontCy, model.params)}
-            {/* Side view */}
-            {sideFn(dims.d * viewScale, dims.h * viewScale, sideCx, sideCy, model.params)}
-            {/* Top view */}
-            {topFn(dims.w * viewScale, dims.d * viewScale, topCx, topCy, model.params)}
-            {/* Section view */}
-            {showSection && sectionFn && sectionFn(dims.w * viewScale, dims.h * viewScale, sectionCx, sectionCy, model.params)}
-
-            {/* Section cut line on front view */}
-            {showSection && (
-              <>
-                <line x1={frontCx} y1={frontCy - fh / 2 - 15} x2={frontCx} y2={frontCy + fh / 2 + 15} stroke={LINE_COLOR} strokeWidth={0.6} strokeDasharray="8 3 2 3" />
-                <text x={frontCx - 8} y={frontCy - fh / 2 - 18} fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">A</text>
-                <text x={frontCx - 8} y={frontCy + fh / 2 + 25} fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">A</text>
-                {/* Section arrows */}
-                <polygon points={`${frontCx - 5},${frontCy - fh / 2 - 12} ${frontCx + 5},${frontCy - fh / 2 - 12} ${frontCx},${frontCy - fh / 2 - 6}`} fill={LINE_COLOR} />
-                <polygon points={`${frontCx - 5},${frontCy + fh / 2 + 12} ${frontCx + 5},${frontCy + fh / 2 + 12} ${frontCx},${frontCy + fh / 2 + 6}`} fill={LINE_COLOR} />
-              </>
+            {/* ISOMETRIC VIEW */}
+            {showIsometric && (
+              <DraggableViewPanel id={`part-${globalIdx}-iso`} x={iPos.x} y={iPos.y} w={vw} h={viewZoneH} onDragEnd={handlePartViewDrag} label="ISOMETRIC">
+                <text x={isoCx} y={iPos.y + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">ISOMETRIC VIEW</text>
+                <rect x={iPos.x} y={iPos.y + 12} width={vw} height={viewZoneH - 15} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" rx={2} />
+                {getIsometricView(model.type, dims.w * viewScale, dims.h * viewScale, dims.d * viewScale, isoCx, isoCy)}
+              </DraggableViewPanel>
             )}
 
             {/* Projection lines */}
             <line x1={frontCx + fw / 2 + 10} y1={frontCy} x2={sideCx - dims.d * viewScale / 2 - 10} y2={sideCy} stroke={HIDDEN_COLOR} strokeWidth={0.2} strokeDasharray="4 3" />
             <line x1={frontCx} y1={frontCy + fh / 2 + 10} x2={topCx} y2={topCy - dims.d * viewScale / 2 - 10} stroke={HIDDEN_COLOR} strokeWidth={0.2} strokeDasharray="4 3" />
-
-            {/* Dimension lines — front view */}
-            <DimensionH x1={frontCx - fw / 2} x2={frontCx + fw / 2} y={frontCy + fh / 2 + 25} value={`${dimStr(dims.w)} mm`} />
-            <DimensionV y1={frontCy - fh / 2} y2={frontCy + fh / 2} x={frontCx + fw / 2 + 20} value={`${dimStr(dims.h)} mm`} />
-
-            {/* Balloon callout */}
-            <Balloon cx={frontCx + fw / 2 + 45} cy={frontCy - fh / 2 - 10} tx={frontCx + fw / 4} ty={frontCy} num={globalIdx + 1} />
 
             {/* Part separator */}
             {idx < pageModels.length - 1 && (
