@@ -51,11 +51,38 @@ interface BBox {
 /** Get the effective size of a part based on type and scale */
 function getPartSize(m: PartModel): [number, number, number] {
   const s = m.scale || [1, 1, 1];
+  const p = m.params || {};
   switch (m.type) {
-    case "cylinder": return [s[0], s[1], s[0]]; // diameter = X, height = Y
-    case "gear":     return [s[0] * 1.2, s[1] * 0.4, s[0] * 1.2];
-    case "bracket":  return [s[0], s[1], s[2] * 0.6];
-    default:         return [s[0], s[1], s[2]]; // box
+    case "cylinder": case "tube": case "motor": case "bodytube": case "motortube":
+      return [(p.radius || 0.5) * 2 * s[0], (p.height || 1.5) * s[1], (p.radius || 0.5) * 2 * s[2]];
+    case "gear":
+      return [s[0] * 1.2, (p.thickness || 0.4) * s[1], s[0] * 1.2];
+    case "bracket":
+      return [(p.armLength || 1.0) * s[0], (p.width || 0.8) * s[1], (p.thickness || 0.3) * s[2]];
+    case "wheel":
+      return [(p.width || 0.3) * s[0], (p.radius || 0.5) * 2 * s[1], (p.radius || 0.5) * 2 * s[2]];
+    case "sphere":
+      return [(p.radius || 0.5) * 2 * s[0], (p.radius || 0.5) * 2 * s[1], (p.radius || 0.5) * 2 * s[2]];
+    case "box": case "chassis": case "avionicsbox":
+      return [(p.width || 1.2) * s[0], (p.height || 1.2) * s[1], (p.depth || 1.2) * s[2]];
+    case "plate":
+      return [(p.width || 1.0) * s[0], (p.thickness || 0.05) * s[1], (p.depth || 1.0) * s[2]];
+    case "antenna":
+      return [(p.dishRadius || 0.4) * 2 * s[0], (p.mastHeight || 0.5) * s[1], (p.dishRadius || 0.4) * 2 * s[2]];
+    case "camera":
+      return [(p.bodyWidth || 0.2) * s[0], (p.bodyHeight || 0.15) * s[1], (p.bodyDepth || 0.2) * s[2]];
+    case "rocker":
+      return [(p.rockerLength || 2.0) * s[0], (p.rockerWidth || 0.3) * s[1], (p.rockerThickness || 0.12) * s[2]];
+    case "bogie":
+      return [(p.bogieLength || 1.2) * s[0], (p.bogieWidth || 0.25) * s[1], (p.bogieThickness || 0.1) * s[2]];
+    case "knuckle":
+      return [(p.knuckleRadius || 0.1) * 2 * s[0], (p.knuckleHeight || 0.2) * s[1], (p.knuckleRadius || 0.1) * 2 * s[2]];
+    case "battery":
+      return [(p.batteryWidth || 0.5) * s[0], (p.batteryHeight || 0.3) * s[1], (p.batteryLength || 0.5) * s[2]];
+    case "rtg":
+      return [(p.rtgRadius || 0.2) * 2 * s[0], (p.rtgLength || 0.8) * s[1], (p.rtgRadius || 0.2) * 2 * s[2]];
+    default:
+      return [s[0], s[1], s[2]];
   }
 }
 
