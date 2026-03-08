@@ -107,9 +107,61 @@ export interface ModelParams {
   standoffRadius?: number;
   standoffHeight?: number;
   threadRadius?: number;
+  // Rocket - Nose Cone
+  noseLength?: number;
+  noseRadius?: number;
+  noseProfile?: string; // ogive, parabolic, conical
+  // Rocket - Body Tube
+  tubeRadius?: number;
+  tubeLength?: number;
+  tubeWall?: number;
+  // Rocket - Fin
+  finSpan?: number;
+  finRoot?: number;
+  finTip?: number;
+  finSweep?: number;
+  finThickness?: number;
+  finCount?: number;
+  // Rocket - Centering Ring
+  ringOuterRadius?: number;
+  ringInnerRadius?: number;
+  ringThickness?: number;
+  // Rocket - Bulkhead
+  bulkheadRadius?: number;
+  bulkheadThickness?: number;
+  // Rocket - Coupler
+  couplerRadius?: number;
+  couplerLength?: number;
+  couplerWall?: number;
+  // Rocket - Launch Guide
+  guideLength?: number;
+  guideRadius?: number;
+  // Rocket - Motor Mount Tube
+  mountRadius?: number;
+  mountLength?: number;
+  mountWall?: number;
+  // Rocket - Thrust Plate
+  plateRadius?: number;
+  plateThickness?: number;
+  plateHoleRadius?: number;
+  // Rocket - Retainer
+  retainerRadius?: number;
+  retainerHeight?: number;
+  // Rocket - Nozzle
+  nozzleThroat?: number;
+  nozzleExit?: number;
+  nozzleLength?: number;
+  // Rocket - E-Bay
+  ebayRadius?: number;
+  ebayLength?: number;
+  ebayWall?: number;
+  // Rocket - Baffle
+  baffleRadius?: number;
+  baffleThickness?: number;
+  baffleHoles?: number;
 }
 
-export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track" | "bolt" | "nut" | "screw" | "bearing" | "pulley" | "shaft" | "mug" | "hammer" | "handle" | "chassis" | "rocker" | "bogie" | "knuckle" | "motor" | "standoff";
+export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track" | "bolt" | "nut" | "screw" | "bearing" | "pulley" | "shaft" | "mug" | "hammer" | "handle" | "chassis" | "rocker" | "bogie" | "knuckle" | "motor" | "standoff" | "nosecone" | "bodytube" | "fin" | "centeringring" | "bulkhead" | "coupler" | "launchguide" | "motortube" | "thrustplate" | "retainer" | "nozzle" | "ebay" | "baffle";
 
 export interface SceneModel {
   id: string;
