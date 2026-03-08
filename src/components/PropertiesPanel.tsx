@@ -209,6 +209,70 @@ const PARAM_DEFS: Record<string, ParamDef[]> = {
     { key: "standoffHeight", label: "Height", type: "number", min: 0.1, max: 2, step: 0.05, default: 0.4, hasDimension: true },
     { key: "threadRadius", label: "Thread R", type: "number", min: 0.01, max: 0.15, step: 0.005, default: 0.03, hasDimension: true },
   ],
+  nosecone: [
+    { key: "noseLength", label: "Length", type: "number", min: 0.3, max: 5, step: 0.1, default: 1.5, hasDimension: true },
+    { key: "noseRadius", label: "Radius", type: "number", min: 0.1, max: 3, step: 0.05, default: 0.5, hasDimension: true },
+  ],
+  bodytube: [
+    { key: "tubeRadius", label: "Radius", type: "number", min: 0.1, max: 3, step: 0.05, default: 0.5, hasDimension: true },
+    { key: "tubeLength", label: "Length", type: "number", min: 0.3, max: 10, step: 0.1, default: 3.0, hasDimension: true },
+    { key: "tubeWall", label: "Wall", type: "number", min: 0.01, max: 0.2, step: 0.005, default: 0.03, hasDimension: true },
+  ],
+  fin: [
+    { key: "finSpan", label: "Span", type: "number", min: 0.1, max: 3, step: 0.05, default: 0.6, hasDimension: true },
+    { key: "finRoot", label: "Root", type: "number", min: 0.1, max: 3, step: 0.05, default: 0.8, hasDimension: true },
+    { key: "finTip", label: "Tip", type: "number", min: 0.05, max: 2, step: 0.05, default: 0.3, hasDimension: true },
+    { key: "finSweep", label: "Sweep", type: "number", min: 0, max: 2, step: 0.05, default: 0.2, hasDimension: true },
+    { key: "finThickness", label: "Thickness", type: "number", min: 0.01, max: 0.2, step: 0.005, default: 0.04, hasDimension: true },
+    { key: "finCount", label: "Fins", type: "int", min: 2, max: 8, step: 1, default: 3, hasDimension: false },
+  ],
+  centeringring: [
+    { key: "ringOuterRadius", label: "Outer R", type: "number", min: 0.1, max: 3, step: 0.05, default: 0.5, hasDimension: true },
+    { key: "ringInnerRadius", label: "Inner R", type: "number", min: 0.05, max: 2, step: 0.05, default: 0.2, hasDimension: true },
+    { key: "ringThickness", label: "Thickness", type: "number", min: 0.01, max: 0.2, step: 0.005, default: 0.05, hasDimension: true },
+  ],
+  bulkhead: [
+    { key: "bulkheadRadius", label: "Radius", type: "number", min: 0.1, max: 3, step: 0.05, default: 0.5, hasDimension: true },
+    { key: "bulkheadThickness", label: "Thickness", type: "number", min: 0.02, max: 0.3, step: 0.01, default: 0.08, hasDimension: true },
+  ],
+  coupler: [
+    { key: "couplerRadius", label: "Radius", type: "number", min: 0.1, max: 3, step: 0.05, default: 0.48, hasDimension: true },
+    { key: "couplerLength", label: "Length", type: "number", min: 0.1, max: 3, step: 0.05, default: 0.6, hasDimension: true },
+    { key: "couplerWall", label: "Wall", type: "number", min: 0.01, max: 0.1, step: 0.005, default: 0.025, hasDimension: true },
+  ],
+  launchguide: [
+    { key: "guideLength", label: "Length", type: "number", min: 0.2, max: 3, step: 0.1, default: 0.8, hasDimension: true },
+    { key: "guideRadius", label: "Radius", type: "number", min: 0.01, max: 0.2, step: 0.005, default: 0.04, hasDimension: true },
+  ],
+  motortube: [
+    { key: "mountRadius", label: "Radius", type: "number", min: 0.05, max: 1, step: 0.02, default: 0.2, hasDimension: true },
+    { key: "mountLength", label: "Length", type: "number", min: 0.2, max: 5, step: 0.1, default: 1.5, hasDimension: true },
+    { key: "mountWall", label: "Wall", type: "number", min: 0.005, max: 0.1, step: 0.005, default: 0.02, hasDimension: true },
+  ],
+  thrustplate: [
+    { key: "plateRadius", label: "Radius", type: "number", min: 0.1, max: 3, step: 0.05, default: 0.5, hasDimension: true },
+    { key: "plateThickness", label: "Thickness", type: "number", min: 0.01, max: 0.2, step: 0.01, default: 0.06, hasDimension: true },
+    { key: "plateHoleRadius", label: "Hole R", type: "number", min: 0.05, max: 1, step: 0.02, default: 0.2, hasDimension: true },
+  ],
+  retainer: [
+    { key: "retainerRadius", label: "Radius", type: "number", min: 0.05, max: 1, step: 0.02, default: 0.22, hasDimension: true },
+    { key: "retainerHeight", label: "Height", type: "number", min: 0.05, max: 0.5, step: 0.02, default: 0.15, hasDimension: true },
+  ],
+  nozzle: [
+    { key: "nozzleThroat", label: "Throat R", type: "number", min: 0.02, max: 0.5, step: 0.01, default: 0.08, hasDimension: true },
+    { key: "nozzleExit", label: "Exit R", type: "number", min: 0.05, max: 1, step: 0.02, default: 0.25, hasDimension: true },
+    { key: "nozzleLength", label: "Length", type: "number", min: 0.1, max: 2, step: 0.05, default: 0.5, hasDimension: true },
+  ],
+  ebay: [
+    { key: "ebayRadius", label: "Radius", type: "number", min: 0.1, max: 3, step: 0.05, default: 0.5, hasDimension: true },
+    { key: "ebayLength", label: "Length", type: "number", min: 0.2, max: 3, step: 0.05, default: 0.6, hasDimension: true },
+    { key: "ebayWall", label: "Wall", type: "number", min: 0.01, max: 0.1, step: 0.005, default: 0.03, hasDimension: true },
+  ],
+  baffle: [
+    { key: "baffleRadius", label: "Radius", type: "number", min: 0.1, max: 3, step: 0.05, default: 0.48, hasDimension: true },
+    { key: "baffleThickness", label: "Thickness", type: "number", min: 0.01, max: 0.2, step: 0.005, default: 0.04, hasDimension: true },
+    { key: "baffleHoles", label: "Holes", type: "int", min: 4, max: 24, step: 1, default: 12, hasDimension: false },
+  ],
 };
 
 interface PropertiesPanelProps {
