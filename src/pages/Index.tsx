@@ -86,16 +86,7 @@ export default function Index() {
           </span>
         </div>
 
-        <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground">
-          <span className="hidden md:flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-primary" /> AI-Powered
-          </span>
-          <span>🖱️ Orbit</span>
-          <span className="text-border">·</span>
-          <span>🔍 Zoom</span>
-          <span className="text-border">·</span>
-          <span>✋ Pan</span>
-          <span className="text-border">·</span>
+        <div className="flex items-center gap-3">
           <ExportDropdown hasModel={models.length > 0} />
         </div>
       </header>
