@@ -1033,7 +1033,8 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
       </g>
 
       {/* ─── Part Views ─── */}
-      {models.map((model, idx) => {
+      {pageModels.map((model, idx) => {
+        const globalIdx = startIdx + idx;
         const profile = getProfile(model.type);
         const dims = getScaledDims(model);
         const partY = viewsStartY + idx * partRowH;
