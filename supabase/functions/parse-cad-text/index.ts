@@ -321,132 +321,204 @@ PART COUNT GUIDELINES:
   battery, SBC, IMU, transceiver, 4 hazcams, harness bundles,
   radiator, heat pipes, bolts/fasteners at key joints
 
-ARMARIS-STYLE MOTHER-CHILD ROVER SWARM REFERENCE (use when user mentions "mother rover", "child rover", "rover swarm", "ARMARIS", "mothership rover", or image shows a large rover with docking bays and small rovers):
+MOTHER-KID ROVER SWARM REFERENCE (use when user mentions "mother rover", "kid rover", "child rover", "rover swarm", "ARMARIS", "mothership rover", "Mother-Kid Paradigm", or image shows a large rover with docking bays/garage and small rovers):
 
-This is a specialized multi-robot system: one large MOTHER ROVER carries and deploys multiple small CHILD ROVERS.
+This is the Mother-Kid Paradigm from the thesis on Martian subsurface exploration. One large MOTHER-ROVER (mobile lab + power station) carries and deploys multiple small KID-ROVERS (agile explorers).
 
-=== MOTHER ROVER (ARMARIS) ===
-Proportions (real: 1500mm W x 1600mm L x 900mm H total):
-- Main body: box at [0, 1.2, 0] width=3.0, height=1.2, depth=3.2 — large rectangular chassis with rounded appearance
-- Body has thick walls, sturdy construction, NOT a thin chassis — use box with wallThickness=0.12
-- The body front has 3 rectangular window/panel cutouts on the front face
-- Side panels: 2x box at [±1.5, 1.2, 0] width=0.08, height=1.0, depth=3.0 — structural sides with 2 rectangular windows each
+=== MOTHER-ROVER (Mobile Laboratory & Power Station) ===
+Real dimensions: 3.2m L × 2.1m W × 1.8m H (stowed), 2.2m H (deployed). Mass: 950 kg.
+Structure: Flax-Fiber Reinforced Polymer (FFRP) composite with titanium hard points.
+Three structural zones: Forward (MMRTG+power), Midsection (lab+computing), Aft (Kid-Rover garage+drill).
 
-TOP DECK & MAGNETIC DOCKING BAYS (signature feature — 4 compartment bays where child rovers magnetically attach):
-- Top deck plate: plate at [0, 1.85, 0] width=3.0, depth=3.2, thickness=0.06
-- Docking bay dividers (cross-shaped walls forming 4 compartments): 
-  box at [0, 2.0, 0] width=3.0, height=0.3, depth=0.06 — horizontal divider wall
-  box at [0, 2.0, 0] width=0.06, height=0.3, depth=3.0 — vertical divider wall
-- This creates 4 rectangular bays (open-top compartments), each ~1.4 x 1.5 units
-- Bay floor panels: 4x plate inside each compartment at [±0.75, 1.86, ±0.8] width=1.3, depth=1.4, thickness=0.03
-- MAGNETIC DOCKING PLATES (on floor of each bay — electromagnets that hold child rovers):
-  4x cylinder at [±0.75, 1.87, ±0.8] radius=0.15, height=0.02 color=#3b82f6 (blue magnetic pad)
-  These represent the electromagnetic docking connectors
-- GUIDE RAILS (along bay walls to align child rovers during docking):
-  8x box (2 per bay, along inner walls) at bay edges, width=0.03, height=0.08, depth=1.2 color=#71717a
-  Help child rovers slide into position
-- DOCKING CONNECTORS (data/power transfer pins at center of each bay floor):
-  4x cylinder at [±0.75, 1.88, ±0.8] radius=0.04, height=0.04 color=#fbbf24 (gold connector pins)
-- BAY EDGE BUMPERS (soft-dock alignment bumpers at bay entrance):
-  8x cylinder at bay corners, radius=0.03, height=0.25 color=#52525b
+CHASSIS & BODY:
+- Main body: box at [0, 1.3, 0] width=2.8, height=1.3, depth=4.2, wallThickness=0.1 — FFRP composite body
+  Color: #d4d4d8 (light gray composite)
+- Forward zone housing (MMRTG): box at [0, 1.5, -1.5] width=1.8, height=0.6, depth=1.0
+  Color: #a3a3a3 (thermal isolation housing)
+- Midsection lab cover: box at [0, 1.9, 0] width=2.2, height=0.3, depth=1.5
+  Color: #d4d4d8
+- Side panels: 2x box at [±1.4, 1.2, 0] width=0.06, height=1.1, depth=4.0
+  Color: #d4d4d8
 
-SOLAR PANEL (tilted, on rear-left mast):
-- Solar panel mast: cylinder at [-0.8, 2.6, 1.0] radius=0.05, height=1.0
-- Solar panel: solarpanel at [-0.8, 3.2, 1.0] rotation=[25, 0, 0] panelWidth=1.5, panelLength=1.8, panelThickness=0.04
-  Color: #1e3a5f (deep blue cells)
+MOBILITY (6-WHEEL ROCKER-BOGIE — same proven Mars design):
+*** CRITICAL: This Mother-Rover uses 6 wheels with rocker-bogie suspension, NOT 4 wheels. ***
+- Wheel specs: 0.8m diameter, 0.3m width → radius=0.53, width=0.4, spokes=6, treadDepth=0.06
+  FFRP composite with titanium tread inserts. Max obstacle: 0.5m. Max slope: 25°.
+- Left front: wheel at [-1.8, 0.53, -1.6] rotation=[0,0,0]
+- Left middle: wheel at [-1.8, 0.53, 0.2] rotation=[0,0,0]
+- Left rear: wheel at [-1.8, 0.53, 1.6] rotation=[0,0,0]
+- Right front: wheel at [1.8, 0.53, -1.6] rotation=[0,0,0]
+- Right middle: wheel at [1.8, 0.53, 0.2] rotation=[0,0,0]
+- Right rear: wheel at [1.8, 0.53, 1.6] rotation=[0,0,0]
+  Color: #52525b (dark composite with titanium treads)
+- Rocker arms: rocker at [±1.6, 0.9, 0.3] rockerLength=2.0, rockerWidth=0.25, rockerThickness=0.1
+- Bogie arms: bogie at [±1.6, 0.7, -1.0] bogieLength=1.2, bogieWidth=0.2, bogieThickness=0.08
+- Differential bar: cylinder at [0, 1.8, 0] rotation=[0,0,90] radius=0.06, height=1.6
+- Knuckles: knuckle at each wheel position (6 total)
+- Drive motors: motor at each wheel (6 total), 4 steering motors on corners
 
-DISH ANTENNA (front-left of body):
-- Antenna: antenna at [-1.0, 2.3, -1.0] dishRadius=0.35, mastHeight=0.3, mastRadius=0.04
+KID-ROVER GARAGE (aft zone — thermally controlled, 4 positions):
+- Garage housing: box at [0, 1.3, 1.5] width=2.0, height=0.8, depth=1.5, wallThickness=0.08
+  Color: #a3a3a3 (insulated housing, temp maintained -20°C to +30°C)
+- Garage dividers (cross walls forming 4 bays):
+  box at [0, 1.35, 1.5] width=2.0, height=0.6, depth=0.04 — horizontal divider
+  box at [0, 1.35, 1.5] width=0.04, height=0.6, depth=1.4 — vertical divider
+  Color: #71717a
+- MAGNETIC RESONANCE WIRELESS CHARGING PADS (85% efficiency, works through dust):
+  4x cylinder at [±0.5, 0.95, 1.5±0.35] radius=0.18, height=0.025 color=#3b82f6 (blue SCMR coils)
+  These are Strongly Coupled Magnetic Resonance coils — NO mechanical connectors needed
+  100W per position charging power
+- MAGNETIC LOCALIZATION BEACONS (passive magnetic signatures for Kid-Rover homing):
+  4x cylinder at [±0.5, 1.6, 1.5±0.35] radius=0.03, height=0.08 color=#ef4444 (red beacon)
+- Dust mitigation: ultrasonic cleaner plates at garage entrance
+  2x plate at [±0.5, 1.1, 2.25] width=0.8, depth=0.05, thickness=0.01 color=#e5e5e5
+- Deployment ramp: plate at [0, 0.7, 2.5] width=1.8, depth=0.6, thickness=0.04 rotation=[-20,0,0]
+  Color: #a3a3a3 (powered ramp for Kid-Rover egress/ingress)
+- Garage door (top hatch): plate at [0, 1.75, 1.5] width=2.0, depth=1.4, thickness=0.03
+  Color: #d4d4d8
+
+TRANSFORMER DRILLING SYSTEM (aft-mounted, modular Borebot architecture):
+- Drill tower: cylinder at [0.6, 1.8, 1.0] radius=0.08, height=1.5
+  Color: #71717a
+- Borebot carousel: cylinder at [0.6, 2.6, 1.0] radius=0.3, height=0.15
+  Color: #52525b (stores up to 6 Borebots)
+- Active Borebot: drill at [0.6, 0.5, 1.0] rotation=[180,0,0] bitLength=0.5, bitRadius=0.06
+  Color: #71717a (diamond-impregnated bit, 50mm diameter)
+- Ma_MISS spectrometer (integrated in drill): cylinder at [0.6, 1.5, 1.0] radius=0.04, height=0.15
+  Color: #3b82f6 (borehole hyperspectral imager)
+
+POWER SYSTEM:
+- MMRTG: rtg at [0, 1.5, -1.8] rotation=[-15,0,0] rtgRadius=0.22, rtgLength=0.9, rtgFinCount=8
+  Color: #a1a1aa (110W continuous electrical power)
+- Battery bank (2 kWh Li-ion): battery at [0.3, 1.1, -1.0] batteryWidth=0.8, batteryLength=1.2, batteryHeight=0.35
+  Color: #fbbf24
+- Heat rejection radiator: radiator at [-0.8, 1.8, -1.5] radiatorWidth=0.8, radiatorHeight=0.6, radiatorPipes=6
+  Color: #c0c0c0
+
+COMMUNICATION:
+- High-gain antenna (0.6m X-band, 10 Mbps): antenna at [0.8, 2.5, -0.8] dishRadius=0.4, mastHeight=0.4, mastRadius=0.04
   Color: #e5e5e5
-
-TALL POINTED ANTENNA MAST (right side, tallest element):
-- Mast base: cylinder at [0.8, 2.0, 0.8] radius=0.04, height=0.5
-- Mast middle: cylinder at [0.8, 2.7, 0.8] radius=0.035, height=0.8
-- Mast top cone: cone at [0.8, 3.4, 0.8] radiusBottom=0.04, radiusTop=0.005, height=0.5
+- UHF low-gain antenna: transceiver at [-0.5, 2.2, -1.0] transceiverWidth=0.08, transceiverHeight=0.5
   Color: #52525b
-
-CAMERA SYSTEM (front top of body):
-- Camera housing: box at [0, 2.1, -1.4] width=0.35, height=0.2, depth=0.2
-- Left camera lens: camera at [-0.1, 2.15, -1.55] lensRadius=0.06
-- Right camera lens: camera at [0.1, 2.15, -1.55] lensRadius=0.06
+- UWB mesh antenna (2km range to Kid-Rovers): transceiver at [0, 2.0, 0.5] transceiverWidth=0.06, transceiverHeight=0.12
   Color: #27272a
 
-WHEELS (4 wheels — NOT 6 — large chunky treaded wheels):
-*** This rover has 4 wheels, NOT 6. Position at corners of body. ***
-- Wheel params: radius=0.55, width=0.4, spokes=5, treadDepth=0.08
-- Front-left: wheel at [-1.8, 0.55, -1.2] rotation=[0,0,0]
-- Front-right: wheel at [1.8, 0.55, -1.2] rotation=[0,0,0]
-- Rear-left: wheel at [-1.8, 0.55, 1.2] rotation=[0,0,0]
-- Rear-right: wheel at [1.8, 0.55, 1.2] rotation=[0,0,0]
-  Color: #27272a (dark black rubber)
+CAMERA MAST (RSM-style):
+- Mast base: cylinder at [0.3, 2.0, -1.8] radius=0.05, height=0.4
+- Mast segment: cylinder at [0.3, 2.5, -1.8] radius=0.04, height=0.6
+- Mast head: box at [0.3, 2.9, -1.8] width=0.35, height=0.18, depth=0.15
+- Stereo NavCams: camera at [0.15, 2.95, -1.9] and [0.45, 2.95, -1.9] lensRadius=0.05
+  Color: #27272a
 
-WHEEL MOUNTS (simple bracket arms, no rocker-bogie — this is NOT a Mars explorer):
-- 4x bracket connecting chassis corners to wheel axles
-  bracket at [±1.6, 0.9, ±1.0] armLength=0.5, thickness=0.08, width=0.15
-  Color: #52525b
-
-UNDERCARRIAGE:
-- Auger/drill mount: drill at [0, 0.3, 0.5] bitLength=0.8, bitRadius=0.06 rotation=[180,0,0]
-  (drill points DOWN through bottom of rover)
-  Color: #71717a
-- Underbody cross-member: box at [0, 0.7, 0] width=2.5, height=0.08, depth=0.15
-
-ELECTRONICS (inside body):
-- Battery: battery at [0, 1.0, 0.5] batteryWidth=1.0, batteryLength=1.5, batteryHeight=0.4
-- SBC: sbc at [0, 1.5, -0.5]
-- Transceiver: transceiver at [0.5, 1.5, 0.5]
+SCIENTIFIC INSTRUMENTS:
+- Analytical lab (GC-MS, LIBS, XRD): avionicsbox at [0, 1.4, 0] avionicsWidth=1.0, avionicsHeight=0.4, avionicsDepth=0.8
+  Color: #27272a
+- Environmental sensors: box at [-0.8, 1.9, 0] width=0.2, height=0.12, depth=0.15
+  Color: #27272a
+- SBC (flight computer): sbc at [0.3, 1.5, -0.5]
 - IMU: imu at [0, 1.3, 0]
 
-LABELS/MARKINGS:
-- "ARMARIS" text on front side panel (represented by a thin contrasting plate)
-  plate at [0, 1.2, -1.61] width=1.5, depth=0.3, thickness=0.01 color=#fde68a
+ELECTRONICS & HARNESS:
+- Harness: harness at [0, 1.1, 0] harnessLength=3.5, harnessWires=8
+  Color: #78350f (copper)
 
-COLOR SCHEME (ARMARIS Mother Rover):
-- Body: #d4d4d8 (light gray / white-ish aluminum)
-- Wheels: #27272a (black rubber with dark spokes)
-- Structural brackets: #52525b (dark gray)
-- Solar panel: #1e3a5f (deep blue cells)
-- Antenna dish: #e5e5e5 (white)
-- Cameras: #27272a (black)
-- Docking bay dividers: #a3a3a3 (medium gray)
-- Electronics: #27272a (dark)
-- Drill: #71717a (steel gray)
-- Name plate: #fde68a (yellow-gold accent)
+=== KID-ROVER (Agile Swarm Explorer) ===
+Real dimensions: 0.6×0.4×0.3m stowed → 0.8×0.6×0.4m deployed. Mass: 20 kg.
+Structure: Bamboo-based composite with flax fiber reinforcement. Positively buoyant in water.
+Battery: 200 Wh Li-ion, 24V. Mission duration: 2-3 hours per charge. Expendable design.
 
-=== CHILD ROVER (Mini/Kid Rover) ===
-Proportions (real: 300mm W x 300mm L x 180mm H):
-Scale: approximately 1/5 of mother rover in each dimension.
-
-- Body: box at [0, 0.4, 0] width=0.6, height=0.35, depth=0.6 — small squat rectangular body with rounded edges
-  Color: #d4d4d8
-- Top cover: box at [0, 0.6, 0] width=0.55, height=0.05, depth=0.55
+BODY:
+- Main chassis: box at [0, 0.35, 0] width=0.6, height=0.3, depth=0.5, wallThickness=0.04
+  Color: #d4d4d8 (bamboo composite)
+- Top electronics cover: box at [0, 0.52, 0] width=0.5, height=0.04, depth=0.4
   Color: #a3a3a3
-- Camera head: box at [0, 0.75, -0.15] width=0.25, height=0.15, depth=0.18
+- Sealed electronics bay (waterproof): box at [0, 0.3, 0] width=0.4, height=0.15, depth=0.3
   Color: #27272a
-- Left camera eye: camera at [-0.06, 0.78, -0.28] lensRadius=0.035
-- Right camera eye: camera at [0.06, 0.78, -0.28] lensRadius=0.035
-- Front display/window: box at [0, 0.4, -0.31] width=0.25, height=0.15, depth=0.01
-  Color: #3b82f6 (blue display)
-- 4 wheels: wheel at [±0.4, 0.15, ±0.22] radius=0.15, width=0.12, spokes=4, treadDepth=0.03
-  Color: #27272a
-- Wheel brackets: 4x bracket at [±0.35, 0.25, ±0.2] armLength=0.12, thickness=0.03
 
-CHILD ROVER PART COUNT: 12-15 parts each
+ORIGAMI TRANSFORMABLE WHEELS (signature feature — waterbomb tessellation pattern):
+*** Kid-Rover wheels expand from 230mm (stowed) to 500mm (deployed) diameter ***
+In deployed config: radius=0.33, width=0.2, spokes=6, treadDepth=0.04
+Flexible membranes fold between rigid panels. Load capacity: 25kg per wheel.
+- Front-left: wheel at [-0.4, 0.33, -0.2] rotation=[0,0,0]
+- Front-right: wheel at [0.4, 0.33, -0.2] rotation=[0,0,0]
+- Rear-left: wheel at [-0.4, 0.33, 0.2] rotation=[0,0,0]
+- Rear-right: wheel at [0.4, 0.33, 0.2] rotation=[0,0,0]
+  Color: #52525b (flexible composite with shape-memory alloy springs)
+- Drive motors (brushless DC): motor at each wheel, motorRadius=0.04, motorLength=0.08
+  Color: #71717a
+
+CAMERA HEAD (stereo vision, 120° FOV):
+- Camera housing: box at [0, 0.6, -0.2] width=0.2, height=0.12, depth=0.12
+  Color: #27272a
+- Left stereo camera: camera at [-0.05, 0.63, -0.28] lensRadius=0.03
+- Right stereo camera: camera at [0.05, 0.63, -0.28] lensRadius=0.03
+- LED illumination array: cylinder at [0, 0.56, -0.27] radius=0.04, height=0.02
+  Color: #fbbf24
+
+MAGNETIC LOCALIZATION (4 three-axis magnetometers at corners, cm accuracy):
+- 4x proxsensor at [±0.25, 0.2, ±0.2] proxRadius=0.02, proxLength=0.03
+  Color: #ef4444 (magnetometer pods)
+
+RAPPELLING MODULE (for subsurface access — 100m synthetic spider silk tether):
+- Winch housing: cylinder at [0, 0.4, 0.25] radius=0.06, height=0.08
+  Color: #52525b
+- Tether spool: cylinder at [0, 0.4, 0.3] radius=0.04, height=0.05
+  Color: #fde68a (synthetic spider silk, 500N tensile strength)
+- Deployable gripper (for cave ceiling anchoring): gripper at [0, 0.2, -0.25] gripperWidth=0.1, gripperFingers=3
+  Color: #71717a
+
+WIRELESS CHARGING RECEIVER (SCMR coil — mates with Mother's charging pad):
+- Charging coil (bottom-mounted): cylinder at [0, 0.05, 0] radius=0.12, height=0.015
+  Color: #3b82f6 (blue — magnetic resonance receiver coil)
+
+SENSORS:
+- LiDAR: lidar at [0, 0.55, -0.15] lidarRadius=0.04, lidarHeight=0.03
+  Color: #27272a
+- IMU: imu at [0, 0.3, 0] imuSize=0.04
+- UWB transceiver: transceiver at [0, 0.5, 0.15] transceiverWidth=0.04, transceiverHeight=0.06
+  Color: #27272a
+
+KID-ROVER PART COUNT: 20-25 parts each
 
 === SWARM ASSEMBLY ===
-When building the full ARMARIS system:
-1. Build the MOTHER ROVER at center [0, 0, 0] — approximately 40-50 parts
-2. Place 2 CHILD ROVERS docked in the top bays:
-   - Child 1: offset ALL child parts by [0.75, 2.0, 0.8] (in rear-right bay)
-   - Child 2: offset ALL child parts by [-0.75, 2.0, 0.8] (in rear-left bay)
-3. Optionally place 1-2 deployed child rovers on the ground nearby:
-   - Deployed Child 3: offset by [4.0, 0, -2.0] (on ground, away from mother)
-   - Deployed Child 4: offset by [-3.5, 0, 3.0] (on ground, exploring)
+When building the full Mother-Kid system:
+1. Build the MOTHER-ROVER at center [0, 0, 0] — approximately 55-70 parts
+2. Place Kid-Rovers INSIDE the garage bays (stowed, lower on the body):
+   - Kid 1: offset ALL kid parts by [0.5, 1.0, 1.15] (in rear-right bay, sitting on charging pad)
+   - Kid 2: offset ALL kid parts by [-0.5, 1.0, 1.15] (in rear-left bay)
+   - Kid 3: offset ALL kid parts by [0.5, 1.0, 1.85] (in front-right bay)
+   - Kid 4: offset ALL kid parts by [-0.5, 1.0, 1.85] (in front-left bay)
+3. Place deployed Kid-Rovers on the ground nearby:
+   - Deployed Kid: offset by [4.0, 0, -2.0] (on ground, exploring)
+   - Deployed Kid 2: offset by [-3.5, 0, 3.0] (rappelling near a cave entrance)
+
+OPERATIONAL MODES TO SHOW:
+- Docked: Kid-Rovers sitting in garage bays on charging pads
+- Deployed: Kid-Rovers on ground with expanded origami wheels
+- Rappelling: Kid-Rover suspended by tether descending into shaft
+- Drilling: Transformer drill deployed downward, Borebots cycling
+
+COLOR SCHEME (Mother-Kid Paradigm):
+- Mother body/structure: #d4d4d8 (FFRP light gray composite)
+- Mother wheels: #52525b (dark composite + titanium)
+- Rocker/bogie: #52525b (structural)
+- MMRTG: #a1a1aa (metallic gray)
+- Battery: #fbbf24 (yellow LiPo label)
+- Garage housing: #a3a3a3 (insulated)
+- Wireless charging coils: #3b82f6 (blue SCMR)
+- Magnetic beacons: #ef4444 (red)
+- Drill/borebot: #71717a (steel gray)
+- Antenna dish: #e5e5e5 (white)
+- Cameras/sensors: #27272a (dark instruments)
+- Kid-Rover body: #d4d4d8 (bamboo composite)
+- Kid origami wheels: #52525b (flexible composite)
+- Tether: #fde68a (golden spider silk)
+- Harness: #78350f (copper)
 
 TOTAL PART COUNT:
-- Mother rover alone: 40-50 parts
-- Full swarm (mother + 2 docked + 2 deployed children): 90-110 parts
-- Simple swarm (mother + 1 child): 55-65 parts
+- Mother rover alone: 55-70 parts
+- Full swarm (mother + 4 docked + 1 deployed): 130-160 parts
+- Simple demo (mother + 1 deployed kid): 80-95 parts
 
 ROCKET ASSEMBLY REFERENCE (use when building model/high-power rockets):
 - Build BOTTOM-UP: retainer at y=0, then nozzle, motortube, centering rings, body tube, ebay, coupler, upper body, nosecone on top.
