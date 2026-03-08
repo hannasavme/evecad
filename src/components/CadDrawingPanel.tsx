@@ -1130,6 +1130,10 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
     setAnnotations((prev) => prev.filter((a) => a.id !== id));
   }, []);
 
+  const moveAnnotation = useCallback((id: string, x: number, y: number) => {
+    setAnnotations((prev) => prev.map((a) => (a.id === id ? { ...a, x, y } : a)));
+  }, []);
+
   const handleExportSVG = () => {
     const svgEl = svgContainerRef.current?.querySelector("svg");
     if (!svgEl) return;
