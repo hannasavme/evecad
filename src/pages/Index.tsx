@@ -36,6 +36,7 @@ export default function Index() {
   const [showInput, setShowInput] = useState(false);
   const [models, setModels] = useState<SceneModel[]>([]);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
+  const [showDrawing, setShowDrawing] = useState(false);
   const [assemblyInstructions, setAssemblyInstructions] = useState<string | null>(null);
   const viewerRef = useRef<ModelViewerHandle>(null);
 
