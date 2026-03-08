@@ -77,60 +77,89 @@ export default function Index() {
         }
       }, 150);
 
-      let type: SceneModel["type"] = "box";
-      let label = input.text?.slice(0, 30) || "model";
-      let params: Record<string, any> = {};
-
       try {
         const body: Record<string, any> = {};
 
         if (input.mode === "text" && input.text) {
           body.text = input.text;
         } else if (input.mode === "image" && input.imageFile) {
-          // Convert image to base64
           const base64 = await fileToBase64(input.imageFile);
           body.imageBase64 = base64;
-          label = "Image model";
         }
 
-        const { data, error } = await supabase.functions.invoke("parse-cad-text", {
-          body,
-        });
+        const { data, error } = await supabase.functions.invoke("parse-cad-text", { body });
 
-        if (!error && data?.type) {
-          type = data.type;
-          label = data.label || label;
-          params = data.params || {};
-        } else {
-          type = localInferType(input.text);
+        clearInterval(interval);
+        setProgress(100);
+        setStage(stages[stages.length - 1]);
+
+        if (error || !data?.parts?.length) {
+          // Fallback single part
+          const type = localInferType(input.text);
+          const offset = modelsRef.current.length * 2.5;
+          const newModel: SceneModel = {
+            id: `model-${++modelIdCounter}`,
+            type,
+            position: [offset, 0.5, 0],
+            scale: [1, 1, 1],
+            color: DEFAULT_COLORS[type] || "#d8b4fe",
+            label: input.text?.slice(0, 30) || "model",
+            visible: true,
+          };
+          setTimeout(() => {
+            setModelsImmediate((prev) => [...prev, newModel]);
+            setSelectedModelId(newModel.id);
+            setShowInput(false);
+            setIsGenerating(false);
+            toast.success(`${type} generated!`);
+          }, 300);
+          return;
         }
+
+        const parts: SceneModel[] = data.parts.map((p: any) => ({
+          id: `model-${++modelIdCounter}`,
+          type: p.type as SceneModel["type"],
+          position: (p.position || [0, 0.5, 0]) as [number, number, number],
+          scale: [1, 1, 1] as [number, number, number],
+          color: p.color || DEFAULT_COLORS[p.type] || "#d8b4fe",
+          label: p.label || p.type,
+          params: p.params || {},
+          visible: true,
+          group: data.assemblyName || undefined,
+        }));
+
+        setTimeout(() => {
+          setModelsImmediate((prev) => [...prev, ...parts]);
+          if (parts.length > 0) setSelectedModelId(parts[0].id);
+          setShowInput(false);
+          setIsGenerating(false);
+          if (parts.length > 1) {
+            toast.success(`${data.assemblyName || "Assembly"}: ${parts.length} parts generated!`);
+          } else {
+            toast.success(`${parts[0].type} generated!`);
+          }
+        }, 300);
       } catch {
-        type = localInferType(input.text);
-      }
-
-      clearInterval(interval);
-      setProgress(100);
-      setStage(stages[stages.length - 1]);
-
-      setTimeout(() => {
-        const offset = models.length * 2.5;
+        clearInterval(interval);
+        const type = localInferType(input.text);
+        const offset = modelsRef.current.length * 2.5;
         const newModel: SceneModel = {
           id: `model-${++modelIdCounter}`,
           type,
           position: [offset, 0.5, 0],
           scale: [1, 1, 1],
           color: DEFAULT_COLORS[type] || "#d8b4fe",
-          label,
-          params,
+          label: input.text?.slice(0, 30) || "model",
+          visible: true,
         };
         setModelsImmediate((prev) => [...prev, newModel]);
         setSelectedModelId(newModel.id);
         setShowInput(false);
         setIsGenerating(false);
-        toast.success(`${type} generated with ${Object.keys(params).length} custom parameters!`);
-      }, 300);
+        toast.success(`${type} generated!`);
+      }
     },
-    [models.length]
+    []
   );
 
   const fileToBase64 = (file: File): Promise<string> => {
