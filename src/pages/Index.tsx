@@ -372,53 +372,53 @@ export default function Index() {
   return (
     <div className="h-screen w-screen overflow-hidden bg-background relative">
       {/* Header */}
-      <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 h-12 bg-card/70 backdrop-blur-md border-b-2 border-border">
-        <div className="flex items-center gap-2.5">
-          <img src={mascotImg} alt="EveCAD mascot" className="w-8 h-8 rounded-xl" />
-          <span className="font-extrabold text-lg tracking-tight text-foreground">
+      <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-2 sm:px-4 h-12 bg-card/70 backdrop-blur-md border-b-2 border-border">
+        <div className="flex items-center gap-2">
+          <img src={mascotImg} alt="EveCAD mascot" className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl" />
+          <span className="font-extrabold text-base sm:text-lg tracking-tight text-foreground">
             Eve<span className="text-gradient-primary">CAD</span>
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto">
           {models.length >= 2 && (
             <button
               onClick={handleAssemble}
               disabled={isAssembling}
-              className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors px-2.5 py-1.5 rounded-xl border-2 border-border hover:border-primary/40 bg-card/60 disabled:opacity-50"
+              className="flex items-center gap-1 sm:gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors px-2 sm:px-2.5 py-1.5 rounded-xl border-2 border-border hover:border-primary/40 bg-card/60 disabled:opacity-50 shrink-0"
             >
               {isAssembling ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
               ) : (
                 <Wrench className="w-3 h-3" />
               )}
-              Assemble
+              <span className="hidden sm:inline">Assemble</span>
             </button>
           )}
           {selectedModels.length > 0 && (
             <button
               onClick={() => setShowProperties(!showProperties)}
-              className={`flex items-center gap-1.5 text-[10px] font-bold transition-colors px-2.5 py-1.5 rounded-xl border-2 bg-card/60 ${
+              className={`flex items-center gap-1 sm:gap-1.5 text-[10px] font-bold transition-colors px-2 sm:px-2.5 py-1.5 rounded-xl border-2 bg-card/60 shrink-0 ${
                 showProperties
                   ? "border-primary/40 text-primary"
                   : "border-border text-muted-foreground hover:text-primary hover:border-primary/40"
               }`}
             >
               <SlidersHorizontal className="w-3 h-3" />
-              Properties
+              <span className="hidden sm:inline">Properties</span>
             </button>
           )}
           {models.length > 0 && (
             <button
               onClick={() => setShowDrawing(!showDrawing)}
-              className={`flex items-center gap-1.5 text-[10px] font-bold transition-colors px-2.5 py-1.5 rounded-xl border-2 bg-card/60 ${
+              className={`flex items-center gap-1 sm:gap-1.5 text-[10px] font-bold transition-colors px-2 sm:px-2.5 py-1.5 rounded-xl border-2 bg-card/60 shrink-0 ${
                 showDrawing
                   ? "border-primary/40 text-primary"
                   : "border-border text-muted-foreground hover:text-primary hover:border-primary/40"
               }`}
             >
               <Ruler className="w-3 h-3" />
-              Drawing
+              <span className="hidden sm:inline">Drawing</span>
             </button>
           )}
           <ImportButton onImport={(imported) => setModelsImmediate((prev) => [...prev, ...imported])} />
