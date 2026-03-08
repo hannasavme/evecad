@@ -2,25 +2,53 @@ import { useState } from "react";
 import { Download, FileBox, Printer, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
+import { exportSTL, exportOBJ, downloadBlob } from "@/lib/exporters";
+import type * as THREE from "three";
 
 const formats = [
-  { id: "step", label: "STEP", desc: "Pro CAD ⚙️", icon: FileBox },
   { id: "stl", label: "STL", desc: "3D Print 🖨️", icon: Printer },
   { id: "obj", label: "OBJ", desc: "Preview 👀", icon: Eye },
+  { id: "step", label: "STEP", desc: "Pro CAD ⚙️", icon: FileBox },
 ];
 
 interface ExportDropdownProps {
   hasModel: boolean;
+  getScene?: () => THREE.Scene | null;
 }
 
-export default function ExportDropdown({ hasModel }: ExportDropdownProps) {
+export default function ExportDropdown({ hasModel, getScene }: ExportDropdownProps) {
   const [open, setOpen] = useState(false);
 
   const handleExport = (format: string) => {
-    toast.success(`${format.toUpperCase()} export started! 🎉`, {
-      description: "Connect a backend to enable real CAD file generation~",
-    });
     setOpen(false);
+
+    if (format === "step") {
+      toast.info("STEP export coming soon! ⚙️", {
+        description: "STEP files require a CAD kernel (OpenCascade). STL and OBJ are available now~",
+      });
+      return;
+    }
+
+    const scene = getScene?.();
+    if (!scene) {
+      toast.error("No scene available to export 😿");
+      return;
+    }
+
+    try {
+      if (format === "stl") {
+        const blob = exportSTL(scene);
+        downloadBlob(blob, "cadgen-model.stl");
+        toast.success("STL downloaded! 🎉", { description: "Ready for 3D printing~" });
+      } else if (format === "obj") {
+        const blob = exportOBJ(scene);
+        downloadBlob(blob, "cadgen-model.obj");
+        toast.success("OBJ downloaded! 🎉", { description: "Ready for visualization~" });
+      }
+    } catch (err) {
+      console.error("Export error:", err);
+      toast.error("Export failed 😿", { description: "Something went wrong during export." });
+    }
   };
 
   return (
@@ -45,7 +73,7 @@ export default function ExportDropdown({ hasModel }: ExportDropdownProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-1.5 z-50 bg-card border-2 border-border rounded-2xl p-2 kawaii-shadow-sm min-w-[140px]"
+            className="absolute right-0 top-full mt-1.5 z-50 bg-card border-2 border-border rounded-2xl p-2 kawaii-shadow-sm min-w-[160px]"
           >
             {formats.map((f) => (
               <button
