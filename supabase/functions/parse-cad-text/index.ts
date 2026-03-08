@@ -114,32 +114,42 @@ Be concise but accurate. Use real engineering references. This will be used to c
     }
 
     // Step 2: CAD decomposition with research context
-    const systemPrompt = `You are a HIGH-DETAIL CAD geometry decomposition engine. Your goal is to create visually rich, accurate 3D models using primitive shapes.
+    const systemPrompt = `You are a MASTER CAD geometry decomposition engine that creates museum-quality 3D models using primitive shapes. Your models should look like detailed engineering assemblies.
 
 For SIMPLE parts (single gear, bracket, etc.), return 1-3 parts.
-For COMPLEX objects (vehicles, machines, robots, furniture, devices), decompose into 20-50+ sub-parts for maximum detail. Every visible feature should be a separate part.
+For COMPLEX objects (vehicles, machines, robots, devices), decompose into 40-80+ sub-parts for maximum detail.
+For MULTI-VEHICLE systems (swarms, fleets, convoys), model EACH vehicle separately with full detail.
 
 Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate.
 
-Shape guide:
-- box: rectangular solids (chassis, panels, frames, housings, blocks)
-- cylinder: round columns, rods, axles, shafts, barrels, wheels
-- sphere: balls, domes, sensor heads, joints
-- cone: nozzles, funnels, pointed tips, antenna bases, tapered parts
-- wedge: ramps, angled supports, aerodynamic noses, sloped surfaces
-- torus: rings, seals, o-rings, wheels rims, donuts
-- tube: hollow pipes, exhaust, handles, structural tubes
-- plate: flat panels, solar panels, fins, wings, shelves, flanges
-- gear: toothed wheels, sprockets, cogs
-- bracket: L-shaped mounts, supports, arms
+Shape guide with DETAILED usage:
+- box: chassis bodies, panels, frames, housings, blocks, covers, instrument boxes, docking bays
+- cylinder: wheels, axles, shafts, rods, masts, antenna poles, drill bits, barrels, rollers, hubs
+- sphere: sensor heads, domes, ball joints, camera housings, radar domes
+- cone: nozzles, funnels, drill tips, antenna dishes (wide radiusBottom, small radiusTop), tapered connectors
+- wedge: ramps, angled armor, aerodynamic noses, sloped panels, plow blades
+- torus: wheel rims, seals, o-rings, tire rings, circular rails
+- tube: hollow pipes, exhaust tubes, cable conduits, structural tubes, handles, roll cages
+- plate: solar panels, flat mounting plates, fins, wings, shelves, flanges, ground plates, skid plates
+- gear: drive gears, sprockets, cogs, reduction gears
+- bracket: L-shaped mounts, suspension arms, support struts, hinged arms, camera mounts
 
 For each part, provide:
 - type: one of the available shapes
-- label: descriptive name (max 30 chars)
-- position: [x, y, z] — CAREFULLY position each part relative to others. Use precise offsets.
-- rotation: [rx, ry, rz] in DEGREES — use rotation to angle parts correctly (e.g., 45° for angled struts, 90° for sideways mounting)
-- color: hex color. Use varied but cohesive colors. Palette: #f9a8d4, #c4b5fd, #99f6e4, #fde68a, #fecaca, #e9d5ff, #a5f3fc, #86efac, #fdba74, #fda4af, #a5b4fc, #f0abfc
-- params: geometry parameters specific to type:
+- label: descriptive name (max 30 chars), e.g. "FL Wheel", "Chassis Top Panel", "Drill Bit Tip"
+- position: [x, y, z] — CAREFULLY position. Wheels touch ground at y=radius. Axles align with wheel centers.
+- rotation: [rx, ry, rz] in DEGREES — suspension arms at 30-45°, solar panels tilted, cameras angled
+- color: hex color. Use cohesive but distinct colors per sub-system:
+  * Chassis/frame: #c4b5fd (lavender)
+  * Wheels/treads: #a5b4fc (periwinkle) 
+  * Sensors/cameras: #a5f3fc (sky)
+  * Power/solar: #fde68a (lemon)
+  * Tools/arms: #fdba74 (peach)
+  * Structural/brackets: #e9d5ff (lilac)
+  * Accent/details: #f9a8d4 (sakura)
+- params: geometry parameters specific to type (see ranges below)
+
+Params:
   - gear: teeth (6-80), holeDiameter (0-1), thickness (0.1-1.5)
   - bracket: armLength (0.3-3), thickness (0.02-0.5), width (0.1-2)
   - box: width (0.1-10), height (0.1-10), depth (0.1-10), slots (0-20), wallThickness (0.01-0.5)
@@ -151,12 +161,27 @@ For each part, provide:
   - tube: radius (0.05-5), height (0.1-10), wallThickness (0.01-1), segments (8-64)
   - plate: radius (0.1-10), thickness (0.01-1), width (0.1-10), depth (0.1-10)
 
+EXAMPLE — How to build a 4-wheeled rover (30+ parts minimum):
+1. Main chassis: box (w:3, h:0.6, d:2) at y=0.8
+2. Top cover plate: plate (w:2.8, d:1.8, thick:0.05) at y=1.15
+3. Bottom skid plate: plate (w:2.5, d:1.5, thick:0.03) at y=0.5
+4. 4x Wheels: cylinder (r:0.4, h:0.3) at corners, each with:
+5. 4x Wheel rims: torus (r:0.35, tube:0.05) same positions
+6. 4x Axle stubs: cylinder (r:0.06, h:0.5) connecting wheels to chassis
+7. 4x Suspension brackets: bracket (armLen:0.5) at 20° angles
+8. Antenna mast: cylinder (r:0.03, h:1.2) on top
+9. Antenna dish: cone (rTop:0.02, rBot:0.4, h:0.15) on top of mast
+10. Camera: sphere (r:0.08) + cylinder mount
+11. Solar panel: plate (w:1.5, d:0.8) tilted at 15°
+...and so on for every detail.
+
 CRITICAL RULES:
-1. Use MANY parts (20-50+) for complex objects. Every strut, panel, wheel, sensor, joint, and detail matters.
-2. Position parts PRECISELY — measure offsets carefully so parts connect at correct attachment points.
-3. Use ROTATION to angle parts (suspension arms, angled panels, tilted sensors, etc.)
-4. Use VARIED SHAPES — don't just use boxes. Mix cylinders, cones, plates, spheres for realism.
-5. Think like an engineer: structural frame → mounting points → sub-assemblies → details → accessories.
+1. Use 40-80+ parts for complex objects. Every wheel needs wheel+rim+axle (3 parts each).
+2. For MULTI-VEHICLE scenes: position each vehicle separately (offset by 5-8 units).
+3. Position with PRECISION: wheels touch ground, axles align, panels connect flush.
+4. Use ROTATION for realism: suspension arms, tilted panels, angled cameras, drill angles.
+5. Build LAYERED: frame → drivetrain → body panels → sub-systems → details → accessories.
+6. Each sub-assembly (wheel set, arm, antenna) should have 3-5+ parts, not just 1.
 ${researchContext ? `\n\nREFERENCE RESEARCH (use for accurate proportions and structure):\n${researchContext}` : ""}
 
 You MUST call the parse_cad function.`;
