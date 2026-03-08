@@ -14,9 +14,9 @@ import { useUndoHistory } from "@/hooks/use-undo-history";
 
 const DEFAULT_COLORS: Record<string, string> = {
   gear: "#f9a8d4",
-  bracket: "#c4b5fd",
-  box: "#d8b4fe",
-  cylinder: "#a5f3fc",
+  bracket: "#f9a8d4",
+  box: "#f9a8d4",
+  cylinder: "#f9a8d4",
 };
 
 const stages = [
