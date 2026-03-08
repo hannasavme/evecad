@@ -299,7 +299,7 @@ function localParse(text: string) {
   const kawaiiColors = ["#f9a8d4", "#c4b5fd", "#99f6e4", "#fde68a", "#fecaca", "#e9d5ff"];
   const color = kawaiiColors[Math.floor(Math.random() * kawaiiColors.length)];
   return {
-    parts: [{ type, label: text.slice(0, 30), position: [0, 0.5, 0], color, params }],
+    parts: [{ type, label: text.slice(0, 30), position: [0, 0.5, 0], rotation: [0, 0, 0], color, params }],
     assemblyName: null,
   };
 }
