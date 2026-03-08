@@ -14,9 +14,9 @@ import { useUndoHistory } from "@/hooks/use-undo-history";
 
 const DEFAULT_COLORS: Record<string, string> = {
   gear: "#f9a8d4",
-  bracket: "#c4b5fd",
-  box: "#d8b4fe",
-  cylinder: "#a5f3fc",
+  bracket: "#f9a8d4",
+  box: "#f9a8d4",
+  cylinder: "#f9a8d4",
 };
 
 const stages = [
@@ -102,7 +102,7 @@ export default function Index() {
             type,
             position: [offset, 0.5, 0],
             scale: [1, 1, 1],
-            color: DEFAULT_COLORS[type] || "#d8b4fe",
+            color: DEFAULT_COLORS[type] || "#f9a8d4",
             label: input.text?.slice(0, 30) || "model",
             visible: true,
           };
@@ -121,7 +121,7 @@ export default function Index() {
           type: p.type as SceneModel["type"],
           position: (p.position || [0, 0.5, 0]) as [number, number, number],
           scale: [1, 1, 1] as [number, number, number],
-          color: p.color || DEFAULT_COLORS[p.type] || "#d8b4fe",
+          color: p.color || DEFAULT_COLORS[p.type] || "#f9a8d4",
           label: p.label || p.type,
           params: p.params || {},
           visible: true,
@@ -148,7 +148,7 @@ export default function Index() {
           type,
           position: [offset, 0.5, 0],
           scale: [1, 1, 1],
-          color: DEFAULT_COLORS[type] || "#d8b4fe",
+          color: DEFAULT_COLORS[type] || "#f9a8d4",
           label: input.text?.slice(0, 30) || "model",
           visible: true,
         };
@@ -223,7 +223,7 @@ export default function Index() {
           type: p.type as SceneModel["type"],
           position: p.position as [number, number, number],
           scale: p.scale as [number, number, number],
-          color: DEFAULT_COLORS[p.type] || "#fde68a",
+          color: DEFAULT_COLORS[p.type] || "#f9a8d4",
           label: p.label,
         }));
         setModelsImmediate((prev) => [...prev, ...newParts]);
