@@ -164,6 +164,14 @@ COMPOUND TYPE RULES (HIGHEST PRIORITY — ALWAYS FOLLOW):
 - "proptank": ANY propellant/oxidizer tank — auto-renders cylindrical pressure vessel with domed ends, stringers, ring frames, feed ports.
 - "reactionwheel": ANY reaction/momentum wheel — auto-renders flywheel with housing, hub motor, spokes, encoder, mounting base.
 - "avionicsbox": ANY avionics/electronics enclosure — auto-renders box with front-panel connectors, heat sink fins, EMI gasket, mounting ears, cable harness connector.
+- "droneframe": ANY drone/quadcopter main frame — auto-renders top/bottom plates with standoffs, cable slots, FC mounting holes.
+- "dronearm": ANY drone arm — auto-renders beam with motor mount holes, zip-tie slots, frame attach end.
+- "propeller": ANY propeller/rotor blade — auto-renders hub with configurable blade count and pitch.
+- "propguard": ANY propeller guard ring — auto-renders protective ring with support struts.
+- "brushlessmotor": ANY brushless motor (outrunner) — auto-renders stator, bell housing, magnets, output shaft, prop adapter, wire leads.
+- "fctray": ANY flight controller mounting tray — auto-renders plate with M3 pattern holes, grommets, FC board, USB connector.
+- "batterytray": ANY battery holder/tray — auto-renders base with side rails, front/rear lips, strap slots, non-slip pad.
+- "escbox": ANY ESC enclosure — auto-renders box with heat sink fins, 3-phase wires in/out, signal wire.
 
 If user asks to "generate a wheel" → use type "wheel" (NOT impeller).
 If user asks for an impeller/turbine/fan → use wedges/plates radially around a cylinder hub.
