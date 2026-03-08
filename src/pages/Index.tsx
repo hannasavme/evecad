@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUndoHistory } from "@/hooks/use-undo-history";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthGate } from "@/hooks/useAuthGate";
 
 const DEFAULT_COLORS: Record<string, string> = {
   gear: "#f9a8d4",
