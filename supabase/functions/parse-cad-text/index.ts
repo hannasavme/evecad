@@ -65,7 +65,7 @@ For each part, provide:
 - type: one of the available shapes
 - label: descriptive name (max 30 chars)
 - position: [x, y, z] coordinates for assembly placement
-- color: hex color string
+- color: hex color from this kawaii palette ONLY: #f9a8d4 (pink), #c4b5fd (lavender), #99f6e4 (mint), #fde68a (yellow), #fecaca (peach), #e9d5ff (light purple). Vary colors across parts.
 - params: geometry parameters specific to type:
   - gear: teeth (6-80), holeDiameter (0-1), thickness (0.1-1.5)
   - bracket: armLength (0.3-3), thickness (0.02-0.5), width (0.1-2)
