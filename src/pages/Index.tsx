@@ -1,16 +1,18 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Box, Plus, Star, Sparkles, Heart, X, Layers, Trash2 } from "lucide-react";
 import InputPanel from "@/components/InputPanel";
-import ModelViewer, { type SceneModel } from "@/components/ModelViewer";
+import ModelViewer, { type SceneModel, type ModelViewerHandle } from "@/components/ModelViewer";
 import ExportDropdown from "@/components/ExportDropdown";
 import GenerationProgress from "@/components/GenerationProgress";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const stages = [
-  "Reading your wishes~ ✨",
-  "Sketching geometry~ 📐",
+  "Asking AI to understand~ ✨",
+  "Parsing geometry~ 📐",
   "Building mesh~ 🏗️",
-  "Adding sparkles~ ✨",
+  "Adding details~ ✨",
   "Almost done~ 🎀",
 ];
 
@@ -23,8 +25,74 @@ export default function Index() {
   const [showInput, setShowInput] = useState(false);
   const [models, setModels] = useState<SceneModel[]>([]);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
+  const viewerRef = useRef<ModelViewerHandle>(null);
 
-  const inferModelType = (text?: string): SceneModel["type"] => {
+  const handleGenerate = useCallback(
+    async (input: { mode: string; text?: string; imageFile?: File }) => {
+      setIsGenerating(true);
+      setProgress(0);
+
+      // Start progress animation
+      let step = 0;
+      const interval = setInterval(() => {
+        step++;
+        if (step <= 20) {
+          setProgress(Math.min((step / 25) * 100, 80));
+          setStage(stages[Math.min(Math.floor(step / 4), stages.length - 2)]);
+        }
+      }, 150);
+
+      let type: SceneModel["type"] = "box";
+      let label = input.text?.slice(0, 30) || "model";
+
+      try {
+        // Call AI edge function to parse text
+        if (input.mode === "text" && input.text) {
+          const { data, error } = await supabase.functions.invoke("parse-cad-text", {
+            body: { text: input.text },
+          });
+
+          if (error) {
+            console.error("AI parse error:", error);
+            // Fallback to local inference
+            type = localInferType(input.text);
+          } else if (data?.type) {
+            type = data.type;
+            label = data.label || label;
+          }
+        } else {
+          type = "box";
+          label = "Uploaded model";
+        }
+      } catch (err) {
+        console.error("Generate error:", err);
+        type = localInferType(input.text);
+      }
+
+      // Finish progress
+      clearInterval(interval);
+      setProgress(100);
+      setStage(stages[stages.length - 1]);
+
+      setTimeout(() => {
+        const offset = models.length * 2.5;
+        const newModel: SceneModel = {
+          id: `model-${++modelIdCounter}`,
+          type,
+          position: [offset, 0.5, 0],
+          label,
+        };
+        setModels((prev) => [...prev, newModel]);
+        setSelectedModelId(newModel.id);
+        setShowInput(false);
+        setIsGenerating(false);
+        toast.success(`${type} generated! 🎉`);
+      }, 300);
+    },
+    [models.length]
+  );
+
+  const localInferType = (text?: string): SceneModel["type"] => {
     if (!text) return "box";
     const t = text.toLowerCase();
     if (t.includes("gear")) return "gear";
@@ -33,46 +101,17 @@ export default function Index() {
     return "box";
   };
 
-  const handleGenerate = useCallback(
-    (input: { mode: string; text?: string; imageFile?: File }) => {
-      setIsGenerating(true);
-      setProgress(0);
-      const type = inferModelType(input.text);
-      const label = input.text?.slice(0, 30) || type;
-      let step = 0;
-
-      const interval = setInterval(() => {
-        step++;
-        setProgress(Math.min((step / 25) * 100, 100));
-        setStage(stages[Math.min(Math.floor(step / 5), stages.length - 1)]);
-        if (step >= 25) {
-          clearInterval(interval);
-          setIsGenerating(false);
-          const offset = models.length * 2.5;
-          const newModel: SceneModel = {
-            id: `model-${++modelIdCounter}`,
-            type,
-            position: [offset, 0.5, 0],
-            label,
-          };
-          setModels((prev) => [...prev, newModel]);
-          setSelectedModelId(newModel.id);
-          setShowInput(false);
-        }
-      }, 120);
-    },
-    [models.length]
-  );
-
   const handleDeleteSelected = () => {
     if (!selectedModelId) return;
     setModels((prev) => prev.filter((m) => m.id !== selectedModelId));
     setSelectedModelId(null);
   };
 
+  const getScene = () => viewerRef.current?.getScene() ?? null;
+
   return (
     <div className="h-screen w-screen overflow-hidden bg-background relative">
-      {/* Header — compact overlay */}
+      {/* Header */}
       <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 h-12 bg-card/70 backdrop-blur-md border-b-2 border-border">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-primary/15 border-2 border-primary/30 flex items-center justify-center">
@@ -87,13 +126,14 @@ export default function Index() {
         </div>
 
         <div className="flex items-center gap-3">
-          <ExportDropdown hasModel={models.length > 0} />
+          <ExportDropdown hasModel={models.length > 0} getScene={getScene} />
         </div>
       </header>
 
       {/* Full-screen 3D Viewport */}
       <div className="absolute inset-0 pt-12">
         <ModelViewer
+          ref={viewerRef}
           models={models}
           selectedModelId={selectedModelId}
           onSelectModel={setSelectedModelId}

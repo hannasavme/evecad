@@ -1,6 +1,6 @@
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Environment, ContactShadows, Float, TransformControls } from "@react-three/drei";
-import { Suspense, useMemo, useState, useRef } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
+import { OrbitControls, Environment, ContactShadows, Float } from "@react-three/drei";
+import { Suspense, useMemo, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import * as THREE from "three";
 
 export interface SceneModel {
@@ -8,6 +8,10 @@ export interface SceneModel {
   type: "gear" | "bracket" | "box" | "cylinder";
   position: [number, number, number];
   label: string;
+}
+
+export interface ModelViewerHandle {
+  getScene: () => THREE.Scene | null;
 }
 
 interface ModelViewerProps {
@@ -87,6 +91,15 @@ function SceneModelComponent({ model, isSelected, onSelect }: { model: SceneMode
   );
 }
 
+// Component inside Canvas to capture scene ref
+function SceneCapture({ onSceneReady }: { onSceneReady: (scene: THREE.Scene) => void }) {
+  const { scene } = useThree();
+  useEffect(() => {
+    onSceneReady(scene);
+  }, [scene, onSceneReady]);
+  return null;
+}
+
 function Scene({ models, selectedModelId, onSelectModel }: ModelViewerProps) {
   return (
     <>
@@ -121,18 +134,31 @@ function Scene({ models, selectedModelId, onSelectModel }: ModelViewerProps) {
   );
 }
 
-export default function ModelViewer({ models, selectedModelId, onSelectModel }: ModelViewerProps) {
-  return (
-    <div className="w-full h-full">
-      <Canvas
-        camera={{ position: [4, 3, 4], fov: 50 }}
-        shadows
-        onPointerMissed={() => onSelectModel(null)}
-      >
-        <Suspense fallback={null}>
-          <Scene models={models} selectedModelId={selectedModelId} onSelectModel={onSelectModel} />
-        </Suspense>
-      </Canvas>
-    </div>
-  );
-}
+const ModelViewer = forwardRef<ModelViewerHandle, ModelViewerProps>(
+  ({ models, selectedModelId, onSelectModel }, ref) => {
+    const sceneRef = useRef<THREE.Scene | null>(null);
+
+    useImperativeHandle(ref, () => ({
+      getScene: () => sceneRef.current,
+    }));
+
+    return (
+      <div className="w-full h-full">
+        <Canvas
+          camera={{ position: [4, 3, 4], fov: 50 }}
+          shadows
+          onPointerMissed={() => onSelectModel(null)}
+        >
+          <Suspense fallback={null}>
+            <SceneCapture onSceneReady={(s) => { sceneRef.current = s; }} />
+            <Scene models={models} selectedModelId={selectedModelId} onSelectModel={onSelectModel} />
+          </Suspense>
+        </Canvas>
+      </div>
+    );
+  }
+);
+
+ModelViewer.displayName = "ModelViewer";
+
+export default ModelViewer;
