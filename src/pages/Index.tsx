@@ -35,14 +35,21 @@ export default function Index() {
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState("");
   const [showInput, setShowInput] = useState(false);
-  const { current: models, push: pushModels, undo, redo, canUndo, canRedo } = useUndoHistory<SceneModel[]>([]);
+  const { current: models, push: pushModels, pushImmediate, undo, redo, canUndo, canRedo } = useUndoHistory<SceneModel[]>([]);
 
   const modelsRef = useRef(models);
   modelsRef.current = models;
 
+  // Debounced setter for continuous changes (sliders)
   const setModels = useCallback((updater: SceneModel[] | ((prev: SceneModel[]) => SceneModel[])) => {
     pushModels(typeof updater === "function" ? updater(modelsRef.current) : updater);
   }, [pushModels]);
+
+  // Immediate setter for discrete changes (add, delete, assemble)
+  const setModelsImmediate = useCallback((updater: SceneModel[] | ((prev: SceneModel[]) => SceneModel[])) => {
+    pushImmediate(typeof updater === "function" ? updater(modelsRef.current) : updater);
+  }, [pushImmediate]);
+
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
   const [showDrawing, setShowDrawing] = useState(false);
   const [assemblyInstructions, setAssemblyInstructions] = useState<string | null>(null);
@@ -52,7 +59,7 @@ export default function Index() {
 
   const handleUpdateModel = useCallback((id: string, updates: Partial<SceneModel>) => {
     setModels((prev) => prev.map((m) => (m.id === id ? { ...m, ...updates } : m)));
-  }, []);
+  }, [setModels]);
 
   const handleGenerate = useCallback(
     async (input: { mode: string; text?: string; imageFile?: File }) => {
@@ -104,7 +111,7 @@ export default function Index() {
           color: DEFAULT_COLORS[type] || "#d8b4fe",
           label,
         };
-        setModels((prev) => [...prev, newModel]);
+        setModelsImmediate((prev) => [...prev, newModel]);
         setSelectedModelId(newModel.id);
         setShowInput(false);
         setIsGenerating(false);
@@ -137,7 +144,7 @@ export default function Index() {
 
       // Apply new positions and scales
       if (data?.parts) {
-        setModels((prev) =>
+        setModelsImmediate((prev) =>
           prev.map((m, index) => {
             const update = data.parts.find((p: any) => p.id === m.id) || data.parts[index];
             if (update) {
@@ -169,7 +176,7 @@ export default function Index() {
           color: DEFAULT_COLORS[p.type] || "#fde68a",
           label: p.label,
         }));
-        setModels((prev) => [...prev, ...newParts]);
+        setModelsImmediate((prev) => [...prev, ...newParts]);
         toast.success(`Added ${newParts.length} extra part(s) for assembly`);
       }
 
@@ -197,7 +204,7 @@ export default function Index() {
 
   const handleDeleteSelected = () => {
     if (!selectedModelId) return;
-    setModels((prev) => prev.filter((m) => m.id !== selectedModelId));
+    setModelsImmediate((prev) => prev.filter((m) => m.id !== selectedModelId));
     setSelectedModelId(null);
   };
 
