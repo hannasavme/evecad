@@ -1225,6 +1225,19 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
               <Download className="w-3 h-3 inline mr-1" />DXF
             </button>
             <div className="w-px h-5 bg-border mx-1" />
+            {/* Page navigation */}
+            {totalPages > 1 && (
+              <>
+                <button onClick={() => setDrawingPage(Math.max(0, drawingPage - 1))} disabled={drawingPage === 0} className="text-[10px] font-bold text-muted-foreground hover:text-primary px-1 py-1 rounded-lg hover:bg-muted disabled:opacity-30">
+                  <ChevronLeft className="w-3 h-3" />
+                </button>
+                <span className="text-[10px] font-bold text-muted-foreground px-1">{drawingPage + 1}/{totalPages}</span>
+                <button onClick={() => setDrawingPage(Math.min(totalPages - 1, drawingPage + 1))} disabled={drawingPage >= totalPages - 1} className="text-[10px] font-bold text-muted-foreground hover:text-primary px-1 py-1 rounded-lg hover:bg-muted disabled:opacity-30">
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+                <div className="w-px h-5 bg-border mx-1" />
+              </>
+            )}
             <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted">
               <X className="w-4 h-4" />
             </button>
@@ -1243,6 +1256,8 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
             onUpdateTitle={setTitleText}
             showSection={showSection}
             showBOM={showBOM}
+            page={drawingPage}
+            partsPerPage={PARTS_PER_PAGE}
           />
         </div>
       </div>
