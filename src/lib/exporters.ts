@@ -8,10 +8,11 @@ export function exportSTL(scene: THREE.Scene): Blob {
 
   scene.traverse((obj) => {
     if (!(obj instanceof THREE.Mesh)) return;
-    // Skip non-model meshes (grid, helpers, selection indicators)
-    const mat = (obj as THREE.Mesh).material as THREE.Material;
-    if (mat && ('wireframe' in mat) && (mat as any).wireframe) return;
-    if (mat && 'opacity' in mat && (mat as any).opacity < 0.1) return;
+    const mat = obj.material as THREE.MeshStandardMaterial;
+    // Only export solid MeshStandardMaterial (skip grid, env, helpers, selection spheres)
+    if (!mat || mat.type !== "MeshStandardMaterial") return;
+    if (mat.wireframe) return;
+    if (mat.transparent && mat.opacity < 0.5) return;
     const mesh = obj as THREE.Mesh;
     const geometry = mesh.geometry.clone();
     geometry.applyMatrix4(mesh.matrixWorld);
@@ -79,9 +80,10 @@ export function exportOBJ(scene: THREE.Scene): Blob {
 
   scene.traverse((obj) => {
     if (!(obj instanceof THREE.Mesh)) return;
-    const mat = (obj as THREE.Mesh).material as THREE.Material;
-    if (mat && ('wireframe' in mat) && (mat as any).wireframe) return;
-    if (mat && 'opacity' in mat && (mat as any).opacity < 0.1) return;
+    const mat = obj.material as THREE.MeshStandardMaterial;
+    if (!mat || mat.type !== "MeshStandardMaterial") return;
+    if (mat.wireframe) return;
+    if (mat.transparent && mat.opacity < 0.5) return;
     const mesh = obj as THREE.Mesh;
     const geometry = mesh.geometry.clone();
     geometry.applyMatrix4(mesh.matrixWorld);
