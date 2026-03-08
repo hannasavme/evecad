@@ -9,9 +9,12 @@ import ImportButton from "@/components/ImportButton";
 import GenerationProgress from "@/components/GenerationProgress";
 import PropertiesPanel from "@/components/PropertiesPanel";
 import CadDrawingPanel from "@/components/CadDrawingPanel";
+import UserMenu from "@/components/UserMenu";
+import SaveLoadMenu from "@/components/SaveLoadMenu";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUndoHistory } from "@/hooks/use-undo-history";
+import { useAuth } from "@/hooks/useAuth";
 
 const DEFAULT_COLORS: Record<string, string> = {
   gear: "#f9a8d4",
