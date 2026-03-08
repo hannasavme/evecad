@@ -82,12 +82,16 @@ const PARAM_DEFS: Record<string, ParamDef[]> = {
 };
 
 interface PropertiesPanelProps {
-  model: SceneModel;
+  models: SceneModel[];  // selected models (1 or more)
   onUpdate: (id: string, updates: Partial<SceneModel>) => void;
+  onBatchUpdate: (ids: string[], updates: Partial<SceneModel>) => void;
   onClose: () => void;
 }
 
-export default function PropertiesPanel({ model, onUpdate, onClose }: PropertiesPanelProps) {
+export default function PropertiesPanel({ models: selectedModels, onUpdate, onBatchUpdate, onClose }: PropertiesPanelProps) {
+  const [unit, setUnit] = useState<Unit>("mm");
+  const isMulti = selectedModels.length > 1;
+  const model = selectedModels[0]; // primary model for single-select editing
   const [unit, setUnit] = useState<Unit>("mm");
 
   const handlePositionChange = (axis: 0 | 1 | 2, value: number) => {
