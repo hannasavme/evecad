@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Star, X, Layers, Trash2, Wrench, Loader2, Ruler, Crosshair, Pencil, Eye, EyeOff } from "lucide-react";
+import { Plus, Star, X, Layers, Trash2, Wrench, Loader2, Ruler, Crosshair, Pencil, Eye, EyeOff, SlidersHorizontal } from "lucide-react";
 import mascotImg from "@/assets/mascot.png";
 import InputPanel, { type InputMode } from "@/components/InputPanel";
 import ModelViewer, { type SceneModel, type ModelViewerHandle } from "@/components/ModelViewer";
