@@ -204,7 +204,7 @@ export default function Index() {
 
   const handleDeleteSelected = () => {
     if (!selectedModelId) return;
-    setModels((prev) => prev.filter((m) => m.id !== selectedModelId));
+    setModelsImmediate((prev) => prev.filter((m) => m.id !== selectedModelId));
     setSelectedModelId(null);
   };
 
