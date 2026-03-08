@@ -321,6 +321,123 @@ PART COUNT GUIDELINES:
   battery, SBC, IMU, transceiver, 4 hazcams, harness bundles,
   radiator, heat pipes, bolts/fasteners at key joints
 
+ARMARIS-STYLE MOTHER-CHILD ROVER SWARM REFERENCE (use when user mentions "mother rover", "child rover", "rover swarm", "ARMARIS", "mothership rover", or image shows a large rover with docking bays and small rovers):
+
+This is a specialized multi-robot system: one large MOTHER ROVER carries and deploys multiple small CHILD ROVERS.
+
+=== MOTHER ROVER (ARMARIS) ===
+Proportions (real: 1500mm W x 1600mm L x 900mm H total):
+- Main body: box at [0, 1.2, 0] width=3.0, height=1.2, depth=3.2 — large rectangular chassis with rounded appearance
+- Body has thick walls, sturdy construction, NOT a thin chassis — use box with wallThickness=0.12
+- The body front has 3 rectangular window/panel cutouts on the front face
+- Side panels: 2x box at [±1.5, 1.2, 0] width=0.08, height=1.0, depth=3.0 — structural sides with 2 rectangular windows each
+
+TOP DECK & DOCKING BAYS (signature feature — 4 compartment bays for child rovers):
+- Top deck plate: plate at [0, 1.85, 0] width=3.0, depth=3.2, thickness=0.06
+- Docking bay dividers (cross-shaped): 
+  box at [0, 2.0, 0] width=3.0, height=0.3, depth=0.06 — horizontal divider
+  box at [0, 2.0, 0] width=0.06, height=0.3, depth=3.0 — vertical divider
+- This creates 4 rectangular bays (open-top compartments), each ~1.4 x 1.5 units
+- Bay floor panels: 4x plate inside each compartment at [±0.75, 1.86, ±0.8]
+
+SOLAR PANEL (tilted, on rear-left mast):
+- Solar panel mast: cylinder at [-0.8, 2.6, 1.0] radius=0.05, height=1.0
+- Solar panel: solarpanel at [-0.8, 3.2, 1.0] rotation=[25, 0, 0] panelWidth=1.5, panelLength=1.8, panelThickness=0.04
+  Color: #1e3a5f (deep blue cells)
+
+DISH ANTENNA (front-left of body):
+- Antenna: antenna at [-1.0, 2.3, -1.0] dishRadius=0.35, mastHeight=0.3, mastRadius=0.04
+  Color: #e5e5e5
+
+TALL POINTED ANTENNA MAST (right side, tallest element):
+- Mast base: cylinder at [0.8, 2.0, 0.8] radius=0.04, height=0.5
+- Mast middle: cylinder at [0.8, 2.7, 0.8] radius=0.035, height=0.8
+- Mast top cone: cone at [0.8, 3.4, 0.8] radiusBottom=0.04, radiusTop=0.005, height=0.5
+  Color: #52525b
+
+CAMERA SYSTEM (front top of body):
+- Camera housing: box at [0, 2.1, -1.4] width=0.35, height=0.2, depth=0.2
+- Left camera lens: camera at [-0.1, 2.15, -1.55] lensRadius=0.06
+- Right camera lens: camera at [0.1, 2.15, -1.55] lensRadius=0.06
+  Color: #27272a
+
+WHEELS (4 wheels — NOT 6 — large chunky treaded wheels):
+*** This rover has 4 wheels, NOT 6. Position at corners of body. ***
+- Wheel params: radius=0.55, width=0.4, spokes=5, treadDepth=0.08
+- Front-left: wheel at [-1.8, 0.55, -1.2] rotation=[0,0,0]
+- Front-right: wheel at [1.8, 0.55, -1.2] rotation=[0,0,0]
+- Rear-left: wheel at [-1.8, 0.55, 1.2] rotation=[0,0,0]
+- Rear-right: wheel at [1.8, 0.55, 1.2] rotation=[0,0,0]
+  Color: #27272a (dark black rubber)
+
+WHEEL MOUNTS (simple bracket arms, no rocker-bogie — this is NOT a Mars explorer):
+- 4x bracket connecting chassis corners to wheel axles
+  bracket at [±1.6, 0.9, ±1.0] armLength=0.5, thickness=0.08, width=0.15
+  Color: #52525b
+
+UNDERCARRIAGE:
+- Auger/drill mount: drill at [0, 0.3, 0.5] bitLength=0.8, bitRadius=0.06 rotation=[180,0,0]
+  (drill points DOWN through bottom of rover)
+  Color: #71717a
+- Underbody cross-member: box at [0, 0.7, 0] width=2.5, height=0.08, depth=0.15
+
+ELECTRONICS (inside body):
+- Battery: battery at [0, 1.0, 0.5] batteryWidth=1.0, batteryLength=1.5, batteryHeight=0.4
+- SBC: sbc at [0, 1.5, -0.5]
+- Transceiver: transceiver at [0.5, 1.5, 0.5]
+- IMU: imu at [0, 1.3, 0]
+
+LABELS/MARKINGS:
+- "ARMARIS" text on front side panel (represented by a thin contrasting plate)
+  plate at [0, 1.2, -1.61] width=1.5, depth=0.3, thickness=0.01 color=#fde68a
+
+COLOR SCHEME (ARMARIS Mother Rover):
+- Body: #d4d4d8 (light gray / white-ish aluminum)
+- Wheels: #27272a (black rubber with dark spokes)
+- Structural brackets: #52525b (dark gray)
+- Solar panel: #1e3a5f (deep blue cells)
+- Antenna dish: #e5e5e5 (white)
+- Cameras: #27272a (black)
+- Docking bay dividers: #a3a3a3 (medium gray)
+- Electronics: #27272a (dark)
+- Drill: #71717a (steel gray)
+- Name plate: #fde68a (yellow-gold accent)
+
+=== CHILD ROVER (Mini/Kid Rover) ===
+Proportions (real: 300mm W x 300mm L x 180mm H):
+Scale: approximately 1/5 of mother rover in each dimension.
+
+- Body: box at [0, 0.4, 0] width=0.6, height=0.35, depth=0.6 — small squat rectangular body with rounded edges
+  Color: #d4d4d8
+- Top cover: box at [0, 0.6, 0] width=0.55, height=0.05, depth=0.55
+  Color: #a3a3a3
+- Camera head: box at [0, 0.75, -0.15] width=0.25, height=0.15, depth=0.18
+  Color: #27272a
+- Left camera eye: camera at [-0.06, 0.78, -0.28] lensRadius=0.035
+- Right camera eye: camera at [0.06, 0.78, -0.28] lensRadius=0.035
+- Front display/window: box at [0, 0.4, -0.31] width=0.25, height=0.15, depth=0.01
+  Color: #3b82f6 (blue display)
+- 4 wheels: wheel at [±0.4, 0.15, ±0.22] radius=0.15, width=0.12, spokes=4, treadDepth=0.03
+  Color: #27272a
+- Wheel brackets: 4x bracket at [±0.35, 0.25, ±0.2] armLength=0.12, thickness=0.03
+
+CHILD ROVER PART COUNT: 12-15 parts each
+
+=== SWARM ASSEMBLY ===
+When building the full ARMARIS system:
+1. Build the MOTHER ROVER at center [0, 0, 0] — approximately 40-50 parts
+2. Place 2 CHILD ROVERS docked in the top bays:
+   - Child 1: offset ALL child parts by [0.75, 2.0, 0.8] (in rear-right bay)
+   - Child 2: offset ALL child parts by [-0.75, 2.0, 0.8] (in rear-left bay)
+3. Optionally place 1-2 deployed child rovers on the ground nearby:
+   - Deployed Child 3: offset by [4.0, 0, -2.0] (on ground, away from mother)
+   - Deployed Child 4: offset by [-3.5, 0, 3.0] (on ground, exploring)
+
+TOTAL PART COUNT:
+- Mother rover alone: 40-50 parts
+- Full swarm (mother + 2 docked + 2 deployed children): 90-110 parts
+- Simple swarm (mother + 1 child): 55-65 parts
+
 ROCKET ASSEMBLY REFERENCE (use when building model/high-power rockets):
 - Build BOTTOM-UP: retainer at y=0, then nozzle, motortube, centering rings, body tube, ebay, coupler, upper body, nosecone on top.
 - All tube radii must match: bodytube.tubeRadius = nosecone.noseRadius = ebay.ebayRadius.
