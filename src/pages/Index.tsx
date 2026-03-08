@@ -144,7 +144,7 @@ export default function Index() {
 
       // Apply new positions and scales
       if (data?.parts) {
-        setModels((prev) =>
+        setModelsImmediate((prev) =>
           prev.map((m, index) => {
             const update = data.parts.find((p: any) => p.id === m.id) || data.parts[index];
             if (update) {
