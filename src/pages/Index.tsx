@@ -429,6 +429,21 @@ export default function Index() {
           )}
           <ImportButton onImport={(imported) => setModelsImmediate((prev) => [...prev, ...imported])} />
           <ExportDropdown hasModel={models.length > 0} getScene={getScene} />
+          {user && (
+            <SaveLoadMenu
+              models={models}
+              onLoad={(loaded) => {
+                pushImmediate(loaded);
+              }}
+              currentProjectId={currentProjectId}
+              onProjectChange={(id, name) => {
+                setCurrentProjectId(id);
+                setProjectName(name);
+              }}
+              projectName={projectName}
+            />
+          )}
+          <UserMenu />
         </div>
       </header>
 
