@@ -43,18 +43,51 @@ serve(async (req) => {
       userContent.push({ type: "text", text: text! });
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: imageBase64 ? "google/gemini-2.5-flash" : "google/gemini-3-flash-preview",
-        messages: [
-          {
-            role: "system",
-            content: `You are a CAD geometry decomposition engine. Given a description or image, determine if it's a simple part or a complex object.
+    // Step 1: Research step — for complex objects, get real-world structural details first
+    const isSimplePart = text && /^(a\s+)?(gear|bracket|box|cylinder|pipe|tube|rod|cog|sprocket|mount)\b/i.test(text.trim());
+    let researchContext = "";
+
+    if (!isSimplePart && !imageBase64) {
+      console.log("Running research step for complex object:", text);
+      try {
+        const researchResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              {
+                role: "system",
+                content: `You are a mechanical engineering research assistant. Given an object name, describe its real-world physical structure in detail for someone building a simplified 3D CAD model.
+
+Focus on:
+- Main structural components and their shapes (rectangular, cylindrical, flat, etc.)
+- Approximate proportions and relative sizes
+- How parts connect and their spatial arrangement
+- Key distinguishing features
+
+Be concise but accurate. Use real engineering references. This will be used to create an accurate simplified 3D model.`,
+              },
+              { role: "user", content: `Describe the physical structure and components of: "${text}". Focus on shapes, proportions, and spatial arrangement.` },
+            ],
+          }),
+        });
+
+        if (researchResponse.ok) {
+          const researchData = await researchResponse.json();
+          researchContext = researchData.choices?.[0]?.message?.content || "";
+          console.log("Research context obtained:", researchContext.slice(0, 200));
+        }
+      } catch (e) {
+        console.warn("Research step failed, proceeding without:", e);
+      }
+    }
+
+    // Step 2: CAD decomposition with research context
+    const systemPrompt = `You are a CAD geometry decomposition engine. Given a description or image, determine if it's a simple part or a complex object.
 
 For SIMPLE parts (gear, bracket, box, cylinder, pipe, etc.), return a single part.
 For COMPLEX objects (vehicles, machines, robots, furniture, devices, etc.), decompose them into multiple simpler sub-parts that can each be represented as one of: gear, bracket, box, cylinder.
@@ -72,10 +105,10 @@ For each part, provide:
   - box: width (0.1-10), height (0.1-10), depth (0.1-10), slots (0-20), wallThickness (0.01-0.5)
   - cylinder: radius (0.05-5), height (0.1-10), wallThickness (0.01-0.5), segments (8-64)
 
-Think creatively about how to approximate complex shapes using these primitives.
-Example: "mars rover" → chassis (box), 6 wheels (cylinders), camera mast (cylinder), solar panel (box), robotic arm (bracket+cylinder).
+Think creatively about how to approximate complex shapes using these primitives. Pay close attention to PROPORTIONS and SPATIAL ARRANGEMENT — parts must be positioned correctly relative to each other.
+${researchContext ? `\n\nREFERENCE RESEARCH about this object (use this for accurate proportions and structure):\n${researchContext}` : ""}
 
-You MUST call the parse_cad function.`,
+You MUST call the parse_cad function.`;
           },
           ...(userContent.length > 1
             ? [{ role: "user" as const, content: userContent }]
