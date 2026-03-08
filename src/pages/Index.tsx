@@ -152,6 +152,12 @@ export default function Index() {
         setStage(stages[stages.length - 1]);
 
         if (error || !data?.parts?.length) {
+          if (input.mode === "paper") {
+            clearInterval(interval);
+            setIsGenerating(false);
+            toast.error(typeof error === "string" ? error : "Could not extract a design from this paper. Try specifying a focus area.");
+            return;
+          }
           // Fallback single part
           const type = localInferType(input.text);
           const offset = modelsRef.current.length * 2.5;
