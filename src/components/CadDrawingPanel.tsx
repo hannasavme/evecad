@@ -1670,6 +1670,7 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [titleText, setTitleText] = useState("EveCAD Drawing");
   const [showSection, setShowSection] = useState(true);
+  const [showIsometric, setShowIsometric] = useState(false);
   const [showBOM, setShowBOM] = useState(true);
   const [visibleIds, setVisibleIds] = useState<Set<string>>(() => new Set(models.map(m => m.id)));
   const [showComponentDropdown, setShowComponentDropdown] = useState(false);
