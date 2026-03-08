@@ -82,9 +82,34 @@ export interface ModelParams {
   knobHeight?: number;
   stemRadius?: number;
   stemHeight?: number;
+  // Chassis
+  chassisLength?: number;
+  chassisWidth?: number;
+  chassisThickness?: number;
+  mountHoles?: number;
+  // Rocker
+  rockerLength?: number;
+  rockerWidth?: number;
+  rockerThickness?: number;
+  // Bogie
+  bogieLength?: number;
+  bogieWidth?: number;
+  bogieThickness?: number;
+  // Knuckle
+  knuckleRadius?: number;
+  knuckleHeight?: number;
+  boreSize?: number;
+  // Motor
+  motorRadius?: number;
+  motorLength?: number;
+  shaftDiameter?: number;
+  // Standoff
+  standoffRadius?: number;
+  standoffHeight?: number;
+  threadRadius?: number;
 }
 
-export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track" | "bolt" | "nut" | "screw" | "bearing" | "pulley" | "shaft" | "mug" | "hammer" | "handle";
+export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track" | "bolt" | "nut" | "screw" | "bearing" | "pulley" | "shaft" | "mug" | "hammer" | "handle" | "chassis" | "rocker" | "bogie" | "knuckle" | "motor" | "standoff";
 
 export interface SceneModel {
   id: string;
@@ -805,6 +830,232 @@ function HandleMesh({ color, params }: { color: string; params?: ModelParams }) 
   );
 }
 
+// ─── Rover Compound Primitives ──────────────────────────
+
+function ChassisMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const l = params?.chassisLength ?? params?.depth ?? 3.0;
+  const w = params?.chassisWidth ?? params?.width ?? 2.0;
+  const t = params?.chassisThickness ?? params?.thickness ?? 0.15;
+  const holes = params?.mountHoles ?? 8;
+
+  const holeElements = useMemo(() => {
+    const els: JSX.Element[] = [];
+    const cols = Math.ceil(holes / 2);
+    for (let i = 0; i < holes; i++) {
+      const row = i % 2;
+      const col = Math.floor(i / 2);
+      const hx = -w * 0.35 + (row * w * 0.7);
+      const hz = -l * 0.4 + col * (l * 0.8 / Math.max(cols - 1, 1));
+      els.push(
+        <mesh key={i} position={[hx, t / 2 + 0.001, hz]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.06, 0.06, t + 0.01, 12]} />
+          <meshStandardMaterial color="#333" metalness={0.5} roughness={0.3} />
+        </mesh>
+      );
+    }
+    return els;
+  }, [holes, w, l, t]);
+
+  return (
+    <group>
+      {/* Main plate */}
+      <mesh position={[0, t / 2, 0]}><boxGeometry args={[w, t, l]} /><meshStandardMaterial color={color} metalness={0.4} roughness={0.4} /></mesh>
+      {/* Raised edge rails */}
+      <mesh position={[-w / 2 + 0.05, t + 0.04, 0]}><boxGeometry args={[0.1, 0.08, l * 0.9]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      <mesh position={[w / 2 - 0.05, t + 0.04, 0]}><boxGeometry args={[0.1, 0.08, l * 0.9]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      {/* Cross braces */}
+      <mesh position={[0, -0.03, l * 0.25]}><boxGeometry args={[w * 0.8, 0.04, 0.08]} /><meshStandardMaterial color={color} metalness={0.4} roughness={0.4} /></mesh>
+      <mesh position={[0, -0.03, -l * 0.25]}><boxGeometry args={[w * 0.8, 0.04, 0.08]} /><meshStandardMaterial color={color} metalness={0.4} roughness={0.4} /></mesh>
+      {/* Corner gussets */}
+      {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([sx, sz], i) => (
+        <mesh key={i} position={[sx * (w / 2 - 0.08), t / 2, sz * (l / 2 - 0.08)]}>
+          <boxGeometry args={[0.15, t + 0.02, 0.15]} />
+          <meshStandardMaterial color={color} metalness={0.5} roughness={0.3} />
+        </mesh>
+      ))}
+      {/* Mount holes */}
+      {holeElements}
+    </group>
+  );
+}
+
+function RockerMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const l = params?.rockerLength ?? params?.armLength ?? 2.0;
+  const w = params?.rockerWidth ?? params?.width ?? 0.3;
+  const t = params?.rockerThickness ?? params?.thickness ?? 0.12;
+
+  return (
+    <group>
+      {/* Main arm beam */}
+      <mesh><boxGeometry args={[w, t, l]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      {/* Reinforcement rib */}
+      <mesh position={[0, t / 2 + 0.02, 0]}><boxGeometry args={[w * 0.3, 0.04, l * 0.8]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      {/* Pivot joint at differential end */}
+      <mesh position={[0, 0, -l / 2]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[t * 0.8, t * 0.8, w * 1.3, 16]} />
+        <meshStandardMaterial color="#999" metalness={0.7} roughness={0.2} />
+      </mesh>
+      {/* Pivot bore */}
+      <mesh position={[0, 0, -l / 2]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[t * 0.25, t * 0.25, w * 1.4, 12]} />
+        <meshStandardMaterial color="#333" metalness={0.5} roughness={0.3} />
+      </mesh>
+      {/* Bogie pivot at wheel end */}
+      <mesh position={[0, 0, l / 2]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[t * 0.6, t * 0.6, w * 1.1, 16]} />
+        <meshStandardMaterial color="#999" metalness={0.7} roughness={0.2} />
+      </mesh>
+      {/* Bogie bore */}
+      <mesh position={[0, 0, l / 2]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[t * 0.2, t * 0.2, w * 1.2, 12]} />
+        <meshStandardMaterial color="#333" metalness={0.5} roughness={0.3} />
+      </mesh>
+      {/* Middle wheel mount point */}
+      <mesh position={[0, -t / 2 - 0.05, l * 0.15]}>
+        <cylinderGeometry args={[t * 0.5, t * 0.5, 0.1, 12]} />
+        <meshStandardMaterial color="#888" metalness={0.6} roughness={0.3} />
+      </mesh>
+    </group>
+  );
+}
+
+function BogieMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const l = params?.bogieLength ?? params?.armLength ?? 1.2;
+  const w = params?.bogieWidth ?? params?.width ?? 0.25;
+  const t = params?.bogieThickness ?? params?.thickness ?? 0.1;
+
+  return (
+    <group>
+      {/* Main arm */}
+      <mesh><boxGeometry args={[w, t, l]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      {/* Pivot joint center */}
+      <mesh position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[t * 0.7, t * 0.7, w * 1.2, 16]} />
+        <meshStandardMaterial color="#999" metalness={0.7} roughness={0.2} />
+      </mesh>
+      {/* Wheel mount - front */}
+      <mesh position={[0, -t / 2 - 0.04, l / 2 - 0.05]}>
+        <cylinderGeometry args={[t * 0.45, t * 0.45, 0.08, 12]} />
+        <meshStandardMaterial color="#888" metalness={0.6} roughness={0.3} />
+      </mesh>
+      {/* Wheel mount - rear */}
+      <mesh position={[0, -t / 2 - 0.04, -l / 2 + 0.05]}>
+        <cylinderGeometry args={[t * 0.45, t * 0.45, 0.08, 12]} />
+        <meshStandardMaterial color="#888" metalness={0.6} roughness={0.3} />
+      </mesh>
+      {/* Side plates */}
+      <mesh position={[w / 2 + 0.01, 0, 0]}><boxGeometry args={[0.02, t * 1.5, l * 0.6]} /><meshStandardMaterial color={color} metalness={0.4} roughness={0.4} /></mesh>
+      <mesh position={[-w / 2 - 0.01, 0, 0]}><boxGeometry args={[0.02, t * 1.5, l * 0.6]} /><meshStandardMaterial color={color} metalness={0.4} roughness={0.4} /></mesh>
+    </group>
+  );
+}
+
+function KnuckleMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.knuckleRadius ?? params?.radius ?? 0.2;
+  const h = params?.knuckleHeight ?? params?.height ?? 0.4;
+  const bore = params?.boreSize ?? r * 0.35;
+
+  return (
+    <group>
+      {/* Main housing */}
+      <mesh><cylinderGeometry args={[r, r * 1.1, h, 20]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      {/* Steering bore (vertical) */}
+      <mesh><cylinderGeometry args={[bore, bore, h + 0.02, 12]} /><meshStandardMaterial color="#333" metalness={0.5} roughness={0.3} /></mesh>
+      {/* Axle bore (horizontal) */}
+      <mesh rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[bore * 0.8, bore * 0.8, r * 2.5, 12]} />
+        <meshStandardMaterial color="#444" metalness={0.5} roughness={0.3} />
+      </mesh>
+      {/* Top flange */}
+      <mesh position={[0, h / 2, 0]}><cylinderGeometry args={[r * 1.3, r, 0.05, 20]} /><meshStandardMaterial color={color} metalness={0.6} roughness={0.2} /></mesh>
+      {/* Bottom flange */}
+      <mesh position={[0, -h / 2, 0]}><cylinderGeometry args={[r, r * 1.3, 0.05, 20]} /><meshStandardMaterial color={color} metalness={0.6} roughness={0.2} /></mesh>
+      {/* Mounting ears */}
+      <mesh position={[r * 1.1, h * 0.15, 0]}><boxGeometry args={[0.08, h * 0.4, r * 0.5]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      <mesh position={[-r * 1.1, h * 0.15, 0]}><boxGeometry args={[0.08, h * 0.4, r * 0.5]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      {/* Bolt holes on ears */}
+      <mesh position={[r * 1.1, h * 0.15, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.025, 0.025, 0.1, 8]} />
+        <meshStandardMaterial color="#222" metalness={0.5} roughness={0.3} />
+      </mesh>
+      <mesh position={[-r * 1.1, h * 0.15, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.025, 0.025, 0.1, 8]} />
+        <meshStandardMaterial color="#222" metalness={0.5} roughness={0.3} />
+      </mesh>
+    </group>
+  );
+}
+
+function MotorMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.motorRadius ?? params?.radius ?? 0.2;
+  const l = params?.motorLength ?? params?.height ?? 0.6;
+  const sr = params?.shaftDiameter ? params.shaftDiameter / 2 : r * 0.15;
+
+  return (
+    <group>
+      {/* Motor body */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[r, r, l, 24]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      {/* Gearbox housing */}
+      <mesh position={[0, 0, l / 2 + r * 0.5]} rotation={[Math.PI / 2, 0, 0]}>
+        <boxGeometry args={[r * 1.8, r * 1.0, r * 1.8]} />
+        <meshStandardMaterial color={color} metalness={0.4} roughness={0.4} />
+      </mesh>
+      {/* Output shaft */}
+      <mesh position={[0, 0, l / 2 + r * 1.0 + sr]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[sr, sr, r * 0.8, 12]} />
+        <meshStandardMaterial color="#aaa" metalness={0.8} roughness={0.1} />
+      </mesh>
+      {/* Shaft flat */}
+      <mesh position={[sr * 0.8, 0, l / 2 + r * 1.0 + sr]}>
+        <boxGeometry args={[sr * 0.3, sr * 1.5, r * 0.7]} />
+        <meshStandardMaterial color="#888" metalness={0.7} roughness={0.2} />
+      </mesh>
+      {/* Rear cap */}
+      <mesh position={[0, 0, -l / 2 - 0.02]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[r * 0.9, r * 0.9, 0.04, 24]} />
+        <meshStandardMaterial color="#777" metalness={0.6} roughness={0.3} />
+      </mesh>
+      {/* Terminals */}
+      <mesh position={[r * 0.3, r * 0.5, -l * 0.3]}><boxGeometry args={[0.04, 0.15, 0.04]} /><meshStandardMaterial color="#c4a000" metalness={0.8} roughness={0.2} /></mesh>
+      <mesh position={[-r * 0.3, r * 0.5, -l * 0.3]}><boxGeometry args={[0.04, 0.15, 0.04]} /><meshStandardMaterial color="#c4a000" metalness={0.8} roughness={0.2} /></mesh>
+      {/* Mount tabs */}
+      <mesh position={[r + 0.02, 0, 0]}><boxGeometry args={[0.06, 0.04, l * 0.15]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      <mesh position={[-r - 0.02, 0, 0]}><boxGeometry args={[0.06, 0.04, l * 0.15]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+    </group>
+  );
+}
+
+function StandoffMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.standoffRadius ?? params?.radius ?? 0.08;
+  const h = params?.standoffHeight ?? params?.height ?? 0.4;
+  const tr = params?.threadRadius ?? r * 0.4;
+
+  return (
+    <group>
+      {/* Main hex body */}
+      <mesh><cylinderGeometry args={[r, r, h, 6]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.2} /></mesh>
+      {/* Top thread */}
+      <mesh position={[0, h / 2 + 0.06, 0]}><cylinderGeometry args={[tr, tr, 0.12, 12]} /><meshStandardMaterial color="#aaa" metalness={0.8} roughness={0.1} /></mesh>
+      {/* Bottom thread */}
+      <mesh position={[0, -h / 2 - 0.06, 0]}><cylinderGeometry args={[tr, tr, 0.12, 12]} /><meshStandardMaterial color="#aaa" metalness={0.8} roughness={0.1} /></mesh>
+      {/* Thread grooves top */}
+      {Array.from({ length: 3 }).map((_, i) => (
+        <mesh key={`t${i}`} position={[0, h / 2 + 0.02 + i * 0.035, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[tr, 0.005, 4, 12]} />
+          <meshStandardMaterial color="#888" metalness={0.7} roughness={0.2} />
+        </mesh>
+      ))}
+      {/* Thread grooves bottom */}
+      {Array.from({ length: 3 }).map((_, i) => (
+        <mesh key={`b${i}`} position={[0, -h / 2 - 0.02 - i * 0.035, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[tr, 0.005, 4, 12]} />
+          <meshStandardMaterial color="#888" metalness={0.7} roughness={0.2} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 const meshMap: Record<string, React.FC<{ color: string; params?: ModelParams }>> = {
   gear: GearMesh,
   bracket: BracketMesh,
@@ -830,6 +1081,12 @@ const meshMap: Record<string, React.FC<{ color: string; params?: ModelParams }>>
   mug: MugMesh,
   hammer: HammerMesh,
   handle: HandleMesh,
+  chassis: ChassisMesh,
+  rocker: RockerMesh,
+  bogie: BogieMesh,
+  knuckle: KnuckleMesh,
+  motor: MotorMesh,
+  standoff: StandoffMesh,
 };
 
 // ─── Scene Components ──────────────────────────────────

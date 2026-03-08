@@ -178,6 +178,37 @@ const PARAM_DEFS: Record<string, ParamDef[]> = {
     { key: "stemRadius", label: "Stem R", type: "number", min: 0.02, max: 0.2, step: 0.01, default: 0.06, hasDimension: true },
     { key: "stemHeight", label: "Stem H", type: "number", min: 0.1, max: 1, step: 0.05, default: 0.4, hasDimension: true },
   ],
+  chassis: [
+    { key: "chassisLength", label: "Length", type: "number", min: 1, max: 10, step: 0.1, default: 3.0, hasDimension: true },
+    { key: "chassisWidth", label: "Width", type: "number", min: 0.5, max: 8, step: 0.1, default: 2.0, hasDimension: true },
+    { key: "chassisThickness", label: "Thickness", type: "number", min: 0.05, max: 0.5, step: 0.01, default: 0.15, hasDimension: true },
+    { key: "mountHoles", label: "Mount holes", type: "int", min: 0, max: 16, step: 1, default: 8, hasDimension: false },
+  ],
+  rocker: [
+    { key: "rockerLength", label: "Length", type: "number", min: 0.5, max: 6, step: 0.1, default: 2.0, hasDimension: true },
+    { key: "rockerWidth", label: "Width", type: "number", min: 0.1, max: 1, step: 0.05, default: 0.3, hasDimension: true },
+    { key: "rockerThickness", label: "Thickness", type: "number", min: 0.05, max: 0.5, step: 0.01, default: 0.12, hasDimension: true },
+  ],
+  bogie: [
+    { key: "bogieLength", label: "Length", type: "number", min: 0.3, max: 4, step: 0.1, default: 1.2, hasDimension: true },
+    { key: "bogieWidth", label: "Width", type: "number", min: 0.1, max: 0.8, step: 0.05, default: 0.25, hasDimension: true },
+    { key: "bogieThickness", label: "Thickness", type: "number", min: 0.03, max: 0.3, step: 0.01, default: 0.1, hasDimension: true },
+  ],
+  knuckle: [
+    { key: "knuckleRadius", label: "Radius", type: "number", min: 0.05, max: 1, step: 0.02, default: 0.2, hasDimension: true },
+    { key: "knuckleHeight", label: "Height", type: "number", min: 0.1, max: 2, step: 0.05, default: 0.4, hasDimension: true },
+    { key: "boreSize", label: "Bore", type: "number", min: 0.02, max: 0.5, step: 0.01, default: 0.07, hasDimension: true },
+  ],
+  motor: [
+    { key: "motorRadius", label: "Radius", type: "number", min: 0.05, max: 1, step: 0.02, default: 0.2, hasDimension: true },
+    { key: "motorLength", label: "Length", type: "number", min: 0.2, max: 3, step: 0.05, default: 0.6, hasDimension: true },
+    { key: "shaftDiameter", label: "Shaft D", type: "number", min: 0.01, max: 0.3, step: 0.01, default: 0.06, hasDimension: true },
+  ],
+  standoff: [
+    { key: "standoffRadius", label: "Radius", type: "number", min: 0.03, max: 0.3, step: 0.01, default: 0.08, hasDimension: true },
+    { key: "standoffHeight", label: "Height", type: "number", min: 0.1, max: 2, step: 0.05, default: 0.4, hasDimension: true },
+    { key: "threadRadius", label: "Thread R", type: "number", min: 0.01, max: 0.15, step: 0.005, default: 0.03, hasDimension: true },
+  ],
 };
 
 interface PropertiesPanelProps {

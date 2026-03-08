@@ -120,7 +120,7 @@ For SIMPLE parts (single gear, bracket, etc.), return 1-3 parts.
 For COMPLEX objects (vehicles, machines, robots, devices), decompose into 40-80+ sub-parts for maximum detail.
 For MULTI-VEHICLE systems (swarms, fleets, convoys), model EACH vehicle separately with full detail.
 
-Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track, bolt, nut, screw, bearing, pulley, shaft, mug, hammer, handle.
+Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track, bolt, nut, screw, bearing, pulley, shaft, mug, hammer, handle, chassis, rocker, bogie, knuckle, motor, standoff.
 
 COMPOUND TYPE RULES (HIGHEST PRIORITY — ALWAYS FOLLOW):
 - "wheel": ANY wheel — auto-renders with tire, spoked rim, hub cap, axle hole, treads.
@@ -137,21 +137,37 @@ COMPOUND TYPE RULES (HIGHEST PRIORITY — ALWAYS FOLLOW):
 - "mug": ANY cup/mug — auto-renders with hollow body, handle, rim.
 - "hammer": ANY hammer — auto-renders with wooden handle, metal head, ball peen.
 - "handle": ANY knob/handle — auto-renders with knob, stem, base flange.
+- "chassis": ANY main body/chassis plate — auto-renders with raised rails, cross braces, corner gussets, mount holes.
+- "rocker": ANY rocker arm (rover suspension) — auto-renders with beam, pivot joints at both ends, middle wheel mount.
+- "bogie": ANY bogie arm (secondary suspension link) — auto-renders with beam, central pivot, front/rear wheel mounts, side plates.
+- "knuckle": ANY steering knuckle/joint housing — auto-renders with cylindrical housing, steering bore, axle bore, flanges, mounting ears.
+- "motor": ANY DC/gear motor — auto-renders with cylindrical body, gearbox housing, output shaft, terminals, mount tabs.
+- "standoff": ANY PCB standoff/spacer — auto-renders with hex body, threaded studs top/bottom.
 
 If user asks to "generate a wheel" → use type "wheel" (NOT impeller).
 If user asks for an impeller/turbine/fan → use wedges/plates radially around a cylinder hub.
 
 Shape guide for BASIC types:
-- box: chassis bodies, panels, frames, housings, blocks, covers
-- cylinder: pipes, columns, posts (NOT for wheels/shafts/bolts — use compound types)
-- sphere: domes, ball joints, pressure vessels (NOT for camera sensors)
+- box: panels, frames, housings, blocks, covers, electronics bays, battery mounts
+- cylinder: pipes, columns, posts (NOT for wheels/shafts/bolts/motors — use compound types)
+- sphere: domes, ball joints, pressure vessels, pivot spheres (NOT for camera sensors)
 - cone: nozzles, funnels, tapered connectors
 - wedge: ramps, angled armor, turbine/impeller blades, sloped panels
 - torus: seals, o-rings, circular rails
 - tube: hollow pipes, exhaust tubes, structural tubes
 - plate: solar panels, flat mounting plates, fins, wings, shelves
 - gear: drive gears, sprockets, cogs
-- bracket: L-shaped mounts, suspension arms, support struts
+- bracket: L-shaped mounts, suspension arms, support struts, motor brackets
+
+ROVER ASSEMBLY REFERENCE (use when building Mars/planetary rovers):
+- Chassis at center [0, chassisH, 0]. Electronics bay on top of chassis.
+- Differential bar: cylinder spanning between left/right rocker pivots, mounted on top of chassis center.
+- Rocker arms: connect to chassis differential at inner pivot, extend outward. Middle wheel mounts on rocker.
+- Bogie arms: pivot at outer end of each rocker. Front and rear wheels on bogie ends.
+- Steering knuckles: on the 4 corner wheels (front-left, front-right, rear-left, rear-right).
+- Motors: one per wheel, mounted on knuckles or directly on bogie/rocker wheel mounts.
+- 6 wheels total: 2 on rockers (middle), 4 on bogies (corners).
+- Camera/antenna on mast above chassis. PCB standoffs inside electronics bay.
 
 For each part, provide:
 - type: one of the available shapes
@@ -189,6 +205,12 @@ Params:
   - mug: mugRadius (0.2-1.5), mugHeight (0.3-2), handleSize (0.1-0.8), wallThickness (0.02-0.1)
   - hammer: handleLength (0.5-3), handleRadius (0.03-0.2), headWidth (0.2-1.5), headSize (0.08-0.5)
   - handle: knobRadius (0.05-0.5), stemRadius (0.02-0.2), stemHeight (0.1-1)
+  - chassis: chassisLength (1-10), chassisWidth (0.5-8), chassisThickness (0.05-0.5), mountHoles (0-16)
+  - rocker: rockerLength (0.5-6), rockerWidth (0.1-1), rockerThickness (0.05-0.5)
+  - bogie: bogieLength (0.3-4), bogieWidth (0.1-0.8), bogieThickness (0.03-0.3)
+  - knuckle: knuckleRadius (0.05-1), knuckleHeight (0.1-2), boreSize (0.02-0.5)
+  - motor: motorRadius (0.05-1), motorLength (0.2-3), shaftDiameter (0.01-0.3)
+  - standoff: standoffRadius (0.03-0.3), standoffHeight (0.1-2), threadRadius (0.01-0.15)
 
 CRITICAL RULES:
 1. ALWAYS use compound types when the object IS one of those things. NEVER substitute with basic primitives.
@@ -249,7 +271,7 @@ You MUST call the parse_cad function.`;
                     items: {
                       type: "object",
                       properties: {
-                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate", "wheel", "camera", "antenna", "drill", "track", "bolt", "nut", "screw", "bearing", "pulley", "shaft", "mug", "hammer", "handle"] },
+                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate", "wheel", "camera", "antenna", "drill", "track", "bolt", "nut", "screw", "bearing", "pulley", "shaft", "mug", "hammer", "handle", "chassis", "rocker", "bogie", "knuckle", "motor", "standoff"] },
                         label: { type: "string" },
                         position: { type: "array", items: { type: "number" }, description: "[x, y, z]" },
                         rotation: { type: "array", items: { type: "number" }, description: "[rx, ry, rz] in degrees" },
@@ -312,6 +334,25 @@ You MUST call the parse_cad function.`;
                             knobHeight: { type: "number" },
                             stemRadius: { type: "number" },
                             stemHeight: { type: "number" },
+                            chassisLength: { type: "number" },
+                            chassisWidth: { type: "number" },
+                            chassisThickness: { type: "number" },
+                            mountHoles: { type: "number" },
+                            rockerLength: { type: "number" },
+                            rockerWidth: { type: "number" },
+                            rockerThickness: { type: "number" },
+                            bogieLength: { type: "number" },
+                            bogieWidth: { type: "number" },
+                            bogieThickness: { type: "number" },
+                            knuckleRadius: { type: "number" },
+                            knuckleHeight: { type: "number" },
+                            boreSize: { type: "number" },
+                            motorRadius: { type: "number" },
+                            motorLength: { type: "number" },
+                            shaftDiameter: { type: "number" },
+                            standoffRadius: { type: "number" },
+                            standoffHeight: { type: "number" },
+                            threadRadius: { type: "number" },
                           },
                         },
                       },
