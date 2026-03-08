@@ -498,12 +498,12 @@ export default function Index() {
               </>
             );
           })()}
-          {selectedModelId && (
+          {selectedModelIds.size > 0 && (
             <button
               onClick={handleDeleteSelected}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-destructive/10 border-2 border-destructive/30 text-destructive hover:bg-destructive/20 transition-all"
             >
-              <Trash2 className="w-3 h-3" /> Remove
+              <Trash2 className="w-3 h-3" /> Remove {selectedModelIds.size > 1 ? `(${selectedModelIds.size})` : ""}
             </button>
           )}
         </div>
