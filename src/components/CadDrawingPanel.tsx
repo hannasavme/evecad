@@ -894,7 +894,7 @@ function dimStr(val: number) {
   return (val * 25.4).toFixed(1);
 }
 
-function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotation, onMoveAnnotation, titleText, onUpdateTitle, showSection, showBOM }: {
+function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotation, onMoveAnnotation, titleText, onUpdateTitle, showSection, showBOM, page, partsPerPage }: {
   models: SceneModel[];
   annotations: Annotation[];
   onUpdateAnnotation: (id: string, text: string) => void;
@@ -902,7 +902,11 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
   onMoveAnnotation: (id: string, x: number, y: number) => void;
   titleText: string; onUpdateTitle: (t: string) => void;
   showSection: boolean; showBOM: boolean;
+  page: number; partsPerPage: number;
 }) {
+  const startIdx = page * partsPerPage;
+  const pageModels = models.slice(startIdx, startIdx + partsPerPage);
+  const totalPages = Math.ceil(models.length / partsPerPage);
   const margin = 20;
   const scl = 55;
   const svgWidth = 1190;
