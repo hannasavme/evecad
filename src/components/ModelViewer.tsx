@@ -43,8 +43,8 @@ export interface ModelViewerHandle {
 
 interface ModelViewerProps {
   models: SceneModel[];
-  selectedModelId: string | null;
-  onSelectModel: (id: string | null) => void;
+  selectedModelIds: Set<string>;
+  onSelectModel: (id: string | null, additive?: boolean) => void;
 }
 
 function GearMesh({ color, params }: { color: string; params?: ModelParams }) {
