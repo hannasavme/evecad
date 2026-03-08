@@ -2066,7 +2066,16 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
               <Crosshair className="w-3 h-3 inline mr-1" />Section
             </button>
             <button onClick={() => setShowIsometric(!showIsometric)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showIsometric ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
-              <Layers className="w-3 h-3 inline mr-1" />Isometric
+              <Layers className="w-3 h-3 inline mr-1" />Iso
+            </button>
+            <button onClick={() => setShowPerspective(!showPerspective)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showPerspective ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+              <Eye className="w-3 h-3 inline mr-1" />Persp
+            </button>
+            <button onClick={() => setShowDimetric(!showDimetric)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showDimetric ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+              <Layers className="w-3 h-3 inline mr-1" />Dimet
+            </button>
+            <button onClick={() => setShowTrimetric(!showTrimetric)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showTrimetric ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+              <Layers className="w-3 h-3 inline mr-1" />Trimet
             </button>
             <button onClick={() => setShowBOM(!showBOM)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showBOM ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
               <List className="w-3 h-3 inline mr-1" />BOM
