@@ -774,7 +774,7 @@ function HammerMesh({ color, params }: { color: string; params?: ModelParams }) 
       {/* Head body */}
       <mesh position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[headS, headS, headW, 16]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.2} /></mesh>
       {/* Flat striking face */}
-      <mesh position={[headW / 2 + 0.01, 0, 0]}><cylinderGeometry args={[headS * 0.95, headS * 0.95, 0.02, 16]} rotation={[0, 0, Math.PI / 2]} /><meshStandardMaterial color="#ccc" metalness={0.8} roughness={0.1} /></mesh>
+      <mesh position={[headW / 2 + 0.01, 0, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[headS * 0.95, headS * 0.95, 0.02, 16]} /><meshStandardMaterial color="#ccc" metalness={0.8} roughness={0.1} /></mesh>
       {/* Peen (ball end) */}
       <mesh position={[-headW / 2 - headS * 0.3, 0, 0]}><sphereGeometry args={[headS * 0.7, 12, 12]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.2} /></mesh>
       {/* Wedge insert */}
