@@ -390,6 +390,7 @@ export default function Index() {
               Drawing
             </button>
           )}
+          <ImportButton onImport={(imported) => setModelsImmediate((prev) => [...prev, ...imported])} />
           <ExportDropdown hasModel={models.length > 0} getScene={getScene} />
         </div>
       </header>
