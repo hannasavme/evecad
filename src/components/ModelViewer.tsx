@@ -242,9 +242,45 @@ export interface ModelParams {
   avionicsHeight?: number;
   avionicsDepth?: number;
   avionicsSlots?: number;
+  // Drone - Frame
+  droneFrameSize?: number;
+  droneFrameThickness?: number;
+  droneArmCount?: number;
+  droneFrameSlots?: number;
+  // Drone - Arm
+  droneArmLength?: number;
+  droneArmWidth?: number;
+  droneArmThickness?: number;
+  // Drone - Propeller
+  propDiameter?: number;
+  propPitch?: number;
+  propBlades?: number;
+  // Drone - Prop Guard
+  guardRadius?: number;
+  guardHeight?: number;
+  guardThickness?: number;
+  // Drone - Brushless Motor
+  blMotorRadius?: number;
+  blMotorHeight?: number;
+  blMotorBells?: number;
+  blMotorShaftR?: number;
+  // Drone - FC Tray
+  fcTrayWidth?: number;
+  fcTrayDepth?: number;
+  fcTrayThickness?: number;
+  fcTrayHoleSpacing?: number;
+  // Drone - Battery Tray
+  batTrayWidth?: number;
+  batTrayDepth?: number;
+  batTrayHeight?: number;
+  batTrayStrapSlots?: number;
+  // Drone - ESC Box
+  escWidth?: number;
+  escDepth?: number;
+  escHeight?: number;
 }
 
-export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track" | "bolt" | "nut" | "screw" | "bearing" | "pulley" | "shaft" | "mug" | "hammer" | "handle" | "chassis" | "rocker" | "bogie" | "knuckle" | "motor" | "standoff" | "nosecone" | "bodytube" | "fin" | "centeringring" | "bulkhead" | "coupler" | "launchguide" | "motortube" | "thrustplate" | "retainer" | "nozzle" | "ebay" | "baffle" | "solarpanel" | "battery" | "rtg" | "sbc" | "transceiver" | "radiator" | "gripper" | "lidar" | "heatpipe" | "harness" | "imu" | "proxsensor" | "fuselage" | "wing" | "enginebell" | "omspod" | "rcsthruster" | "proptank" | "reactionwheel" | "avionicsbox";
+export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track" | "bolt" | "nut" | "screw" | "bearing" | "pulley" | "shaft" | "mug" | "hammer" | "handle" | "chassis" | "rocker" | "bogie" | "knuckle" | "motor" | "standoff" | "nosecone" | "bodytube" | "fin" | "centeringring" | "bulkhead" | "coupler" | "launchguide" | "motortube" | "thrustplate" | "retainer" | "nozzle" | "ebay" | "baffle" | "solarpanel" | "battery" | "rtg" | "sbc" | "transceiver" | "radiator" | "gripper" | "lidar" | "heatpipe" | "harness" | "imu" | "proxsensor" | "fuselage" | "wing" | "enginebell" | "omspod" | "rcsthruster" | "proptank" | "reactionwheel" | "avionicsbox" | "droneframe" | "dronearm" | "propeller" | "propguard" | "brushlessmotor" | "fctray" | "batterytray" | "escbox";
 
 export interface SceneModel {
   id: string;
@@ -2344,6 +2380,376 @@ function AvionicsBoxMesh({ color, params }: { color: string; params?: ModelParam
   );
 }
 
+// ─── Drone Compound Primitives ──────────────────────────
+
+function DroneFrameMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const size = params?.droneFrameSize ?? 2.0;
+  const thick = params?.droneFrameThickness ?? 0.06;
+  const arms = params?.droneArmCount ?? 4;
+  const slots = params?.droneFrameSlots ?? 4;
+  const plateR = size * 0.25;
+
+  return (
+    <group>
+      {/* Top plate */}
+      <mesh position={[0, thick, 0]}>
+        <cylinderGeometry args={[plateR, plateR, thick, arms * 4]} />
+        <meshStandardMaterial color={color} metalness={0.3} roughness={0.5} />
+      </mesh>
+      {/* Bottom plate */}
+      <mesh position={[0, -thick, 0]}>
+        <cylinderGeometry args={[plateR * 1.05, plateR * 1.05, thick, arms * 4]} />
+        <meshStandardMaterial color={color} metalness={0.3} roughness={0.5} />
+      </mesh>
+      {/* Center standoffs connecting plates */}
+      {Array.from({ length: 4 }).map((_, i) => {
+        const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        return (
+          <mesh key={`st${i}`} position={[Math.cos(angle) * plateR * 0.6, 0, Math.sin(angle) * plateR * 0.6]}>
+            <cylinderGeometry args={[0.015, 0.015, thick * 3, 6]} />
+            <meshStandardMaterial color="#888" metalness={0.7} roughness={0.2} />
+          </mesh>
+        );
+      })}
+      {/* Cable management slots on top plate */}
+      {Array.from({ length: slots }).map((_, i) => {
+        const angle = (i / slots) * Math.PI * 2;
+        return (
+          <mesh key={`sl${i}`} position={[Math.cos(angle) * plateR * 0.5, thick + 0.001, Math.sin(angle) * plateR * 0.5]}
+            rotation={[0, -angle, 0]}>
+            <boxGeometry args={[plateR * 0.25, thick + 0.002, 0.02]} />
+            <meshStandardMaterial color="#222" metalness={0.3} roughness={0.5} />
+          </mesh>
+        );
+      })}
+      {/* Center hole */}
+      <mesh position={[0, thick, 0]}>
+        <cylinderGeometry args={[plateR * 0.12, plateR * 0.12, thick + 0.01, 12]} />
+        <meshStandardMaterial color="#111" metalness={0.3} roughness={0.5} />
+      </mesh>
+      {/* FC mounting holes (30.5mm pattern) */}
+      {[[-1,-1],[-1,1],[1,-1],[1,1]].map(([sx,sz], i) => (
+        <mesh key={`fc${i}`} position={[sx * 0.076, thick + 0.001, sz * 0.076]}>
+          <cylinderGeometry args={[0.015, 0.015, thick + 0.01, 8]} />
+          <meshStandardMaterial color="#333" metalness={0.5} roughness={0.3} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function DroneArmMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const l = params?.droneArmLength ?? 1.5;
+  const w = params?.droneArmWidth ?? 0.15;
+  const t = params?.droneArmThickness ?? 0.05;
+
+  return (
+    <group>
+      {/* Main arm beam */}
+      <mesh rotation={[0, 0, 0]}>
+        <boxGeometry args={[w, t, l]} />
+        <meshStandardMaterial color={color} metalness={0.3} roughness={0.5} />
+      </mesh>
+      {/* Reinforcement rib */}
+      <mesh position={[0, t / 2 + 0.008, 0]}>
+        <boxGeometry args={[w * 0.3, 0.015, l * 0.8]} />
+        <meshStandardMaterial color={color} metalness={0.4} roughness={0.4} />
+      </mesh>
+      {/* Motor mount holes at tip */}
+      {[[-1,-1],[-1,1],[1,-1],[1,1]].map(([sx,sz], i) => (
+        <mesh key={i} position={[sx * w * 0.25, 0, l / 2 - 0.03 + sz * 0.03]}>
+          <cylinderGeometry args={[0.01, 0.01, t + 0.01, 8]} />
+          <meshStandardMaterial color="#333" metalness={0.5} roughness={0.3} />
+        </mesh>
+      ))}
+      {/* Frame attach end (wider) */}
+      <mesh position={[0, 0, -l / 2 + 0.03]}>
+        <boxGeometry args={[w * 1.4, t, 0.06]} />
+        <meshStandardMaterial color={color} metalness={0.35} roughness={0.45} />
+      </mesh>
+      {/* Zip tie slots */}
+      {Array.from({ length: 3 }).map((_, i) => (
+        <mesh key={`zs${i}`} position={[0, 0, -l * 0.2 + i * l * 0.3]}>
+          <boxGeometry args={[w + 0.01, t + 0.01, 0.01]} />
+          <meshStandardMaterial color="#222" metalness={0.2} roughness={0.6} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function PropellerMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const diameter = params?.propDiameter ?? 1.2;
+  const pitch = params?.propPitch ?? 0.5;
+  const blades = params?.propBlades ?? 2;
+  const r = diameter / 2;
+
+  const bladeShape = useMemo(() => {
+    const els: JSX.Element[] = [];
+    for (let b = 0; b < blades; b++) {
+      const angle = (b / blades) * Math.PI * 2;
+      els.push(
+        <group key={b} rotation={[0, angle, 0]}>
+          {/* Blade */}
+          <mesh position={[r * 0.45, 0, 0]} rotation={[pitch * 0.3, 0, 0]}>
+            <boxGeometry args={[r * 0.75, 0.008, r * 0.15]} />
+            <meshStandardMaterial color={color} metalness={0.3} roughness={0.4} side={THREE.DoubleSide} />
+          </mesh>
+          {/* Blade tip (tapered) */}
+          <mesh position={[r * 0.88, 0, 0]} rotation={[pitch * 0.2, 0, 0.1]}>
+            <boxGeometry args={[r * 0.15, 0.006, r * 0.08]} />
+            <meshStandardMaterial color={color} metalness={0.3} roughness={0.4} />
+          </mesh>
+        </group>
+      );
+    }
+    return els;
+  }, [blades, r, pitch, color]);
+
+  return (
+    <group>
+      {/* Hub */}
+      <mesh><cylinderGeometry args={[r * 0.06, r * 0.06, 0.025, 16]} /><meshStandardMaterial color="#333" metalness={0.6} roughness={0.3} /></mesh>
+      {/* Hub cap */}
+      <mesh position={[0, 0.015, 0]}><cylinderGeometry args={[r * 0.04, r * 0.03, 0.01, 12]} /><meshStandardMaterial color="#555" metalness={0.7} roughness={0.2} /></mesh>
+      {/* Blades */}
+      {bladeShape}
+    </group>
+  );
+}
+
+function PropGuardMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.guardRadius ?? 0.7;
+  const h = params?.guardHeight ?? 0.08;
+  const t = params?.guardThickness ?? 0.02;
+
+  return (
+    <group>
+      {/* Guard ring */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[r, t, 8, 32]} />
+        <meshStandardMaterial color={color} metalness={0.3} roughness={0.5} />
+      </mesh>
+      {/* Vertical wall */}
+      <mesh>
+        <cylinderGeometry args={[r, r, h, 32]} />
+        <meshStandardMaterial color={color} metalness={0.3} roughness={0.5} transparent opacity={0.6} />
+      </mesh>
+      <mesh>
+        <cylinderGeometry args={[r - t, r - t, h + 0.01, 32]} />
+        <meshStandardMaterial color="#111" metalness={0.2} roughness={0.5} />
+      </mesh>
+      {/* Support struts to arm */}
+      {[0, 90, 180, 270].map((deg) => {
+        const rad = (deg * Math.PI) / 180;
+        return (
+          <mesh key={deg} position={[Math.cos(rad) * r * 0.5, 0, Math.sin(rad) * r * 0.5]}
+            rotation={[0, -rad, 0]}>
+            <boxGeometry args={[r * 0.5, t, t]} />
+            <meshStandardMaterial color={color} metalness={0.35} roughness={0.45} />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}
+
+function BrushlessMotorMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.blMotorRadius ?? 0.14;
+  const h = params?.blMotorHeight ?? 0.12;
+  const bells = params?.blMotorBells ?? 12;
+  const shaftR = params?.blMotorShaftR ?? r * 0.12;
+
+  return (
+    <group>
+      {/* Stator (base) */}
+      <mesh position={[0, -h * 0.2, 0]}>
+        <cylinderGeometry args={[r * 0.85, r * 0.9, h * 0.4, 24]} />
+        <meshStandardMaterial color="#444" metalness={0.5} roughness={0.3} />
+      </mesh>
+      {/* Bell housing (rotor) */}
+      <mesh position={[0, h * 0.15, 0]}>
+        <cylinderGeometry args={[r, r * 0.95, h * 0.5, 24]} />
+        <meshStandardMaterial color={color} metalness={0.6} roughness={0.2} />
+      </mesh>
+      {/* Top cap */}
+      <mesh position={[0, h * 0.42, 0]}>
+        <cylinderGeometry args={[r * 0.8, r, 0.02, 24]} />
+        <meshStandardMaterial color={color} metalness={0.6} roughness={0.2} />
+      </mesh>
+      {/* Magnet indicators */}
+      {Array.from({ length: bells }).map((_, i) => {
+        const angle = (i / bells) * Math.PI * 2;
+        return (
+          <mesh key={i} position={[Math.cos(angle) * r * 0.88, h * 0.15, Math.sin(angle) * r * 0.88]}
+            rotation={[0, -angle, 0]}>
+            <boxGeometry args={[0.008, h * 0.35, r * 0.15]} />
+            <meshStandardMaterial color={i % 2 === 0 ? "#777" : "#555"} metalness={0.5} roughness={0.3} />
+          </mesh>
+        );
+      })}
+      {/* Output shaft */}
+      <mesh position={[0, h * 0.5, 0]}>
+        <cylinderGeometry args={[shaftR, shaftR, h * 0.3, 12]} />
+        <meshStandardMaterial color="#ccc" metalness={0.8} roughness={0.1} />
+      </mesh>
+      {/* Prop adapter */}
+      <mesh position={[0, h * 0.65, 0]}>
+        <cylinderGeometry args={[shaftR * 2.5, shaftR * 1.5, 0.02, 12]} />
+        <meshStandardMaterial color="#999" metalness={0.7} roughness={0.2} />
+      </mesh>
+      {/* Mounting base */}
+      <mesh position={[0, -h * 0.42, 0]}>
+        <cylinderGeometry args={[r * 0.5, r * 0.5, 0.02, 16]} />
+        <meshStandardMaterial color="#666" metalness={0.5} roughness={0.3} />
+      </mesh>
+      {/* Mounting holes */}
+      {[0, 90, 180, 270].map((deg) => {
+        const rad = (deg * Math.PI) / 180;
+        return (
+          <mesh key={deg} position={[Math.cos(rad) * r * 0.35, -h * 0.42, Math.sin(rad) * r * 0.35]}>
+            <cylinderGeometry args={[0.01, 0.01, 0.03, 8]} />
+            <meshStandardMaterial color="#333" metalness={0.5} roughness={0.3} />
+          </mesh>
+        );
+      })}
+      {/* Wire leads */}
+      {[0, 120, 240].map((deg) => {
+        const rad = (deg * Math.PI) / 180;
+        return (
+          <mesh key={`w${deg}`} position={[Math.cos(rad) * r * 0.6, -h * 0.45, Math.sin(rad) * r * 0.6]}>
+            <cylinderGeometry args={[0.008, 0.008, h * 0.2, 6]} />
+            <meshStandardMaterial color={deg === 0 ? "#cc0000" : deg === 120 ? "#cccc00" : "#000000"} metalness={0.3} roughness={0.5} />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}
+
+function FCTrayMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const w = params?.fcTrayWidth ?? 0.3;
+  const d = params?.fcTrayDepth ?? 0.3;
+  const t = params?.fcTrayThickness ?? 0.02;
+  const hs = params?.fcTrayHoleSpacing ?? 0.2;
+
+  return (
+    <group>
+      {/* Main plate */}
+      <mesh><boxGeometry args={[w, t, d]} /><meshStandardMaterial color={color} metalness={0.3} roughness={0.5} /></mesh>
+      {/* Mounting holes (M3 pattern) */}
+      {[[-1,-1],[-1,1],[1,-1],[1,1]].map(([sx,sz], i) => (
+        <mesh key={i} position={[sx * hs / 2, 0, sz * hs / 2]}>
+          <cylinderGeometry args={[0.015, 0.015, t + 0.01, 8]} />
+          <meshStandardMaterial color="#333" metalness={0.5} roughness={0.3} />
+        </mesh>
+      ))}
+      {/* Anti-vibration grommets */}
+      {[[-1,-1],[-1,1],[1,-1],[1,1]].map(([sx,sz], i) => (
+        <mesh key={`g${i}`} position={[sx * hs / 2, t / 2 + 0.005, sz * hs / 2]}>
+          <cylinderGeometry args={[0.02, 0.02, 0.01, 12]} />
+          <meshStandardMaterial color="#333" metalness={0.2} roughness={0.8} />
+        </mesh>
+      ))}
+      {/* FC board representation */}
+      <mesh position={[0, t / 2 + 0.015, 0]}>
+        <boxGeometry args={[w * 0.85, 0.015, d * 0.85]} />
+        <meshStandardMaterial color="#1a5c1a" metalness={0.2} roughness={0.6} />
+      </mesh>
+      {/* IC chips on FC */}
+      <mesh position={[0, t / 2 + 0.025, 0]}>
+        <boxGeometry args={[w * 0.2, 0.005, d * 0.2]} />
+        <meshStandardMaterial color="#111" metalness={0.4} roughness={0.4} />
+      </mesh>
+      {/* USB connector */}
+      <mesh position={[w * 0.4, t / 2 + 0.02, 0]}>
+        <boxGeometry args={[0.02, 0.01, 0.03]} />
+        <meshStandardMaterial color="#aaa" metalness={0.6} roughness={0.3} />
+      </mesh>
+    </group>
+  );
+}
+
+function BatteryTrayMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const w = params?.batTrayWidth ?? 0.5;
+  const d = params?.batTrayDepth ?? 0.8;
+  const h = params?.batTrayHeight ?? 0.08;
+  const straps = params?.batTrayStrapSlots ?? 2;
+
+  return (
+    <group>
+      {/* Base plate */}
+      <mesh><boxGeometry args={[w, 0.02, d]} /><meshStandardMaterial color={color} metalness={0.3} roughness={0.5} /></mesh>
+      {/* Side rails */}
+      <mesh position={[-w / 2 + 0.01, h / 2, 0]}><boxGeometry args={[0.02, h, d * 0.9]} /><meshStandardMaterial color={color} metalness={0.35} roughness={0.45} /></mesh>
+      <mesh position={[w / 2 - 0.01, h / 2, 0]}><boxGeometry args={[0.02, h, d * 0.9]} /><meshStandardMaterial color={color} metalness={0.35} roughness={0.45} /></mesh>
+      {/* Front/rear lips */}
+      <mesh position={[0, h * 0.3, d / 2 - 0.01]}><boxGeometry args={[w, h * 0.6, 0.02]} /><meshStandardMaterial color={color} metalness={0.35} roughness={0.45} /></mesh>
+      <mesh position={[0, h * 0.3, -d / 2 + 0.01]}><boxGeometry args={[w, h * 0.6, 0.02]} /><meshStandardMaterial color={color} metalness={0.35} roughness={0.45} /></mesh>
+      {/* Strap slots */}
+      {Array.from({ length: straps }).map((_, i) => {
+        const z = -d * 0.3 + (d * 0.6 / Math.max(straps - 1, 1)) * i;
+        return (
+          <group key={i}>
+            <mesh position={[-w / 2 - 0.005, h * 0.5, z]}>
+              <boxGeometry args={[0.015, h * 0.3, 0.04]} />
+              <meshStandardMaterial color="#222" metalness={0.3} roughness={0.5} />
+            </mesh>
+            <mesh position={[w / 2 + 0.005, h * 0.5, z]}>
+              <boxGeometry args={[0.015, h * 0.3, 0.04]} />
+              <meshStandardMaterial color="#222" metalness={0.3} roughness={0.5} />
+            </mesh>
+          </group>
+        );
+      })}
+      {/* Non-slip pad */}
+      <mesh position={[0, 0.012, 0]}>
+        <boxGeometry args={[w * 0.85, 0.003, d * 0.85]} />
+        <meshStandardMaterial color="#333" metalness={0.1} roughness={0.9} />
+      </mesh>
+    </group>
+  );
+}
+
+function ESCBoxMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const w = params?.escWidth ?? 0.2;
+  const d = params?.escDepth ?? 0.15;
+  const h = params?.escHeight ?? 0.06;
+
+  return (
+    <group>
+      {/* Main enclosure */}
+      <mesh><boxGeometry args={[w, h, d]} /><meshStandardMaterial color={color} metalness={0.3} roughness={0.5} /></mesh>
+      {/* Heat sink fins */}
+      {Array.from({ length: 4 }).map((_, i) => (
+        <mesh key={i} position={[0, h / 2 + 0.008, -d * 0.3 + i * (d * 0.2)]}>
+          <boxGeometry args={[w * 0.9, 0.015, 0.008]} />
+          <meshStandardMaterial color="#aaa" metalness={0.7} roughness={0.2} />
+        </mesh>
+      ))}
+      {/* Input wires (3 phase) */}
+      {[-1, 0, 1].map((offset, i) => (
+        <mesh key={`in${i}`} position={[offset * w * 0.2, 0, -d / 2 - 0.02]}>
+          <cylinderGeometry args={[0.008, 0.008, 0.04, 6]} />
+          <meshStandardMaterial color={i === 0 ? "#cc0000" : i === 1 ? "#000" : "#cccc00"} metalness={0.3} roughness={0.5} />
+        </mesh>
+      ))}
+      {/* Output wires (to motor) */}
+      {[-1, 0, 1].map((offset, i) => (
+        <mesh key={`out${i}`} position={[offset * w * 0.2, 0, d / 2 + 0.02]}>
+          <cylinderGeometry args={[0.008, 0.008, 0.04, 6]} />
+          <meshStandardMaterial color={i === 0 ? "#cc0000" : i === 1 ? "#cccc00" : "#000"} metalness={0.3} roughness={0.5} />
+        </mesh>
+      ))}
+      {/* Signal wire */}
+      <mesh position={[w * 0.35, -h * 0.2, 0]}>
+        <cylinderGeometry args={[0.005, 0.005, 0.03, 6]} />
+        <meshStandardMaterial color="#fff" metalness={0.3} roughness={0.5} />
+      </mesh>
+    </group>
+  );
+}
+
 const meshMap: Record<string, React.FC<{ color: string; params?: ModelParams }>> = {
   gear: GearMesh,
   bracket: BracketMesh,
@@ -2408,6 +2814,14 @@ const meshMap: Record<string, React.FC<{ color: string; params?: ModelParams }>>
   proptank: PropTankMesh,
   reactionwheel: ReactionWheelMesh,
   avionicsbox: AvionicsBoxMesh,
+  droneframe: DroneFrameMesh,
+  dronearm: DroneArmMesh,
+  propeller: PropellerMesh,
+  propguard: PropGuardMesh,
+  brushlessmotor: BrushlessMotorMesh,
+  fctray: FCTrayMesh,
+  batterytray: BatteryTrayMesh,
+  escbox: ESCBoxMesh,
 };
 
 // ─── Scene Components ──────────────────────────────────

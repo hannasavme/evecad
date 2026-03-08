@@ -120,7 +120,7 @@ For SIMPLE parts (single gear, bracket, etc.), return 1-3 parts.
 For COMPLEX objects (vehicles, machines, robots, devices), decompose into 40-80+ sub-parts for maximum detail.
 For MULTI-VEHICLE systems (swarms, fleets, convoys), model EACH vehicle separately with full detail.
 
-Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track, bolt, nut, screw, bearing, pulley, shaft, mug, hammer, handle, chassis, rocker, bogie, knuckle, motor, standoff, nosecone, bodytube, fin, centeringring, bulkhead, coupler, launchguide, motortube, thrustplate, retainer, nozzle, ebay, baffle, solarpanel, battery, rtg, sbc, transceiver, radiator, gripper, lidar, heatpipe, harness, imu, proxsensor, fuselage, wing, enginebell, omspod, rcsthruster, proptank, reactionwheel, avionicsbox.
+Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track, bolt, nut, screw, bearing, pulley, shaft, mug, hammer, handle, chassis, rocker, bogie, knuckle, motor, standoff, nosecone, bodytube, fin, centeringring, bulkhead, coupler, launchguide, motortube, thrustplate, retainer, nozzle, ebay, baffle, solarpanel, battery, rtg, sbc, transceiver, radiator, gripper, lidar, heatpipe, harness, imu, proxsensor, fuselage, wing, enginebell, omspod, rcsthruster, proptank, reactionwheel, avionicsbox, droneframe, dronearm, propeller, propguard, brushlessmotor, fctray, batterytray, escbox.
 
 COMPOUND TYPE RULES (HIGHEST PRIORITY — ALWAYS FOLLOW):
 - "wheel": ANY wheel — auto-renders with tire, spoked rim, hub cap, axle hole, treads.
@@ -164,6 +164,14 @@ COMPOUND TYPE RULES (HIGHEST PRIORITY — ALWAYS FOLLOW):
 - "proptank": ANY propellant/oxidizer tank — auto-renders cylindrical pressure vessel with domed ends, stringers, ring frames, feed ports.
 - "reactionwheel": ANY reaction/momentum wheel — auto-renders flywheel with housing, hub motor, spokes, encoder, mounting base.
 - "avionicsbox": ANY avionics/electronics enclosure — auto-renders box with front-panel connectors, heat sink fins, EMI gasket, mounting ears, cable harness connector.
+- "droneframe": ANY drone/quadcopter main frame — auto-renders top/bottom plates with standoffs, cable slots, FC mounting holes.
+- "dronearm": ANY drone arm — auto-renders beam with motor mount holes, zip-tie slots, frame attach end.
+- "propeller": ANY propeller/rotor blade — auto-renders hub with configurable blade count and pitch.
+- "propguard": ANY propeller guard ring — auto-renders protective ring with support struts.
+- "brushlessmotor": ANY brushless motor (outrunner) — auto-renders stator, bell housing, magnets, output shaft, prop adapter, wire leads.
+- "fctray": ANY flight controller mounting tray — auto-renders plate with M3 pattern holes, grommets, FC board, USB connector.
+- "batterytray": ANY battery holder/tray — auto-renders base with side rails, front/rear lips, strap slots, non-slip pad.
+- "escbox": ANY ESC enclosure — auto-renders box with heat sink fins, 3-phase wires in/out, signal wire.
 
 If user asks to "generate a wheel" → use type "wheel" (NOT impeller).
 If user asks for an impeller/turbine/fan → use wedges/plates radially around a cylinder hub.
@@ -401,6 +409,14 @@ Params:
   - proptank: propTankRadius (0.2-5), propTankLength (0.5-15)
   - reactionwheel: rwRadius (0.05-1), rwHeight (0.03-0.5), rwRimThickness (0.01-0.1)
   - avionicsbox: avionicsWidth (0.1-3), avionicsHeight (0.1-2), avionicsDepth (0.1-2), avionicsSlots (1-8)
+  - droneframe: droneFrameSize (0.5-10), droneFrameThickness (0.02-0.3), droneArmCount (3-8), droneFrameSlots (0-8)
+  - dronearm: droneArmLength (0.3-5), droneArmWidth (0.05-0.5), droneArmThickness (0.02-0.2)
+  - propeller: propDiameter (0.3-5), propPitch (0.1-3), propBlades (2-6)
+  - propguard: guardRadius (0.2-3), guardHeight (0.02-0.3), guardThickness (0.01-0.1)
+  - brushlessmotor: blMotorRadius (0.05-0.5), blMotorHeight (0.05-0.5), blMotorBells (6-24)
+  - fctray: fcTrayWidth (0.1-1), fcTrayDepth (0.1-1), fcTrayThickness (0.01-0.1), fcTrayHoleSpacing (0.1-0.5)
+  - batterytray: batTrayWidth (0.1-2), batTrayDepth (0.1-2), batTrayHeight (0.02-0.3), batTrayStrapSlots (0-4)
+  - escbox: escWidth (0.05-0.5), escDepth (0.05-0.5), escHeight (0.02-0.2)
 
 ORBITER / SPACE SHUTTLE ASSEMBLY REFERENCE (use when building ANY orbiter, shuttle, or spaceplane):
 Based on NASA Space Shuttle, Buran, Dream Chaser, X-37B designs.
@@ -416,60 +432,86 @@ STRUCTURE:
 - Forward fuselage: fuselage at [0, 2, 4] fuselageLength=4, fuselageWidth=2.5, fuselageHeight=2.0, fuselageNoseRatio=0.35
 - Mid fuselage (payload bay): fuselage at [0, 2, -1] fuselageLength=5, fuselageWidth=2.8, fuselageHeight=2.2, fuselageNoseRatio=0.05
 - Aft fuselage: fuselage at [0, 2, -5] fuselageLength=3, fuselageWidth=2.5, fuselageHeight=2.0, fuselageNoseRatio=0.05
-- Payload bay doors: 2x plate at [±0.3, 3.1, -1] width=1.2, depth=4.8 — open to reveal radiator panels
+- Payload bay doors: 2x plate at [±0.3, 3.1, -1] width=1.2, depth=4.8
 - Bulkheads: bulkhead between forward/mid and mid/aft sections
 
 WINGS:
 - Main wings: wing at [0, 1.5, -3] wingSpan=4, wingRoot=4, wingTip=1.2, wingSweep=2.5, wingThickness=0.1, wingDihedral=3
-- Vertical tail: plate at [0, 3.5, -6] width=0.08, height=2.5, depth=2.0 (or use wing rotated 90°)
+- Vertical tail: plate at [0, 3.5, -6] width=0.08, height=2.5, depth=2.0
 - Body flap: plate at [0, 0.8, -6.5] width=2.2, depth=0.8
 
 PROPULSION:
 - Main engines (3): enginebell at [0, 1.5, -6.5], [0.7, 2, -6.5], [-0.7, 2, -6.5]
-  engineBellThroat=0.12, engineBellExit=0.45, engineBellLength=1.0
-- OMS pods: omspod at [±1.2, 2.5, -5.5] omsPodLength=1.5, omsPodRadius=0.4
-- RCS thrusters: rcsthruster at nose [0, 2.5, 6] and tail [±1, 2, -6.3], rcsNozzleCount=2
-
-PROPELLANT (internal or external):
-- Internal tanks: proptank at [0, 2, -3] propTankRadius=0.6, propTankLength=3
-- External tank (if shuttle-style): proptank at [0, 2.5, -1] propTankRadius=1.3, propTankLength=9 color=#c46210 (orange foam)
-
-THERMAL PROTECTION:
-- TPS belly tiles: plate at [0, 0.8, -1] width=2.5, depth=10 color=#1a1a1a (black HRSI tiles)
-- Nose cap RCC: sphere at [0, 2, 6] radius=0.4 color=#333333
-- Wing leading edge RCC: built into wing compound type
-
-PAYLOAD & ELECTRONICS:
-- Radiator panels (inside bay doors): radiator at [±1, 3.0, -1] radiatorWidth=1, radiatorHeight=4, radiatorPipes=8
-- Avionics bays: avionicsbox at forward [0, 1.5, 4.5] and aft [0, 1.5, -5]
-- Reaction wheels: reactionwheel at [0, 2, 0] for attitude control (3 axes)
-- Star trackers: camera at [0, 3.2, 3] — pointing up through window
-- Antenna: antenna at [0, 3.5, 2] dishRadius=0.3
-
-INTERNAL SYSTEMS:
-- SBC (flight computers): sbc at [0, 1.8, 4]
-- IMU: imu at [0, 1.5, 3]
-- Harness bundles: harness through fuselage length
-- Battery: battery at [0, 1.2, 3]
-
-COLOR SCHEME FOR ORBITERS:
-- Fuselage (upper): #e5e5e5 (white thermal blanket)
-- Fuselage (belly): #1a1a1a (black TPS tiles)
-- Wings: #e5e5e5 (white top) / #1a1a1a (black bottom)
-- Engine bells: #a3a3a3 (metallic gray)
-- OMS pods: #e5e5e5 (white)
-- RCS thrusters: #888888 (medium gray)
-- Propellant tanks: #c46210 (orange foam) or #d4d4d8 (metallic internal)
-- Radiators: #c0c0c0 (silver)
-- Payload bay: #d4d4d8 (silver interior)
-- Vertical tail: #e5e5e5 (white)
-- Avionics: #27272a (dark electronics)
-- Harness: #78350f (copper)
+- OMS pods: omspod at [±1.2, 2.5, -5.5]
+- RCS thrusters: rcsthruster at nose and tail
 
 PART COUNT GUIDELINES FOR ORBITERS:
-- Simple orbiter: 25-35 parts (fuselage + wings + engines + tail)
-- Detailed orbiter: 50-70 parts (add OMS, RCS, payload bay, radiators, avionics)
-- Full Space Shuttle: 80-100+ parts including external tank and SRBs
+- Simple orbiter: 25-35 parts
+- Detailed orbiter: 50-70 parts
+- Full Space Shuttle: 80-100+ parts
+
+DRONE / QUADCOPTER ASSEMBLY REFERENCE (use when building ANY drone, quadcopter, hexacopter, octocopter):
+Based on FPV racing drones, DJI-style camera drones, and custom builds.
+
+PROPORTIONS (scale uniformly, size = motor-to-motor diagonal distance):
+- Frame size (motor-to-motor): typically 2.0-3.0 units for 5" quad
+- Arm length: ~size * 0.5 from center to motor mount
+- Propeller diameter: ~size * 0.4
+- Total height (landing gear to prop tip): ~size * 0.3-0.4
+- Ground clearance: bottom of frame at y≈0.15
+
+FRAME STRUCTURE:
+- Center frame: droneframe at [0, 0.15, 0] droneFrameSize=2.0, droneFrameThickness=0.06, droneArmCount=4
+- Arms (for quad, 45° offset): 4x dronearm radiating from center
+  - Front-left: dronearm at [-0.5, 0.15, -0.5] rotation=[0, 45, 0] droneArmLength=1.2
+  - Front-right: dronearm at [0.5, 0.15, -0.5] rotation=[0, -45, 0]
+  - Rear-left: dronearm at [-0.5, 0.15, 0.5] rotation=[0, 135, 0]
+  - Rear-right: dronearm at [0.5, 0.15, 0.5] rotation=[0, -135, 0]
+
+MOTORS & PROPELLERS (at arm tips):
+- 4x brushlessmotor at each arm tip, blMotorRadius=0.14, blMotorHeight=0.12
+  - FL motor: brushlessmotor at [-1.0, 0.2, -1.0]
+  - FR motor: brushlessmotor at [1.0, 0.2, -1.0]
+  - RL motor: brushlessmotor at [-1.0, 0.2, 1.0]
+  - RR motor: brushlessmotor at [1.0, 0.2, 1.0]
+- 4x propeller on top of each motor, propDiameter=1.0, propBlades=2
+  - propeller at [-1.0, 0.35, -1.0], [1.0, 0.35, -1.0], [-1.0, 0.35, 1.0], [1.0, 0.35, 1.0]
+
+ELECTRONICS STACK (center):
+- FC tray: fctray at [0, 0.18, 0] fcTrayWidth=0.3, fcTrayDepth=0.3
+- 4x ESC: escbox at arm roots or stacked on FC
+- Battery tray: batterytray at [0, 0.05, 0] (bottom of frame)
+- Battery: battery at [0, 0.08, 0] batteryWidth=0.4, batteryLength=0.7, batteryHeight=0.25
+- SBC/VTX: sbc at [0, 0.22, 0] (on top of FC stack)
+- Transceiver (receiver): transceiver at [0, 0.12, 0.3]
+
+CAMERA & SENSORS:
+- FPV camera: camera at [0, 0.18, -0.4] rotation=[25,0,0] (tilted up for FPV)
+- Camera mount cage: box at [0, 0.18, -0.35] width=0.15, height=0.12, depth=0.1
+- GPS module: cylinder at [0, 0.28, 0.2] radius=0.08, height=0.02 (on mast if present)
+- Antenna: transceiver at [0, 0.25, 0.35] (VTX antenna, vertical)
+
+OPTIONAL ACCESSORIES:
+- Prop guards: propguard at each motor position, guardRadius=0.55
+- Landing gear/skids: 2x bracket at [±0.3, 0.02, 0] armLength=0.15
+- GPS mast: cylinder at [0, 0.25, 0.2] radius=0.01, height=0.1
+
+COLOR SCHEME FOR DRONES:
+- Frame/arms: #27272a (carbon fiber black) or #dc2626 (racing red)
+- Motors: #52525b (dark gray bell) / #71717a (stator)
+- Propellers: #1a1a1a (black) or #dc2626 (red for CW) / #27272a (black for CCW)
+- FC/electronics: #1a5c1a (green PCB)
+- Battery: #fbbf24 (yellow LiPo label)
+- ESC: #333333 (dark housing)
+- Camera: #111111 (black)
+- Prop guards: #e5e5e5 (white/translucent)
+- Harness/wires: #78350f (copper)
+
+PART COUNT GUIDELINES FOR DRONES:
+- Simple quad (frame + 4 motors + 4 props): 15-20 parts
+- Detailed quad (add FC, battery, ESCs, camera): 30-45 parts
+- Full racing drone (add prop guards, antenna, GPS, harness): 50-65+ parts
+- Hexacopter/octocopter: multiply motor/arm/prop count accordingly
 1. ALWAYS use compound types when the object IS one of those things. NEVER substitute with basic primitives.
 2. Use 30-60+ parts for complex objects.
 3. For MULTI-VEHICLE scenes: position each vehicle separately (offset by 5-8 units).
@@ -529,7 +571,7 @@ You MUST call the parse_cad function.`;
                     items: {
                       type: "object",
                       properties: {
-                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate", "wheel", "camera", "antenna", "drill", "track", "bolt", "nut", "screw", "bearing", "pulley", "shaft", "mug", "hammer", "handle", "chassis", "rocker", "bogie", "knuckle", "motor", "standoff", "nosecone", "bodytube", "fin", "centeringring", "bulkhead", "coupler", "launchguide", "motortube", "thrustplate", "retainer", "nozzle", "ebay", "baffle", "solarpanel", "battery", "rtg", "sbc", "transceiver", "radiator", "gripper", "lidar", "heatpipe", "harness", "imu", "proxsensor", "fuselage", "wing", "enginebell", "omspod", "rcsthruster", "proptank", "reactionwheel", "avionicsbox"] },
+                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate", "wheel", "camera", "antenna", "drill", "track", "bolt", "nut", "screw", "bearing", "pulley", "shaft", "mug", "hammer", "handle", "chassis", "rocker", "bogie", "knuckle", "motor", "standoff", "nosecone", "bodytube", "fin", "centeringring", "bulkhead", "coupler", "launchguide", "motortube", "thrustplate", "retainer", "nozzle", "ebay", "baffle", "solarpanel", "battery", "rtg", "sbc", "transceiver", "radiator", "gripper", "lidar", "heatpipe", "harness", "imu", "proxsensor", "fuselage", "wing", "enginebell", "omspod", "rcsthruster", "proptank", "reactionwheel", "avionicsbox", "droneframe", "dronearm", "propeller", "propguard", "brushlessmotor", "fctray", "batterytray", "escbox"] },
                         label: { type: "string" },
                         position: { type: "array", items: { type: "number" }, description: "[x, y, z]" },
                         rotation: { type: "array", items: { type: "number" }, description: "[rx, ry, rz] in degrees" },
@@ -712,6 +754,34 @@ You MUST call the parse_cad function.`;
                             avionicsHeight: { type: "number" },
                             avionicsDepth: { type: "number" },
                             avionicsSlots: { type: "number" },
+                            droneFrameSize: { type: "number" },
+                            droneFrameThickness: { type: "number" },
+                            droneArmCount: { type: "number" },
+                            droneFrameSlots: { type: "number" },
+                            droneArmLength: { type: "number" },
+                            droneArmWidth: { type: "number" },
+                            droneArmThickness: { type: "number" },
+                            propDiameter: { type: "number" },
+                            propPitch: { type: "number" },
+                            propBlades: { type: "number" },
+                            guardRadius: { type: "number" },
+                            guardHeight: { type: "number" },
+                            guardThickness: { type: "number" },
+                            blMotorRadius: { type: "number" },
+                            blMotorHeight: { type: "number" },
+                            blMotorBells: { type: "number" },
+                            blMotorShaftR: { type: "number" },
+                            fcTrayWidth: { type: "number" },
+                            fcTrayDepth: { type: "number" },
+                            fcTrayThickness: { type: "number" },
+                            fcTrayHoleSpacing: { type: "number" },
+                            batTrayWidth: { type: "number" },
+                            batTrayDepth: { type: "number" },
+                            batTrayHeight: { type: "number" },
+                            batTrayStrapSlots: { type: "number" },
+                            escWidth: { type: "number" },
+                            escDepth: { type: "number" },
+                            escHeight: { type: "number" },
                           },
                         },
                       },
