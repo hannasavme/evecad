@@ -343,7 +343,7 @@ export default function Index() {
       {/* Recenter button */}
       <button
         onClick={() => viewerRef.current?.resetCamera()}
-        className="absolute bottom-6 right-24 z-40 w-10 h-10 rounded-xl bg-card/90 border-2 border-border text-muted-foreground hover:text-primary hover:border-primary/40 flex items-center justify-center transition-all"
+        className="absolute bottom-[5.5rem] right-7 z-40 w-10 h-10 rounded-xl bg-card/90 border-2 border-border text-muted-foreground hover:text-primary hover:border-primary/40 flex items-center justify-center transition-all"
         title="Recenter view"
       >
         <Crosshair className="w-4 h-4" />
