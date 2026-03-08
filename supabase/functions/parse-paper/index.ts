@@ -80,17 +80,22 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a mechanical engineering research analyst. Given an academic paper (as PDF), extract all information relevant to physical design, mechanical components, and 3D structures.
+            content: `You are a mechanical engineering research analyst specializing in robotics and vehicle design. Given an academic paper (as PDF), extract ALL information relevant to physical design, mechanical components, and 3D structures.
 
-Focus on:
-- Any proposed device, mechanism, or physical system described
-- Dimensions, materials, geometries mentioned
-- Component lists, assemblies, structural elements
-- Figures/diagrams descriptions of physical parts
-- Design requirements and constraints
-- Any specific shapes, sizes, proportions mentioned
+Extract with EXTREME detail:
+- Every distinct vehicle, robot, or device described (mother rover, child rovers, drones, drillers, etc.)
+- Each sub-system: chassis, wheels, suspension, arms, sensors, antennas, power units, docking bays
+- Exact or approximate dimensions, proportions, and relative sizes between components
+- Materials, geometries, mechanical linkages
+- How components connect: mounting points, docking mechanisms, tether cables
+- Wheel types (origami wheels, treads, etc.), their expanded/collapsed states
+- Tool attachments: drills, scoops, grippers, cameras
+- Communication hardware: antennas, dishes, masts
+- Power systems: solar panels, RTGs, batteries
+- Any spatial arrangement: how child rovers dock to the mother, where drills are mounted, etc.
+- Figures/diagrams: describe every visible component in detail
 
-Be thorough but concise. Extract the key engineering/design information that would be needed to create a simplified 3D CAD model of the paper's subject.`,
+Be EXHAUSTIVE. List every single component that would need to be modeled as a separate 3D part. Think about internal structure too: axles connecting wheels, support struts, mounting brackets, hinges.`,
           },
           {
             role: "user",
