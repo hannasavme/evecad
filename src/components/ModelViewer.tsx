@@ -687,13 +687,13 @@ function PulleyMesh({ color, params }: { color: string; params?: ModelParams }) 
   return (
     <group rotation={[Math.PI / 2, 0, 0]}>
       {/* Outer flange left */}
-      <mesh position={[0, 0, w / 2]}><cylinderGeometry args={[r, r, 0.03, 32]} rotation={[Math.PI / 2, 0, 0]} /><meshStandardMaterial color={color} metalness={0.6} roughness={0.25} /></mesh>
+      <mesh position={[0, 0, w / 2]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[r, r, 0.03, 32]} /><meshStandardMaterial color={color} metalness={0.6} roughness={0.25} /></mesh>
       {/* Outer flange right */}
-      <mesh position={[0, 0, -w / 2]}><cylinderGeometry args={[r, r, 0.03, 32]} rotation={[Math.PI / 2, 0, 0]} /><meshStandardMaterial color={color} metalness={0.6} roughness={0.25} /></mesh>
+      <mesh position={[0, 0, -w / 2]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[r, r, 0.03, 32]} /><meshStandardMaterial color={color} metalness={0.6} roughness={0.25} /></mesh>
       {/* Groove body */}
-      <mesh><cylinderGeometry args={[r - grooveD, r - grooveD, grooveW, 32]} rotation={[Math.PI / 2, 0, 0]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[r - grooveD, r - grooveD, grooveW, 32]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
       {/* Hub */}
-      <mesh><cylinderGeometry args={[hubR, hubR, w, 16]} rotation={[Math.PI / 2, 0, 0]} /><meshStandardMaterial color="#888" metalness={0.6} roughness={0.25} /></mesh>
+      <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[hubR, hubR, w, 16]} /><meshStandardMaterial color="#888" metalness={0.6} roughness={0.25} /></mesh>
       {/* Spokes */}
       {[0, 60, 120, 180, 240, 300].map((deg) => {
         const rad = (deg * Math.PI) / 180;
