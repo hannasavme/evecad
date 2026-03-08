@@ -1130,6 +1130,10 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
   const [showBOM, setShowBOM] = useState(true);
   const svgContainerRef = useRef<HTMLDivElement>(null);
 
+  const PARTS_PER_PAGE = 3;
+  const [drawingPage, setDrawingPage] = useState(0);
+  const totalPages = Math.ceil(models.length / PARTS_PER_PAGE);
+
   const addAnnotation = () => {
     setAnnotations((prev) => [...prev, { id: `ann-${++annotationId}`, x: 30 + Math.random() * 200, y: 40 + Math.random() * 100, text: "Note: edit me" }]);
   };
