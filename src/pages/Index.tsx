@@ -51,6 +51,8 @@ export default function Index() {
   }, [pushImmediate]);
 
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
+  const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
+  const [editingLabelValue, setEditingLabelValue] = useState("");
   const [showDrawing, setShowDrawing] = useState(false);
   const [assemblyInstructions, setAssemblyInstructions] = useState<string | null>(null);
   const viewerRef = useRef<ModelViewerHandle>(null);
@@ -346,10 +348,15 @@ export default function Index() {
             <Layers className="w-3 h-3" /> Models ({models.length})
           </span>
           {models.map((m) => (
-            <button
+            <div
               key={m.id}
               onClick={() => setSelectedModelId(m.id === selectedModelId ? null : m.id)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border-2 ${
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                setEditingLabelId(m.id);
+                setEditingLabelValue(m.label);
+              }}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border-2 cursor-pointer ${
                 selectedModelId === m.id
                   ? "bg-primary/15 border-primary/40 text-primary"
                   : "bg-card/80 backdrop-blur-sm border-border text-foreground hover:border-primary/30"
@@ -359,9 +366,29 @@ export default function Index() {
                 className="w-3 h-3 rounded-full shrink-0 border border-border"
                 style={{ backgroundColor: m.color }}
               />
-              <span className="capitalize">{m.type}</span>
-              <span className="text-muted-foreground truncate max-w-[80px]">{m.label}</span>
-            </button>
+              <span className="capitalize shrink-0">{m.type}</span>
+              {editingLabelId === m.id ? (
+                <input
+                  autoFocus
+                  value={editingLabelValue}
+                  onChange={(e) => setEditingLabelValue(e.target.value)}
+                  onBlur={() => {
+                    if (editingLabelValue.trim()) {
+                      setModelsImmediate((prev) => prev.map((x) => x.id === m.id ? { ...x, label: editingLabelValue.trim() } : x));
+                    }
+                    setEditingLabelId(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                    if (e.key === "Escape") setEditingLabelId(null);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-transparent border-b border-primary outline-none text-xs font-bold max-w-[100px] text-foreground"
+                />
+              ) : (
+                <span className="text-muted-foreground truncate max-w-[80px]">{m.label}</span>
+              )}
+            </div>
           ))}
           {selectedModelId && (
             <button
