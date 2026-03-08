@@ -1,12 +1,13 @@
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Star, X, Layers, Trash2, Wrench, Loader2 } from "lucide-react";
+import { Plus, Star, X, Layers, Trash2, Wrench, Loader2, Ruler } from "lucide-react";
 import mascotImg from "@/assets/mascot.png";
 import InputPanel from "@/components/InputPanel";
 import ModelViewer, { type SceneModel, type ModelViewerHandle } from "@/components/ModelViewer";
 import ExportDropdown from "@/components/ExportDropdown";
 import GenerationProgress from "@/components/GenerationProgress";
 import PropertiesPanel from "@/components/PropertiesPanel";
+import CadDrawingPanel from "@/components/CadDrawingPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -35,6 +36,7 @@ export default function Index() {
   const [showInput, setShowInput] = useState(false);
   const [models, setModels] = useState<SceneModel[]>([]);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
+  const [showDrawing, setShowDrawing] = useState(false);
   const [assemblyInstructions, setAssemblyInstructions] = useState<string | null>(null);
   const viewerRef = useRef<ModelViewerHandle>(null);
 
@@ -219,6 +221,19 @@ export default function Index() {
               Assemble
             </button>
           )}
+          {models.length > 0 && (
+            <button
+              onClick={() => setShowDrawing(!showDrawing)}
+              className={`flex items-center gap-1.5 text-[10px] font-bold transition-colors px-2.5 py-1.5 rounded-xl border-2 bg-card/60 ${
+                showDrawing
+                  ? "border-primary/40 text-primary"
+                  : "border-border text-muted-foreground hover:text-primary hover:border-primary/40"
+              }`}
+            >
+              <Ruler className="w-3 h-3" />
+              Drawing
+            </button>
+          )}
           <ExportDropdown hasModel={models.length > 0} getScene={getScene} />
         </div>
       </header>
@@ -241,6 +256,13 @@ export default function Index() {
             onUpdate={handleUpdateModel}
             onClose={() => setSelectedModelId(null)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* CAD Drawing Panel */}
+      <AnimatePresence>
+        {showDrawing && (
+          <CadDrawingPanel models={models} onClose={() => setShowDrawing(false)} />
         )}
       </AnimatePresence>
 
