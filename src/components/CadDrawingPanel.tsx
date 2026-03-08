@@ -903,16 +903,19 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
   titleText: string; onUpdateTitle: (t: string) => void;
   showSection: boolean; showBOM: boolean;
 }) {
-  const svgWidth = 1190;
-  const svgHeight = 842;
   const margin = 20;
   const scl = 55;
+  const svgWidth = 1190;
+  const partRowH = 280;
+  const bomRowH = 16;
+  const bomH = (models.length + 1) * bomRowH + 4;
+  const viewsStartY = margin + (showBOM ? bomH + 30 : 30);
+  const minContentH = viewsStartY + models.length * partRowH + 150;
+  const svgHeight = Math.max(842, minContentH);
   const today = new Date().toISOString().slice(0, 10);
 
   // BOM table dimensions
   const bomW = 300;
-  const bomRowH = 16;
-  const bomH = (models.length + 1) * bomRowH + 4;
   const bomX = svgWidth - margin - bomW;
   const bomY = margin + 10;
 
@@ -926,8 +929,6 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
 
   // Drawing area
   const drawAreaW = svgWidth - margin * 2;
-  const partRowH = 280;
-  const viewsStartY = margin + (showBOM ? bomH + 30 : 30);
 
   return (
     <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
