@@ -50,9 +50,41 @@ export interface ModelParams {
   trackLength?: number;
   trackWidth?: number;
   wheelCount?: number;
+  // Bolt/Screw
+  headRadius?: number;
+  headHeight?: number;
+  shaftRadius?: number;
+  shaftLength?: number;
+  threadPitch?: number;
+  // Nut
+  nutRadius?: number;
+  nutHeight?: number;
+  boreRadius?: number;
+  // Bearing
+  outerRadius?: number;
+  innerRadius?: number;
+  bearingWidth?: number;
+  ballCount?: number;
+  // Pulley
+  grooveDepth?: number;
+  grooveWidth?: number;
+  // Mug
+  mugRadius?: number;
+  mugHeight?: number;
+  handleSize?: number;
+  // Hammer
+  handleLength?: number;
+  handleRadius?: number;
+  headWidth?: number;
+  headSize?: number;
+  // Handle/Knob
+  knobRadius?: number;
+  knobHeight?: number;
+  stemRadius?: number;
+  stemHeight?: number;
 }
 
-export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track";
+export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track" | "bolt" | "nut" | "screw" | "bearing" | "pulley" | "shaft" | "mug" | "hammer" | "handle";
 
 export interface SceneModel {
   id: string;
