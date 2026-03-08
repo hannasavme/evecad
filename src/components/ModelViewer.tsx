@@ -50,9 +50,41 @@ export interface ModelParams {
   trackLength?: number;
   trackWidth?: number;
   wheelCount?: number;
+  // Bolt/Screw
+  headRadius?: number;
+  headHeight?: number;
+  shaftRadius?: number;
+  shaftLength?: number;
+  threadPitch?: number;
+  // Nut
+  nutRadius?: number;
+  nutHeight?: number;
+  boreRadius?: number;
+  // Bearing
+  outerRadius?: number;
+  innerRadius?: number;
+  bearingWidth?: number;
+  ballCount?: number;
+  // Pulley
+  grooveDepth?: number;
+  grooveWidth?: number;
+  // Mug
+  mugRadius?: number;
+  mugHeight?: number;
+  handleSize?: number;
+  // Hammer
+  handleLength?: number;
+  handleRadius?: number;
+  headWidth?: number;
+  headSize?: number;
+  // Handle/Knob
+  knobRadius?: number;
+  knobHeight?: number;
+  stemRadius?: number;
+  stemHeight?: number;
 }
 
-export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track";
+export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track" | "bolt" | "nut" | "screw" | "bearing" | "pulley" | "shaft" | "mug" | "hammer" | "handle";
 
 export interface SceneModel {
   id: string;
@@ -520,6 +552,259 @@ function TrackMesh({ color, params }: { color: string; params?: ModelParams }) {
   );
 }
 
+// ─── Standard Mechanical Compound Primitives ──────────────
+
+function BoltMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const headR = params?.headRadius ?? 0.3;
+  const headH = params?.headHeight ?? 0.15;
+  const shaftR = params?.shaftRadius ?? 0.12;
+  const shaftL = params?.shaftLength ?? 1.0;
+  const pitch = params?.threadPitch ?? 0.1;
+  const seg = params?.segments ?? 6; // hex head
+
+  const threadGeometry = useMemo(() => {
+    const points: THREE.Vector3[] = [];
+    const steps = Math.floor(shaftL / pitch) * 12;
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const angle = t * Math.floor(shaftL / pitch) * Math.PI * 2;
+      const r = shaftR * 1.15;
+      points.push(new THREE.Vector3(Math.cos(angle) * r, -t * shaftL, Math.sin(angle) * r));
+    }
+    const curve = new THREE.CatmullRomCurve3(points);
+    return new THREE.TubeGeometry(curve, steps, shaftR * 0.08, 4, false);
+  }, [shaftR, shaftL, pitch]);
+
+  return (
+    <group>
+      {/* Hex head */}
+      <mesh position={[0, headH / 2, 0]}><cylinderGeometry args={[headR, headR, headH, seg]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.2} flatShading /></mesh>
+      {/* Head chamfer */}
+      <mesh position={[0, headH, 0]}><cylinderGeometry args={[headR * 0.85, headR, 0.02, seg]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.2} flatShading /></mesh>
+      {/* Shaft */}
+      <mesh position={[0, -shaftL / 2, 0]}><cylinderGeometry args={[shaftR, shaftR, shaftL, 16]} /><meshStandardMaterial color={color} metalness={0.6} roughness={0.25} /></mesh>
+      {/* Thread spiral */}
+      <mesh geometry={threadGeometry}><meshStandardMaterial color={color} metalness={0.65} roughness={0.2} /></mesh>
+      {/* Tip chamfer */}
+      <mesh position={[0, -shaftL - 0.03, 0]}><coneGeometry args={[shaftR, 0.06, 16]} /><meshStandardMaterial color={color} metalness={0.6} roughness={0.25} /></mesh>
+    </group>
+  );
+}
+
+function NutMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.nutRadius ?? params?.radius ?? 0.3;
+  const h = params?.nutHeight ?? params?.height ?? 0.2;
+  const bore = params?.boreRadius ?? r * 0.4;
+
+  return (
+    <group>
+      {/* Hex body */}
+      <mesh><cylinderGeometry args={[r, r, h, 6]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.2} flatShading /></mesh>
+      {/* Top chamfer */}
+      <mesh position={[0, h / 2 + 0.01, 0]}><cylinderGeometry args={[r * 0.85, r, 0.02, 6]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.2} flatShading /></mesh>
+      {/* Bottom chamfer */}
+      <mesh position={[0, -h / 2 - 0.01, 0]}><cylinderGeometry args={[r, r * 0.85, 0.02, 6]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.2} flatShading /></mesh>
+      {/* Bore hole */}
+      <mesh><cylinderGeometry args={[bore, bore, h + 0.05, 16]} /><meshStandardMaterial color="#222" metalness={0.5} roughness={0.3} /></mesh>
+      {/* Thread rings inside */}
+      {Array.from({ length: Math.floor(h / 0.06) }).map((_, i) => (
+        <mesh key={i} position={[0, -h / 2 + 0.03 + i * 0.06, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[bore * 1.05, 0.008, 4, 16]} />
+          <meshStandardMaterial color="#555" metalness={0.6} roughness={0.3} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function ScrewMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const headR = params?.headRadius ?? 0.2;
+  const headH = params?.headHeight ?? 0.08;
+  const shaftR = params?.shaftRadius ?? 0.08;
+  const shaftL = params?.shaftLength ?? 0.8;
+
+  return (
+    <group>
+      {/* Flat/Phillips head */}
+      <mesh position={[0, headH / 2, 0]}><cylinderGeometry args={[headR, headR, headH, 24]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.2} /></mesh>
+      {/* Phillips cross slot */}
+      <mesh position={[0, headH + 0.001, 0]}><boxGeometry args={[headR * 1.2, 0.015, headR * 0.15]} /><meshStandardMaterial color="#333" metalness={0.5} roughness={0.3} /></mesh>
+      <mesh position={[0, headH + 0.001, 0]}><boxGeometry args={[headR * 0.15, 0.015, headR * 1.2]} /><meshStandardMaterial color="#333" metalness={0.5} roughness={0.3} /></mesh>
+      {/* Shaft */}
+      <mesh position={[0, -shaftL / 2, 0]}><cylinderGeometry args={[shaftR, shaftR * 0.6, shaftL, 16]} /><meshStandardMaterial color={color} metalness={0.6} roughness={0.25} /></mesh>
+      {/* Thread ridges */}
+      {Array.from({ length: Math.floor(shaftL / 0.05) }).map((_, i) => (
+        <mesh key={i} position={[0, -i * 0.05 - 0.02, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[shaftR * 1.1 * (1 - i * 0.01), 0.006, 4, 16]} />
+          <meshStandardMaterial color={color} metalness={0.65} roughness={0.2} />
+        </mesh>
+      ))}
+      {/* Pointed tip */}
+      <mesh position={[0, -shaftL - 0.04, 0]}><coneGeometry args={[shaftR * 0.6, 0.08, 16]} /><meshStandardMaterial color={color} metalness={0.6} roughness={0.25} /></mesh>
+    </group>
+  );
+}
+
+function BearingMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const outerR = params?.outerRadius ?? params?.radius ?? 0.5;
+  const innerR = params?.innerRadius ?? outerR * 0.4;
+  const w = params?.bearingWidth ?? params?.width ?? 0.2;
+  const ballCount = params?.ballCount ?? 8;
+  const ballR = (outerR - innerR) * 0.25;
+  const raceR = (outerR + innerR) / 2;
+
+  return (
+    <group rotation={[Math.PI / 2, 0, 0]}>
+      {/* Outer ring */}
+      <mesh><torusGeometry args={[outerR, w * 0.35, 16, 32]} /><meshStandardMaterial color={color} metalness={0.8} roughness={0.15} /></mesh>
+      {/* Inner ring */}
+      <mesh><torusGeometry args={[innerR, w * 0.3, 16, 32]} /><meshStandardMaterial color={color} metalness={0.8} roughness={0.15} /></mesh>
+      {/* Balls */}
+      {Array.from({ length: ballCount }).map((_, i) => {
+        const angle = (i / ballCount) * Math.PI * 2;
+        return (
+          <mesh key={i} position={[Math.cos(angle) * raceR, Math.sin(angle) * raceR, 0]}>
+            <sphereGeometry args={[ballR, 16, 16]} />
+            <meshStandardMaterial color="#ddd" metalness={0.9} roughness={0.05} />
+          </mesh>
+        );
+      })}
+      {/* Cage ring */}
+      <mesh><torusGeometry args={[raceR, 0.008, 8, 32]} /><meshStandardMaterial color="#c9a84c" metalness={0.6} roughness={0.3} /></mesh>
+      {/* Bore */}
+      <mesh><cylinderGeometry args={[innerR * 0.85, innerR * 0.85, w * 0.6, 24]} /><meshStandardMaterial color="#333" metalness={0.5} roughness={0.3} /></mesh>
+    </group>
+  );
+}
+
+function PulleyMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.radius ?? 0.5;
+  const w = params?.width ?? 0.3;
+  const grooveD = params?.grooveDepth ?? 0.08;
+  const grooveW = params?.grooveWidth ?? w * 0.4;
+  const hubR = params?.hubRadius ?? r * 0.25;
+
+  return (
+    <group rotation={[Math.PI / 2, 0, 0]}>
+      {/* Outer flange left */}
+      <mesh position={[0, 0, w / 2]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[r, r, 0.03, 32]} /><meshStandardMaterial color={color} metalness={0.6} roughness={0.25} /></mesh>
+      {/* Outer flange right */}
+      <mesh position={[0, 0, -w / 2]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[r, r, 0.03, 32]} /><meshStandardMaterial color={color} metalness={0.6} roughness={0.25} /></mesh>
+      {/* Groove body */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[r - grooveD, r - grooveD, grooveW, 32]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      {/* Hub */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[hubR, hubR, w, 16]} /><meshStandardMaterial color="#888" metalness={0.6} roughness={0.25} /></mesh>
+      {/* Spokes */}
+      {[0, 60, 120, 180, 240, 300].map((deg) => {
+        const rad = (deg * Math.PI) / 180;
+        const spokeLen = (r - grooveD) - hubR;
+        return (
+          <mesh key={deg} position={[Math.cos(rad) * (hubR + spokeLen / 2), Math.sin(rad) * (hubR + spokeLen / 2), 0]}>
+            <boxGeometry args={[spokeLen, r * 0.06, w * 0.4]} />
+            <meshStandardMaterial color={color} metalness={0.5} roughness={0.3} />
+          </mesh>
+        );
+      })}
+      {/* Bore */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[hubR * 0.4, hubR * 0.4, w + 0.02, 12]} /><meshStandardMaterial color="#222" metalness={0.5} roughness={0.3} /></mesh>
+    </group>
+  );
+}
+
+function ShaftMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.radius ?? params?.shaftRadius ?? 0.1;
+  const h = params?.height ?? params?.shaftLength ?? 2.0;
+
+  return (
+    <group>
+      {/* Main shaft */}
+      <mesh><cylinderGeometry args={[r, r, h, 24]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.2} /></mesh>
+      {/* Keyway slot */}
+      <mesh position={[r * 0.7, 0, 0]}><boxGeometry args={[r * 0.3, h * 0.6, r * 0.3]} /><meshStandardMaterial color="#555" metalness={0.5} roughness={0.3} /></mesh>
+      {/* Chamfer top */}
+      <mesh position={[0, h / 2 + 0.01, 0]}><coneGeometry args={[r, 0.03, 24]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.2} /></mesh>
+      {/* Chamfer bottom */}
+      <mesh position={[0, -h / 2 - 0.01, 0]} rotation={[Math.PI, 0, 0]}><coneGeometry args={[r, 0.03, 24]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.2} /></mesh>
+    </group>
+  );
+}
+
+function MugMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.mugRadius ?? params?.radius ?? 0.5;
+  const h = params?.mugHeight ?? params?.height ?? 0.8;
+  const handleS = params?.handleSize ?? 0.3;
+  const wall = params?.wallThickness ?? 0.04;
+
+  return (
+    <group>
+      {/* Outer body */}
+      <mesh position={[0, h / 2, 0]}><cylinderGeometry args={[r, r * 0.9, h, 32]} /><meshStandardMaterial color={color} metalness={0.3} roughness={0.5} /></mesh>
+      {/* Inner cavity */}
+      <mesh position={[0, h / 2 + wall, 0]}><cylinderGeometry args={[r - wall, r * 0.9 - wall, h - wall, 32]} /><meshStandardMaterial color="#f5f0e8" metalness={0.1} roughness={0.6} /></mesh>
+      {/* Bottom */}
+      <mesh position={[0, wall / 2, 0]}><cylinderGeometry args={[r * 0.9 - wall, r * 0.9 - wall, wall, 32]} /><meshStandardMaterial color={color} metalness={0.3} roughness={0.5} /></mesh>
+      {/* Handle */}
+      <mesh position={[r + handleS * 0.4, h * 0.55, 0]} rotation={[0, 0, 0]}>
+        <torusGeometry args={[handleS, handleS * 0.15, 8, 16, Math.PI]} />
+        <meshStandardMaterial color={color} metalness={0.3} roughness={0.5} />
+      </mesh>
+      {/* Rim highlight */}
+      <mesh position={[0, h, 0]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[r, wall * 0.6, 8, 32]} /><meshStandardMaterial color={color} metalness={0.4} roughness={0.4} /></mesh>
+    </group>
+  );
+}
+
+function HammerMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const handleL = params?.handleLength ?? params?.height ?? 1.5;
+  const handleR = params?.handleRadius ?? 0.06;
+  const headW = params?.headWidth ?? params?.width ?? 0.6;
+  const headS = params?.headSize ?? 0.18;
+
+  return (
+    <group>
+      {/* Handle */}
+      <mesh position={[0, -handleL / 2, 0]}><cylinderGeometry args={[handleR, handleR * 1.2, handleL, 12]} /><meshStandardMaterial color="#8B6914" metalness={0.2} roughness={0.7} /></mesh>
+      {/* Handle grip rings */}
+      {Array.from({ length: 5 }).map((_, i) => (
+        <mesh key={i} position={[0, -handleL + 0.15 + i * 0.08, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[handleR * 1.3, 0.008, 6, 12]} />
+          <meshStandardMaterial color="#654321" metalness={0.2} roughness={0.6} />
+        </mesh>
+      ))}
+      {/* Head body */}
+      <mesh position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[headS, headS, headW, 16]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.2} /></mesh>
+      {/* Flat striking face */}
+      <mesh position={[headW / 2 + 0.01, 0, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[headS * 0.95, headS * 0.95, 0.02, 16]} /><meshStandardMaterial color="#ccc" metalness={0.8} roughness={0.1} /></mesh>
+      {/* Peen (ball end) */}
+      <mesh position={[-headW / 2 - headS * 0.3, 0, 0]}><sphereGeometry args={[headS * 0.7, 12, 12]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.2} /></mesh>
+      {/* Wedge insert */}
+      <mesh position={[0, headS * 0.6, 0]}><boxGeometry args={[0.02, headS * 0.3, 0.02]} /><meshStandardMaterial color="#aa8833" metalness={0.5} roughness={0.4} /></mesh>
+    </group>
+  );
+}
+
+function HandleMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const knobR = params?.knobRadius ?? params?.radius ?? 0.2;
+  const knobH = params?.knobHeight ?? 0.15;
+  const stemR = params?.stemRadius ?? knobR * 0.3;
+  const stemH = params?.stemHeight ?? params?.height ?? 0.4;
+
+  return (
+    <group>
+      {/* Knob top */}
+      <mesh position={[0, stemH + knobH / 2, 0]}><sphereGeometry args={[knobR, 16, 16]} /><meshStandardMaterial color={color} metalness={0.4} roughness={0.4} /></mesh>
+      {/* Knob ring */}
+      <mesh position={[0, stemH, 0]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[knobR * 0.8, knobR * 0.08, 8, 24]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      {/* Stem */}
+      <mesh position={[0, stemH / 2, 0]}><cylinderGeometry args={[stemR, stemR * 1.1, stemH, 16]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      {/* Base flange */}
+      <mesh position={[0, -0.02, 0]}><cylinderGeometry args={[stemR * 2.5, stemR * 2.5, 0.04, 16]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      {/* Screw indicator */}
+      <mesh position={[0, -0.05, 0]}><cylinderGeometry args={[stemR * 0.4, stemR * 0.4, 0.03, 8]} /><meshStandardMaterial color="#555" metalness={0.6} roughness={0.3} /></mesh>
+    </group>
+  );
+}
+
 const meshMap: Record<string, React.FC<{ color: string; params?: ModelParams }>> = {
   gear: GearMesh,
   bracket: BracketMesh,
@@ -536,6 +821,15 @@ const meshMap: Record<string, React.FC<{ color: string; params?: ModelParams }>>
   antenna: AntennaMesh,
   drill: DrillMesh,
   track: TrackMesh,
+  bolt: BoltMesh,
+  nut: NutMesh,
+  screw: ScrewMesh,
+  bearing: BearingMesh,
+  pulley: PulleyMesh,
+  shaft: ShaftMesh,
+  mug: MugMesh,
+  hammer: HammerMesh,
+  handle: HandleMesh,
 };
 
 // ─── Scene Components ──────────────────────────────────

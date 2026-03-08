@@ -162,24 +162,33 @@ Be EXHAUSTIVE. List every single component that would need to be modeled as a se
 
 CRITICAL: When a paper describes MULTIPLE vehicles or robots (e.g., mother rover + child rovers + drillers), you MUST model ALL of them as separate sub-assemblies positioned in a scene together.
 
-Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track.
+Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track, bolt, nut, screw, bearing, pulley, shaft, mug, hammer, handle.
 
 Shape guide:
 - box: rectangular solids (chassis, panels, frames, housings)
-- cylinder: round columns, rods, axles, shafts
+- cylinder: round columns, rods (NOT wheels/shafts — use compound types)
 - sphere: balls, domes, joints, pressure vessels
 - cone: nozzles, funnels, pointed tips
-- wedge: ramps, angled supports, aerodynamic noses
+- wedge: ramps, angled supports, blades
 - torus: rings, seals
 - tube: hollow pipes, exhaust, structural tubes
-- plate: flat panels, solar panels, fins, wings, shelves
+- plate: flat panels, solar panels, fins, wings
 - gear: toothed wheels, sprockets, cogs
 - bracket: L-shaped mounts, supports, arms
-- **wheel**: DETAILED wheel with tire, rim, hub, spokes, treads (USE for any wheel!)
-- **camera**: DETAILED camera with body, lens, glass, LED, mount (USE for cameras/sensors!)
-- **antenna**: DETAILED antenna with parabolic dish, mast, feed horn, struts (USE for antennas!)
-- **drill**: DETAILED drill with motor, chuck, spiral bit, tip (USE for drills!)
-- **track**: DETAILED tank track with road wheels, sprocket, idler, pads (USE for tracked vehicles!)
+- **wheel**: DETAILED compound (tire, rim, hub, spokes, treads)
+- **camera**: DETAILED compound (body, lens, glass, LED, mount)
+- **antenna**: DETAILED compound (parabolic dish, mast, feed horn, struts)
+- **drill**: DETAILED compound (motor, chuck, spiral bit, tip)
+- **track**: DETAILED compound (road wheels, sprocket, idler, pads)
+- **bolt**: DETAILED compound (hex head, threaded shaft, chamfered tip)
+- **nut**: DETAILED compound (hex body, bore hole, internal threads)
+- **screw**: DETAILED compound (Phillips head, tapered shaft, pointed tip)
+- **bearing**: DETAILED compound (outer/inner rings, balls, cage)
+- **pulley**: DETAILED compound (flanges, grooved body, hub, spokes)
+- **shaft**: DETAILED compound (keyway slot, chamfered ends)
+- **mug**: DETAILED compound (hollow body, handle, rim)
+- **hammer**: DETAILED compound (wooden handle, metal head, ball peen)
+- **handle**: DETAILED compound (knob, stem, base flange)
 
 For each part provide: type, label (max 30 chars), position [x,y,z], rotation [rx,ry,rz] in degrees, color hex, and params.
 
@@ -199,6 +208,15 @@ Params by type:
 - antenna: dishRadius, mastHeight, mastRadius
 - drill: bitLength, bitRadius, spirals
 - track: trackLength, trackWidth, wheelCount, radius
+- bolt: headRadius, headHeight, shaftRadius, shaftLength, threadPitch
+- nut: nutRadius, nutHeight, boreRadius
+- screw: headRadius, headHeight, shaftRadius, shaftLength
+- bearing: outerRadius, innerRadius, bearingWidth, ballCount
+- pulley: radius, width, grooveDepth, grooveWidth
+- shaft: radius, height
+- mug: mugRadius, mugHeight, handleSize, wallThickness
+- hammer: handleLength, handleRadius, headWidth, headSize
+- handle: knobRadius, stemRadius, stemHeight
 
 CRITICAL RULES:
 1. Generate 40-80+ parts. Every wheel, strut, panel, sensor, joint, axle, and detail is a separate part.
@@ -236,7 +254,7 @@ You MUST call the parse_cad function.`,
                     items: {
                       type: "object",
                       properties: {
-                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate", "wheel", "camera", "antenna", "drill", "track"] },
+                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate", "wheel", "camera", "antenna", "drill", "track", "bolt", "nut", "screw", "bearing", "pulley", "shaft", "mug", "hammer", "handle"] },
                         label: { type: "string" },
                         position: { type: "array", items: { type: "number" }, description: "[x, y, z]" },
                         rotation: { type: "array", items: { type: "number" }, description: "[rx, ry, rz] degrees" },
@@ -274,6 +292,31 @@ You MUST call the parse_cad function.`,
                             trackLength: { type: "number" },
                             trackWidth: { type: "number" },
                             wheelCount: { type: "number" },
+                            headRadius: { type: "number" },
+                            headHeight: { type: "number" },
+                            shaftRadius: { type: "number" },
+                            shaftLength: { type: "number" },
+                            threadPitch: { type: "number" },
+                            nutRadius: { type: "number" },
+                            nutHeight: { type: "number" },
+                            boreRadius: { type: "number" },
+                            outerRadius: { type: "number" },
+                            innerRadius: { type: "number" },
+                            bearingWidth: { type: "number" },
+                            ballCount: { type: "number" },
+                            grooveDepth: { type: "number" },
+                            grooveWidth: { type: "number" },
+                            mugRadius: { type: "number" },
+                            mugHeight: { type: "number" },
+                            handleSize: { type: "number" },
+                            handleLength: { type: "number" },
+                            handleRadius: { type: "number" },
+                            headWidth: { type: "number" },
+                            headSize: { type: "number" },
+                            knobRadius: { type: "number" },
+                            knobHeight: { type: "number" },
+                            stemRadius: { type: "number" },
+                            stemHeight: { type: "number" },
                           },
                         },
                       },
