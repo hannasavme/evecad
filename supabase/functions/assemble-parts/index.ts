@@ -165,61 +165,126 @@ interface AssemblyClassification {
   additionalParts: { type: string; label: string; position: [number, number, number]; scale: [number, number, number]; reason: string }[];
 }
 
-/** Determine how parts should mate based on their types */
+/** Determine how parts should mate based on their types and engineering logic */
 function inferConstraint(parent: PartModel, child: PartModel): Constraint & { modification: string } {
-  const parentType = parent.type;
-  const childType = child.type;
+  const pType = parent.type;
+  const cType = child.type;
 
-  // Gear + Cylinder → Insert (gear onto shaft)
-  if (childType === "gear" && parentType === "cylinder") {
-    return { type: "insert", fromFace: "bottom", toFace: "top", modification: "Bore aligned to shaft diameter" };
+  // ─── Rotation/axis parts (shafts, gears, bearings) ───
+  if (cType === "gear" && (pType === "cylinder" || pType === "shaft")) {
+    return { type: "insert", fromFace: "bottom", toFace: "top", modification: "Gear bore aligned to shaft" };
   }
-  if (parentType === "gear" && childType === "cylinder") {
+  if (pType === "gear" && (cType === "cylinder" || cType === "shaft")) {
     return { type: "insert", fromFace: "bottom", toFace: "top", modification: "Shaft inserted through gear bore" };
   }
-
-  // Gear + Gear → Stack side by side (meshing)
-  if (parentType === "gear" && childType === "gear") {
-    const parentSize = getPartSize(parent);
-    return {
-      type: "mate", fromFace: "left", toFace: "right",
-      offset: [0, 0, 0],
-      modification: "Gears meshed at pitch circle",
-    };
+  if (pType === "gear" && cType === "gear") {
+    return { type: "mate", fromFace: "left", toFace: "right", modification: "Gears meshed at pitch circle" };
+  }
+  if (cType === "bearing" && (pType === "shaft" || pType === "cylinder")) {
+    return { type: "insert", fromFace: "bottom", toFace: "top", modification: "Bearing press-fit onto shaft" };
+  }
+  if (cType === "pulley" && (pType === "shaft" || pType === "cylinder")) {
+    return { type: "insert", fromFace: "bottom", toFace: "top", modification: "Pulley keyed to shaft" };
   }
 
-  // Bracket + anything → Mount on bracket face
-  if (parentType === "bracket") {
-    if (childType === "cylinder") {
-      return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Cylinder mounted on bracket top face" };
+  // ─── Wheels/mobility ───
+  if (cType === "wheel") {
+    if (pType === "knuckle" || pType === "motor") {
+      return { type: "mate", fromFace: "left", toFace: "right", modification: "Wheel mounted on drive axle" };
     }
-    if (childType === "gear") {
-      return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Gear hub mounted on bracket" };
+    if (pType === "rocker" || pType === "bogie") {
+      return { type: "mate", fromFace: "top", toFace: "bottom", modification: "Wheel attached to suspension arm" };
     }
-    return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Component fastened to bracket" };
+    return { type: "mate", fromFace: "top", toFace: "bottom", modification: "Wheel mounted below frame" };
+  }
+  if (cType === "knuckle") {
+    if (pType === "rocker" || pType === "bogie") {
+      return { type: "mate", fromFace: "top", toFace: "bottom", modification: "Knuckle attached to suspension endpoint" };
+    }
+    return { type: "mate", fromFace: "top", toFace: "bottom", modification: "Knuckle attached below" };
+  }
+  if (cType === "motor") {
+    if (pType === "wheel" || pType === "knuckle") {
+      return { type: "mate", fromFace: "right", toFace: "left", modification: "Drive motor mounted to wheel hub" };
+    }
+    return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Motor mounted on surface" };
+  }
+  if (cType === "rocker" || cType === "bogie") {
+    return { type: "mate", fromFace: "right", toFace: "left", modification: "Suspension arm pivoted on chassis side" };
+  }
+  if (cType === "track") {
+    return { type: "mate", fromFace: "top", toFace: "bottom", modification: "Track system under chassis" };
   }
 
-  // Anything + Bracket → Attach bracket to side
-  if (childType === "bracket") {
-    return { type: "mate", fromFace: "back", toFace: "front", modification: "Bracket bolted to component face" };
+  // ─── Brackets and structural ───
+  if (pType === "bracket" || pType === "chassis") {
+    return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Component mounted on structure" };
+  }
+  if (cType === "bracket") {
+    return { type: "mate", fromFace: "back", toFace: "front", modification: "Bracket bolted to face" };
   }
 
-  // Box + Cylinder → Cylinder on top of box
-  if (parentType === "box" && childType === "cylinder") {
-    return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Cylinder seated on box top surface" };
+  // ─── Sensors/instruments mount ON TOP ───
+  if (["camera", "antenna", "lidar", "transceiver", "solarpanel", "rtg", "proxsensor"].includes(cType)) {
+    return { type: "mate", fromFace: "bottom", toFace: "top", modification: `${cType} mounted on top surface` };
   }
 
-  // Cylinder + Box → Box at base of cylinder
-  if (parentType === "cylinder" && childType === "box") {
-    return { type: "mate", fromFace: "top", toFace: "bottom", modification: "Box serves as base plate for cylinder" };
+  // ─── Electronics go INSIDE ───
+  if (["sbc", "imu", "battery", "harness", "avionicsbox"].includes(cType)) {
+    if (pType === "box" || pType === "chassis") {
+      return { type: "mate", fromFace: "bottom", toFace: "top", offset: [0, -0.1, 0], modification: `${cType} housed inside ${pType}` };
+    }
+    return { type: "mate", fromFace: "bottom", toFace: "top", modification: `${cType} placed on surface` };
   }
 
-  // Box + Box → Stack on top
-  if (parentType === "box" && childType === "box") {
+  // ─── Fasteners ───
+  if (["bolt", "screw", "nut"].includes(cType)) {
+    return { type: "insert", fromFace: "bottom", toFace: "top", modification: `Fastener through ${pType}` };
+  }
+
+  // ─── Plate on box/chassis ───
+  if (cType === "plate" && (pType === "box" || pType === "chassis")) {
+    return { type: "stack", fromFace: "bottom", toFace: "top", modification: "Plate flush on top surface" };
+  }
+
+  // ─── Box + Cylinder ───
+  if (pType === "box" && cType === "cylinder") {
+    return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Cylinder seated on box top" };
+  }
+  if (pType === "cylinder" && cType === "box") {
+    return { type: "mate", fromFace: "top", toFace: "bottom", modification: "Box as base plate for cylinder" };
+  }
+
+  // ─── Box + Box → Stack ───
+  if (pType === "box" && cType === "box") {
     return { type: "stack", fromFace: "bottom", toFace: "top", modification: "Stacked and aligned" };
   }
 
-  // Default: stack on top
+  // ─── Rocket parts ───
+  if (["nosecone", "bodytube", "ebay", "coupler", "fin", "bulkhead", "motortube"].includes(cType)) {
+    return { type: "stack", fromFace: "bottom", toFace: "top", modification: `Rocket section stacked: ${cType}` };
+  }
+
+  // ─── Drone parts ───
+  if (cType === "dronearm") {
+    return { type: "mate", fromFace: "back", toFace: "front", modification: "Arm attached to frame slot" };
+  }
+  if (cType === "propeller" || cType === "propguard") {
+    return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Prop mounted on motor shaft" };
+  }
+  if (cType === "brushlessmotor") {
+    return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Motor bolted to arm tip" };
+  }
+
+  // ─── Wing/fuselage ───
+  if (cType === "wing") {
+    return { type: "mate", fromFace: "right", toFace: "left", modification: "Wing root attached to fuselage" };
+  }
+  if (cType === "enginebell") {
+    return { type: "mate", fromFace: "top", toFace: "bottom", modification: "Engine mounted at aft" };
+  }
+
+  // ─── Default: stack on top ───
   return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Mated to adjacent face" };
 }
 
