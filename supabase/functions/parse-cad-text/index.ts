@@ -393,8 +393,83 @@ Params:
   - harness: harnessRadius (0.01-0.15), harnessLength (0.3-5), harnessWires (2-8)
   - imu: imuSize (0.05-0.5)
   - proxsensor: proxRadius (0.02-0.3), proxLength (0.05-0.5)
+  - fuselage: fuselageLength (1-20), fuselageWidth (0.5-8), fuselageHeight (0.3-6), fuselageNoseRatio (0.1-0.5)
+  - wing: wingSpan (0.5-15), wingRoot (0.3-10), wingTip (0.1-5), wingSweep (0-5), wingThickness (0.02-0.5), wingDihedral (angle in degrees, -10 to 15)
+  - enginebell: engineBellThroat (0.02-1), engineBellExit (0.1-3), engineBellLength (0.2-5), engineBellGimbal (angle in degrees, -10 to 10)
+  - omspod: omsPodLength (0.5-5), omsPodRadius (0.1-2)
+  - rcsthruster: rcsRadius (0.02-0.3), rcsLength (0.03-0.5), rcsNozzleCount (1-4)
+  - proptank: propTankRadius (0.2-5), propTankLength (0.5-15)
+  - reactionwheel: rwRadius (0.05-1), rwHeight (0.03-0.5), rwRimThickness (0.01-0.1)
+  - avionicsbox: avionicsWidth (0.1-3), avionicsHeight (0.1-2), avionicsDepth (0.1-2), avionicsSlots (1-8)
 
-CRITICAL RULES:
+ORBITER / SPACE SHUTTLE ASSEMBLY REFERENCE (use when building ANY orbiter, shuttle, or spaceplane):
+Based on NASA Space Shuttle, Buran, Dream Chaser, X-37B designs.
+
+PROPORTIONS (scale uniformly from these ratios):
+- Fuselage total length: ~12 units | width: ~2.5 | height: ~2.0
+- Wing span (tip to tip): ~8 units | sweep angle: ~45°
+- Vertical tail height: ~2.5 | rudder width: ~0.3
+- Payload bay: ~5 units long, ~1.8 wide (inside mid-fuselage)
+- Main engines (3x RS-25): clustered at aft, exit radius ~0.5 each
+
+STRUCTURE:
+- Forward fuselage: fuselage at [0, 2, 4] fuselageLength=4, fuselageWidth=2.5, fuselageHeight=2.0, fuselageNoseRatio=0.35
+- Mid fuselage (payload bay): fuselage at [0, 2, -1] fuselageLength=5, fuselageWidth=2.8, fuselageHeight=2.2, fuselageNoseRatio=0.05
+- Aft fuselage: fuselage at [0, 2, -5] fuselageLength=3, fuselageWidth=2.5, fuselageHeight=2.0, fuselageNoseRatio=0.05
+- Payload bay doors: 2x plate at [±0.3, 3.1, -1] width=1.2, depth=4.8 — open to reveal radiator panels
+- Bulkheads: bulkhead between forward/mid and mid/aft sections
+
+WINGS:
+- Main wings: wing at [0, 1.5, -3] wingSpan=4, wingRoot=4, wingTip=1.2, wingSweep=2.5, wingThickness=0.1, wingDihedral=3
+- Vertical tail: plate at [0, 3.5, -6] width=0.08, height=2.5, depth=2.0 (or use wing rotated 90°)
+- Body flap: plate at [0, 0.8, -6.5] width=2.2, depth=0.8
+
+PROPULSION:
+- Main engines (3): enginebell at [0, 1.5, -6.5], [0.7, 2, -6.5], [-0.7, 2, -6.5]
+  engineBellThroat=0.12, engineBellExit=0.45, engineBellLength=1.0
+- OMS pods: omspod at [±1.2, 2.5, -5.5] omsPodLength=1.5, omsPodRadius=0.4
+- RCS thrusters: rcsthruster at nose [0, 2.5, 6] and tail [±1, 2, -6.3], rcsNozzleCount=2
+
+PROPELLANT (internal or external):
+- Internal tanks: proptank at [0, 2, -3] propTankRadius=0.6, propTankLength=3
+- External tank (if shuttle-style): proptank at [0, 2.5, -1] propTankRadius=1.3, propTankLength=9 color=#c46210 (orange foam)
+
+THERMAL PROTECTION:
+- TPS belly tiles: plate at [0, 0.8, -1] width=2.5, depth=10 color=#1a1a1a (black HRSI tiles)
+- Nose cap RCC: sphere at [0, 2, 6] radius=0.4 color=#333333
+- Wing leading edge RCC: built into wing compound type
+
+PAYLOAD & ELECTRONICS:
+- Radiator panels (inside bay doors): radiator at [±1, 3.0, -1] radiatorWidth=1, radiatorHeight=4, radiatorPipes=8
+- Avionics bays: avionicsbox at forward [0, 1.5, 4.5] and aft [0, 1.5, -5]
+- Reaction wheels: reactionwheel at [0, 2, 0] for attitude control (3 axes)
+- Star trackers: camera at [0, 3.2, 3] — pointing up through window
+- Antenna: antenna at [0, 3.5, 2] dishRadius=0.3
+
+INTERNAL SYSTEMS:
+- SBC (flight computers): sbc at [0, 1.8, 4]
+- IMU: imu at [0, 1.5, 3]
+- Harness bundles: harness through fuselage length
+- Battery: battery at [0, 1.2, 3]
+
+COLOR SCHEME FOR ORBITERS:
+- Fuselage (upper): #e5e5e5 (white thermal blanket)
+- Fuselage (belly): #1a1a1a (black TPS tiles)
+- Wings: #e5e5e5 (white top) / #1a1a1a (black bottom)
+- Engine bells: #a3a3a3 (metallic gray)
+- OMS pods: #e5e5e5 (white)
+- RCS thrusters: #888888 (medium gray)
+- Propellant tanks: #c46210 (orange foam) or #d4d4d8 (metallic internal)
+- Radiators: #c0c0c0 (silver)
+- Payload bay: #d4d4d8 (silver interior)
+- Vertical tail: #e5e5e5 (white)
+- Avionics: #27272a (dark electronics)
+- Harness: #78350f (copper)
+
+PART COUNT GUIDELINES FOR ORBITERS:
+- Simple orbiter: 25-35 parts (fuselage + wings + engines + tail)
+- Detailed orbiter: 50-70 parts (add OMS, RCS, payload bay, radiators, avionics)
+- Full Space Shuttle: 80-100+ parts including external tank and SRBs
 1. ALWAYS use compound types when the object IS one of those things. NEVER substitute with basic primitives.
 2. Use 30-60+ parts for complex objects.
 3. For MULTI-VEHICLE scenes: position each vehicle separately (offset by 5-8 units).
