@@ -1229,14 +1229,14 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const topPos = getViewPos("top");
         const sectionPos = getViewPos("section");
 
-        // View dimensions for collision detection
-        const frontVW = frontZoneW * 0.96;
+        // View dimensions for collision detection — sized to fit within zones
+        const frontVW = frontZoneW - gap * 2;
         const frontVH = viewH;
-        const sideVW = sideZoneW * 0.9;
+        const sideVW = sideZoneW - gap * 2;
         const sideVH = viewH;
-        const topVW = frontZoneW * 0.96;
+        const topVW = frontZoneW - gap * 2;
         const topVH = topViewH;
-        const sectionVW = sectionZoneW * 0.9;
+        const sectionVW = sectionZoneW > 0 ? sectionZoneW - gap * 2 : 0;
         const sectionVH = viewH;
 
         // View centers (computed from positions)
