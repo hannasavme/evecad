@@ -38,10 +38,18 @@ export default function ExportDropdown({ hasModel, getScene }: ExportDropdownPro
     try {
       if (format === "stl") {
         const blob = exportSTL(scene);
+        if (blob.size <= 84) {
+          toast.error("No geometry found to export");
+          return;
+        }
         downloadBlob(blob, "evecad-model.stl");
         toast.success("STL downloaded", { description: "Ready for 3D printing" });
       } else if (format === "obj") {
         const blob = exportOBJ(scene);
+        if (blob.size <= 30) {
+          toast.error("No geometry found to export");
+          return;
+        }
         downloadBlob(blob, "evecad-model.obj");
         toast.success("OBJ downloaded", { description: "Ready for visualization" });
       }
