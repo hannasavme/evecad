@@ -274,9 +274,9 @@ export default function Index() {
   };
 
   const handleDeleteSelected = () => {
-    if (!selectedModelId) return;
-    setModelsImmediate((prev) => prev.filter((m) => m.id !== selectedModelId));
-    setSelectedModelId(null);
+    if (selectedModelIds.size === 0) return;
+    setModelsImmediate((prev) => prev.filter((m) => !selectedModelIds.has(m.id)));
+    setSelectedModelIds(new Set());
   };
 
   const getScene = () => viewerRef.current?.getScene() ?? null;
