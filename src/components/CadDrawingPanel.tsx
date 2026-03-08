@@ -338,9 +338,6 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
             <Ruler className="w-4 h-4 text-primary" /> CAD Drawing — ISO First-Angle — {models.length} part{models.length !== 1 ? "s" : ""}
           </span>
           <div className="flex items-center gap-2">
-            <button onClick={addAnnotation} className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-primary px-2.5 py-1.5 rounded-xl border-2 border-border hover:border-primary/40 transition-all">
-              <Type className="w-3 h-3" /> Add Note
-            </button>
             <button onClick={handleExportSVG} className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-primary px-2.5 py-1.5 rounded-xl border-2 border-border hover:border-primary/40 transition-all">
               <Download className="w-3 h-3" /> SVG
             </button>
