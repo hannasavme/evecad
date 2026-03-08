@@ -468,7 +468,7 @@ export default function Index() {
                     <span className="text-muted-foreground truncate max-w-[70px]">{m.label}</span>
                   )}
                 </button>
-                {selectedModelId === m.id && editingLabelId !== m.id && (
+                {selectedModelIds.has(m.id) && selectedModelIds.size === 1 && editingLabelId !== m.id && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
