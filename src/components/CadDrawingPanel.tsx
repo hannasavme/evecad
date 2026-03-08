@@ -478,6 +478,12 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
           </span>
           <div className="flex items-center gap-2">
             <button
+              onClick={addAnnotation}
+              className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-primary px-2.5 py-1.5 rounded-xl border-2 border-border hover:border-primary/40 transition-all"
+            >
+              <Type className="w-3 h-3" /> Add Note
+            </button>
+            <button
               onClick={() => setShowDimensions(!showDimensions)}
               className={`flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-xl border-2 transition-all ${
                 showDimensions
@@ -507,7 +513,17 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
 
         {/* Drawing area */}
         <div ref={svgContainerRef} className="flex-1 overflow-auto p-4 bg-muted/30">
-          <DrawingSVG models={models} showDimensions={showDimensions} />
+          <DrawingSVG
+            models={models}
+            showDimensions={showDimensions}
+            annotations={annotations}
+            onUpdateAnnotation={updateAnnotation}
+            onDeleteAnnotation={deleteAnnotation}
+            titleText={titleText}
+            onUpdateTitle={setTitleText}
+            subtitleText={subtitleText}
+            onUpdateSubtitle={setSubtitleText}
+          />
         </div>
       </div>
     </motion.div>
