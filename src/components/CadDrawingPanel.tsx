@@ -1033,52 +1033,162 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         <text x={tbX + tbW - 50} y={tbY + tbRowH * 4 + 12} fontSize={6} fill={HIDDEN_COLOR} fontFamily="monospace">SHEET {page + 1} OF {totalPages}</text>
       </g>
 
-      {/* ─── Assembly View (all parts overlaid) ─── */}
-      {isAssemblyMode && (
-        <g>
-          <text x={margin + 10} y={viewsStartY + 10} fontSize={11} fontWeight="bold" fill={CENTER_COLOR} fontFamily="monospace">
-            ASSEMBLY DRAWING — {models.length} components
-          </text>
-          <text x={margin + 10} y={viewsStartY + 22} fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">FRONT VIEW (Assembly)</text>
-          <text x={margin + drawAreaW * 0.5} y={viewsStartY + 22} fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">RIGHT SIDE VIEW (Assembly)</text>
-          <text x={margin + 10} y={viewsStartY + 290} fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">TOP VIEW (Assembly)</text>
+      {/* ─── Assembly View (proper engineering drawing) ─── */}
+      {isAssemblyMode && (() => {
+        // Calculate bounding box of all parts in world space
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        let minZ = Infinity, maxZ = -Infinity;
+        const partData = models.map((model) => {
+          const dims = getScaledDims(model);
+          const px = model.position?.[0] || 0;
+          const py = model.position?.[1] || 0;
+          const pz = model.position?.[2] || 0;
+          const hw = dims.w / 2, hh = dims.h / 2, hd = dims.d / 2;
+          minX = Math.min(minX, px - hw); maxX = Math.max(maxX, px + hw);
+          minY = Math.min(minY, py - hh); maxY = Math.max(maxY, py + hh);
+          minZ = Math.min(minZ, pz - hd); maxZ = Math.max(maxZ, pz + hd);
+          return { model, dims, px, py, pz, hw, hh, hd };
+        });
 
-          {models.map((model, idx) => {
-            const profile = getProfile(model.type);
-            const dims = getScaledDims(model);
-            const viewScale = scl * 0.7;
+        const totalW = maxX - minX || 1;
+        const totalH = maxY - minY || 1;
+        const totalD = maxZ - minZ || 1;
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        const centerZ = (minZ + maxZ) / 2;
 
-            const offsetX = (model.position?.[0] || 0) * viewScale * 0.3;
-            const offsetY = -(model.position?.[1] || 0) * viewScale * 0.3;
-            const offsetZ = (model.position?.[2] || 0) * viewScale * 0.3;
+        // Layout zones on the A3 sheet
+        const drawH = svgHeight - viewsStartY - 130; // leave room for title block
+        const frontZoneW = drawAreaW * 0.42;
+        const sideZoneW = drawAreaW * 0.28;
+        const sectionZoneW = drawAreaW * 0.28;
+        const viewH = drawH * 0.55;
+        const topViewH = drawH * 0.38;
 
-            const frontCx = margin + drawAreaW * 0.22 + offsetX;
-            const frontCy = viewsStartY + 150 + offsetY;
-            const sideCx = margin + drawAreaW * 0.55 + offsetZ;
-            const sideCy = viewsStartY + 150 + offsetY;
-            const topCx = margin + drawAreaW * 0.22 + offsetX;
-            const topCy = viewsStartY + 380 + offsetZ;
+        // Auto-scale to fit largest view
+        const frontScaleW = (frontZoneW - 60) / totalW;
+        const frontScaleH = (viewH - 40) / totalH;
+        const sideScaleW = (sideZoneW - 40) / totalD;
+        const sideScaleH = (viewH - 40) / totalH;
+        const topScaleW = (frontZoneW - 60) / totalW;
+        const topScaleH = (topViewH - 40) / totalD;
+        const asmScale = Math.min(frontScaleW, frontScaleH, sideScaleW, sideScaleH, topScaleW, topScaleH, 40);
 
-            const frontFn = profile.frontProfile || defaultProfile.frontProfile;
-            const topFn = profile.topProfile || defaultProfile.topProfile;
-            const sideFn = profile.sideProfile || defaultProfile.sideProfile;
-            const fw = dims.w * viewScale;
-            const fh = dims.h * viewScale;
+        // View centers
+        const frontCx = margin + frontZoneW * 0.5;
+        const frontCy = viewsStartY + viewH * 0.5 + 15;
+        const sideCx = margin + frontZoneW + sideZoneW * 0.5;
+        const sideCy = frontCy;
+        const topCx = frontCx;
+        const topCy = viewsStartY + viewH + topViewH * 0.5 + 25;
+        const sectionCx = margin + frontZoneW + sideZoneW + sectionZoneW * 0.5;
+        const sectionCy = frontCy;
 
-            const colors = ["hsl(280,30%,25%)", "hsl(210,50%,40%)", "hsl(340,50%,40%)", "hsl(150,40%,35%)", "hsl(30,60%,40%)", "hsl(260,40%,50%)"];
-            const color = colors[idx % colors.length];
+        // Overall assembled dimensions in mm
+        const overallWmm = (totalW * 25.4).toFixed(1);
+        const overallHmm = (totalH * 25.4).toFixed(1);
+        const overallDmm = (totalD * 25.4).toFixed(1);
 
-            return (
-              <g key={model.id} opacity={0.75}>
-                <g style={{ color }}>{frontFn(dims.w * viewScale, dims.h * viewScale, frontCx, frontCy, model.params)}</g>
-                <g style={{ color }}>{sideFn(dims.d * viewScale, dims.h * viewScale, sideCx, sideCy, model.params)}</g>
-                <g style={{ color }}>{topFn(dims.w * viewScale, dims.d * viewScale, topCx, topCy, model.params)}</g>
-                <Balloon cx={frontCx + fw / 2 + 20} cy={frontCy - fh / 2 - 5} tx={frontCx + fw / 4} ty={frontCy} num={idx + 1} />
-              </g>
-            );
-          })}
-        </g>
-      )}
+        // Overall bounding box in SVG coords for each view
+        const frontBBoxW = totalW * asmScale;
+        const frontBBoxH = totalH * asmScale;
+        const sideBBoxW = totalD * asmScale;
+        const sideBBoxH = totalH * asmScale;
+        const topBBoxW = totalW * asmScale;
+        const topBBoxH = totalD * asmScale;
+
+        return (
+          <g>
+            {/* View labels */}
+            <text x={frontCx} y={viewsStartY + 8} textAnchor="middle" fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">FRONT VIEW</text>
+            <text x={sideCx} y={viewsStartY + 8} textAnchor="middle" fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">RIGHT SIDE VIEW</text>
+            <text x={topCx} y={viewsStartY + viewH + 18} textAnchor="middle" fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">TOP VIEW</text>
+            {showSection && <text x={sectionCx} y={viewsStartY + 8} textAnchor="middle" fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">SECTION A-A</text>}
+
+            {/* Dashed view borders */}
+            <rect x={frontCx - frontZoneW * 0.48} y={viewsStartY + 12} width={frontZoneW * 0.96} height={viewH - 5} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" />
+            <rect x={sideCx - sideZoneW * 0.45} y={viewsStartY + 12} width={sideZoneW * 0.9} height={viewH - 5} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" />
+            <rect x={topCx - frontZoneW * 0.48} y={viewsStartY + viewH + 22} width={frontZoneW * 0.96} height={topViewH - 10} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" />
+            {showSection && <rect x={sectionCx - sectionZoneW * 0.45} y={viewsStartY + 12} width={sectionZoneW * 0.9} height={viewH - 5} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" />}
+
+            {/* Projection lines between views */}
+            <line x1={frontCx + frontBBoxW / 2 + 8} y1={frontCy} x2={sideCx - sideBBoxW / 2 - 8} y2={sideCy} stroke={HIDDEN_COLOR} strokeWidth={0.3} strokeDasharray="6 3" />
+            <line x1={frontCx} y1={frontCy + frontBBoxH / 2 + 8} x2={topCx} y2={topCy - topBBoxH / 2 - 8} stroke={HIDDEN_COLOR} strokeWidth={0.3} strokeDasharray="6 3" />
+
+            {/* Section cut line on front view */}
+            {showSection && (
+              <>
+                <line x1={frontCx} y1={frontCy - frontBBoxH / 2 - 18} x2={frontCx} y2={frontCy + frontBBoxH / 2 + 18} stroke={LINE_COLOR} strokeWidth={0.7} strokeDasharray="10 3 2 3" />
+                <text x={frontCx - 10} y={frontCy - frontBBoxH / 2 - 22} fontSize={9} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">A</text>
+                <text x={frontCx - 10} y={frontCy + frontBBoxH / 2 + 30} fontSize={9} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">A</text>
+                <polygon points={`${frontCx - 6},${frontCy - frontBBoxH / 2 - 15} ${frontCx + 6},${frontCy - frontBBoxH / 2 - 15} ${frontCx},${frontCy - frontBBoxH / 2 - 8}`} fill={LINE_COLOR} />
+                <polygon points={`${frontCx - 6},${frontCy + frontBBoxH / 2 + 15} ${frontCx + 6},${frontCy + frontBBoxH / 2 + 15} ${frontCx},${frontCy + frontBBoxH / 2 + 8}`} fill={LINE_COLOR} />
+              </>
+            )}
+
+            {/* Overall dimension lines — Front view */}
+            <DimensionH x1={frontCx - frontBBoxW / 2} x2={frontCx + frontBBoxW / 2} y={frontCy + frontBBoxH / 2 + 30} value={`${overallWmm} mm`} />
+            <DimensionV y1={frontCy - frontBBoxH / 2} y2={frontCy + frontBBoxH / 2} x={frontCx + frontBBoxW / 2 + 25} value={`${overallHmm} mm`} />
+            {/* Overall dimension — Side view */}
+            <DimensionH x1={sideCx - sideBBoxW / 2} x2={sideCx + sideBBoxW / 2} y={sideCy + sideBBoxH / 2 + 30} value={`${overallDmm} mm`} />
+
+            {/* Assembly center lines */}
+            <line x1={frontCx - frontBBoxW / 2 - 12} y1={frontCy} x2={frontCx + frontBBoxW / 2 + 12} y2={frontCy} stroke={CENTER_COLOR} strokeWidth={0.3} strokeDasharray="10 3 2 3" />
+            <line x1={frontCx} y1={frontCy - frontBBoxH / 2 - 12} x2={frontCx} y2={frontCy + frontBBoxH / 2 + 12} stroke={CENTER_COLOR} strokeWidth={0.3} strokeDasharray="10 3 2 3" />
+            <line x1={sideCx - sideBBoxW / 2 - 8} y1={sideCy} x2={sideCx + sideBBoxW / 2 + 8} y2={sideCy} stroke={CENTER_COLOR} strokeWidth={0.3} strokeDasharray="10 3 2 3" />
+            <line x1={sideCx} y1={sideCy - sideBBoxH / 2 - 8} x2={sideCx} y2={sideCy + sideBBoxH / 2 + 8} stroke={CENTER_COLOR} strokeWidth={0.3} strokeDasharray="10 3 2 3" />
+
+            {/* Render all parts in each view */}
+            {partData.map(({ model, dims, px, py, pz }, idx) => {
+              const profile = getProfile(model.type);
+              const frontFn = profile.frontProfile || defaultProfile.frontProfile;
+              const sideFn = profile.sideProfile || defaultProfile.sideProfile;
+              const topFn = profile.topProfile || defaultProfile.topProfile;
+              const sectionFn = profile.sectionProfile || defaultProfile.sectionProfile;
+
+              // Position relative to assembly center, then scale
+              const fx = frontCx + (px - centerX) * asmScale;
+              const fy = frontCy - (py - centerY) * asmScale; // Y inverted
+              const sx = sideCx + (pz - centerZ) * asmScale;
+              const sy = sideCy - (py - centerY) * asmScale;
+              const tx = topCx + (px - centerX) * asmScale;
+              const ty = topCy + (pz - centerZ) * asmScale;
+
+              const pw = dims.w * asmScale;
+              const ph = dims.h * asmScale;
+              const pd = dims.d * asmScale;
+
+              // Balloon positions — stagger around the front view
+              const balloonAngle = (idx / models.length) * Math.PI * 2 - Math.PI / 2;
+              const balloonR = Math.max(frontBBoxW, frontBBoxH) / 2 + 30 + (idx % 3) * 18;
+              const bx = frontCx + Math.cos(balloonAngle) * balloonR;
+              const by = frontCy + Math.sin(balloonAngle) * balloonR;
+
+              return (
+                <g key={model.id}>
+                  {/* Front view */}
+                  <g opacity={0.9}>{frontFn(pw, ph, fx, fy, model.params)}</g>
+                  {/* Side view */}
+                  <g opacity={0.9}>{sideFn(pd, ph, sx, sy, model.params)}</g>
+                  {/* Top view */}
+                  <g opacity={0.9}>{topFn(pw, pd, tx, ty, model.params)}</g>
+                  {/* Section view — with hatching */}
+                  {showSection && (
+                    <g opacity={0.85}>{sectionFn(pw, ph, sectionCx + (px - centerX) * asmScale, sectionCy - (py - centerY) * asmScale, model.params)}</g>
+                  )}
+                  {/* Balloon callout with leader line */}
+                  <Balloon cx={bx} cy={by} tx={fx} ty={fy} num={idx + 1} />
+                </g>
+              );
+            })}
+
+            {/* Assembly title */}
+            <text x={margin + 10} y={svgHeight - margin - tbH - 15} fontSize={9} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">
+              ASSEMBLY DRAWING — {models.length} COMPONENTS — SCALE {asmScale < 10 ? (asmScale / 10).toFixed(2) : "1"} : 1
+            </text>
+          </g>
+        );
+      })()}
 
       {/* ─── Individual Part Views ─── */}
       {!isAssemblyMode && pageModels.map((model, idx) => {
