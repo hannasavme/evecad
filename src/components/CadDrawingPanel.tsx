@@ -1029,7 +1029,7 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         {/* DWG NO */}
         <text x={tbX + tbW - 50} y={tbY + tbRowH * 2 + 12} fontSize={6} fill={HIDDEN_COLOR} fontFamily="monospace">DWG NO</text>
         <text x={tbX + tbW - 50} y={tbY + tbRowH * 3 + 12} fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">EVE-001</text>
-        <text x={tbX + tbW - 50} y={tbY + tbRowH * 4 + 12} fontSize={6} fill={HIDDEN_COLOR} fontFamily="monospace">SHEET 1 OF 1</text>
+        <text x={tbX + tbW - 50} y={tbY + tbRowH * 4 + 12} fontSize={6} fill={HIDDEN_COLOR} fontFamily="monospace">SHEET {page + 1} OF {totalPages}</text>
       </g>
 
       {/* ─── Part Views ─── */}
