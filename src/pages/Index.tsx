@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Box, Plus, Star, X, Layers, Trash2, Wrench, Loader2 } from "lucide-react";
+import { Plus, Star, X, Layers, Trash2, Wrench, Loader2 } from "lucide-react";
+import mascotImg from "@/assets/mascot.png";
 import InputPanel from "@/components/InputPanel";
 import ModelViewer, { type SceneModel, type ModelViewerHandle } from "@/components/ModelViewer";
 import ExportDropdown from "@/components/ExportDropdown";
