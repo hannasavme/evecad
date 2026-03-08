@@ -190,7 +190,21 @@ Params by type:
 - tube: radius, height, wallThickness, segments
 - plate: radius, thickness, width, depth
 
-CRITICAL: Generate 20-50+ parts. Use rotation to angle parts. Position precisely. Use varied shapes.
+CRITICAL RULES:
+1. Generate 40-80+ parts. Every wheel, strut, panel, sensor, joint, axle, and detail is a separate part.
+2. For MULTI-VEHICLE systems: model each vehicle separately, positioned apart in the scene.
+   - Mother rover at center (0,0,0), child rovers offset at (6,0,3), (-5,0,4), etc.
+   - Each vehicle gets its own full set of parts: chassis, wheels, axles, sensors, etc.
+3. WHEELS: Each wheel is a cylinder + torus rim + axle cylinder. A 4-wheeled rover needs 12+ parts just for wheels.
+4. CHASSIS: Build from multiple boxes/plates — main body, side panels, top cover, bottom plate, internal frame.
+5. SUSPENSION: Use brackets at angles (rotation!) connecting wheel assemblies to chassis.
+6. TOOLS (drills, arms): Build from multiple cylinders + cones + brackets with proper rotation.
+7. ANTENNAS: Thin cylinders for masts + spheres/cones for dish heads.
+8. DOCKING BAYS: Tall box structures with internal cylinders, plates for shelves.
+9. Use ROTATION extensively — suspension arms at 30-45°, angled solar panels, tilted cameras.
+10. Use VARIED COLORS to distinguish sub-systems (wheels=one color, chassis=another, sensors=another).
+11. Position parts with MILLIMETER precision — wheels must touch the ground (y=wheel_radius), axles must align.
+12. Think like a real engineer assembling the vehicle: frame → axles → wheels → body panels → subsystems → details.
 You MUST call the parse_cad function.`,
           },
           {
