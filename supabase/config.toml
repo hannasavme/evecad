@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.assemble-parts]
 verify_jwt = false
+
+[functions.parse-paper]
+verify_jwt = false
