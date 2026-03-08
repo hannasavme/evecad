@@ -137,10 +137,32 @@ export default function Index() {
           return;
         }
 
+        // Calculate offset so new assembly doesn't overlap existing models
+        const existing = modelsRef.current;
+        let offsetX = 0;
+        if (existing.length > 0) {
+          let maxX = -Infinity;
+          existing.forEach((m) => {
+            const x = m.position[0] + (m.params?.width ?? 1.5) * m.scale[0];
+            if (x > maxX) maxX = x;
+          });
+          // Also check how far the new parts extend in negative X
+          let minNewX = Infinity;
+          data.parts.forEach((p: any) => {
+            const px = p.position?.[0] ?? 0;
+            if (px < minNewX) minNewX = px;
+          });
+          offsetX = maxX - minNewX + 3; // 3 unit gap between assemblies
+        }
+
         const parts: SceneModel[] = data.parts.map((p: any) => ({
           id: `model-${++modelIdCounter}`,
           type: p.type as SceneModel["type"],
-          position: (p.position || [0, 0.5, 0]) as [number, number, number],
+          position: [
+            (p.position?.[0] ?? 0) + offsetX,
+            p.position?.[1] ?? 0.5,
+            p.position?.[2] ?? 0,
+          ] as [number, number, number],
           scale: [1, 1, 1] as [number, number, number],
           color: p.color || DEFAULT_COLORS[p.type] || "#f9a8d4",
           label: p.label || p.type,
