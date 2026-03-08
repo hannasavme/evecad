@@ -1176,11 +1176,30 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
   const [titleText, setTitleText] = useState("EveCAD Drawing");
   const [showSection, setShowSection] = useState(true);
   const [showBOM, setShowBOM] = useState(true);
+  const [visibleIds, setVisibleIds] = useState<Set<string>>(() => new Set(models.map(m => m.id)));
+  const [showComponentDropdown, setShowComponentDropdown] = useState(false);
   const svgContainerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const filteredModels = useMemo(() => models.filter(m => visibleIds.has(m.id)), [models, visibleIds]);
+  const isAssemblyMode = visibleIds.size === models.length && models.length > 1;
 
   const PARTS_PER_PAGE = 3;
   const [drawingPage, setDrawingPage] = useState(0);
-  const totalPages = Math.ceil(models.length / PARTS_PER_PAGE);
+  const totalPages = isAssemblyMode ? 1 : Math.ceil(filteredModels.length / PARTS_PER_PAGE);
+
+  const toggleComponent = (id: string) => {
+    setVisibleIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    setDrawingPage(0);
+  };
+
+  const selectAll = () => { setVisibleIds(new Set(models.map(m => m.id))); setDrawingPage(0); };
+  const selectNone = () => { setVisibleIds(new Set()); setDrawingPage(0); };
 
   const addAnnotation = () => {
     setAnnotations((prev) => [...prev, { id: `ann-${++annotationId}`, x: 30 + Math.random() * 200, y: 40 + Math.random() * 100, text: "Note: edit me" }]);
