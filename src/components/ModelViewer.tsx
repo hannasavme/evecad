@@ -263,10 +263,24 @@ const meshMap: Record<string, React.FC<{ color: string; params?: ModelParams }>>
 
 // ─── Scene Components ──────────────────────────────────
 
+function ImportedMesh({ model }: { model: any }) {
+  const geo = model._importedGeometry as THREE.BufferGeometry;
+  const s = model._importedScale as number;
+  const c = model._importedCenter as [number, number, number];
+  return (
+    <group scale={[s, s, s]} position={c}>
+      <mesh geometry={geo}>
+        <meshStandardMaterial color={model.color} metalness={0.3} roughness={0.4} />
+      </mesh>
+    </group>
+  );
+}
+
 function SceneModelComponent({ model, isSelected, onSelect }: { model: SceneModel; isSelected: boolean; onSelect: (e: MouseEvent) => void }) {
   const groupRef = useRef<THREE.Group>(null);
   const MeshComp = meshMap[model.type] || BoxMesh;
   const rot = model.rotation || [0, 0, 0];
+  const isImported = !!(model as any)._importedGeometry;
 
   return (
     <group
@@ -276,7 +290,7 @@ function SceneModelComponent({ model, isSelected, onSelect }: { model: SceneMode
       scale={model.scale}
       onClick={(e) => { e.stopPropagation(); onSelect(e.nativeEvent); }}
     >
-      <MeshComp color={model.color} params={model.params} />
+      {isImported ? <ImportedMesh model={model} /> : <MeshComp color={model.color} params={model.params} />}
       {isSelected && (
         <mesh><sphereGeometry args={[2, 16, 16]} /><meshBasicMaterial color="#f9a8d4" transparent opacity={0.05} wireframe /></mesh>
       )}
