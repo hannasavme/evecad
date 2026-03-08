@@ -259,6 +259,13 @@ export default function Index() {
         )}
       </AnimatePresence>
 
+      {/* CAD Drawing Panel */}
+      <AnimatePresence>
+        {showDrawing && (
+          <CadDrawingPanel models={models} onClose={() => setShowDrawing(false)} />
+        )}
+      </AnimatePresence>
+
       {/* Assembly instructions overlay */}
       <AnimatePresence>
         {assemblyInstructions && (
