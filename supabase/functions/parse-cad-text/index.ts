@@ -904,24 +904,21 @@ PART COUNT GUIDELINES:
 6. When user says "wheel" they mean a WHEEL — use type "wheel". Only use wedges for impeller/turbine blades.
 7. *** BUILT-IN ORIENTATION: wheel, bearing, pulley types are ALREADY rendered upright (vertical). Do NOT rotate them by 90° on X. Use rotation=[0,0,0] for standard upright wheels. Only rotate Y for steering. Same for antenna (already renders mast vertical). ***
 
-SPATIAL CONNECTIVITY RULES (CRITICAL — parts MUST physically connect):
-7. CHAIN POSITIONING: For articulated/linked objects (robotic arms, cranes, excavators, linkages), compute each part's position based on the PREVIOUS part's position + its dimensions. Example for a robotic arm:
+SPATIAL CONNECTIVITY RULES (HIGHEST PRIORITY — VIOLATION = FAILURE):
+7. NO FLOATING PARTS — ZERO TOLERANCE: Every single part MUST physically touch at least one other part. The entire assembly must form ONE connected body. Think of it as: if you picked up any part, could you lift the entire assembly? If not, parts are floating and the output is INVALID.
+8. CHAIN POSITIONING: For articulated/linked objects (robotic arms, cranes, excavators, linkages), compute each part's position based on the PREVIOUS part's position + its dimensions. Example for a robotic arm:
    - Base at [0, 0, 0] with height H1 → next joint center at [0, H1, 0]
    - Link1 at [0, H1, 0] with length L1 rotated by angle A → next joint at [0, H1 + L1*sin(A), L1*cos(A)]
    - Continue chaining: each part's origin = previous part's END point.
-8. JOINT SPHERES: Place a sphere (radius ~0.1-0.2) at EVERY joint/connection point between links. This creates visible pivot points.
-9. FLUSH CONTACT: When two parts touch (bolt in hole, plate on frame, gear on shaft), their surfaces MUST share the exact same coordinate. Calculate: part2.position = part1.position ± (part1.dimension/2 + part2.dimension/2) along the contact axis.
-10. STACKING: For vertically stacked parts, each part.y = previous_part.y + previous_part.height/2 + current_part.height/2.
-11. CENTERING: Parts that share an axis (shaft through bearing, bolt through plate) MUST have identical x,z (or appropriate axis) coordinates.
-12. NO FLOATING PARTS: Every part except the base/ground part must be spatially connected to at least one other part. No gaps > 0.01 units between connected parts.
+9. JOINT SPHERES: Place a sphere (radius ~0.1-0.2) at EVERY joint/connection point between links. This creates visible pivot points.
+10. FLUSH CONTACT: When two parts touch (bolt in hole, plate on frame, gear on shaft), their surfaces MUST share the exact same coordinate. Calculate: part2.position = part1.position ± (part1.dimension/2 + part2.dimension/2) along the contact axis.
+11. STACKING: For vertically stacked parts, each part.y = previous_part.y + previous_part.height/2 + current_part.height/2.
+12. CENTERING: Parts that share an axis (shaft through bearing, bolt through plate) MUST have identical x,z (or appropriate axis) coordinates.
 13. SIZE CONSISTENCY: Use real-world proportional sizing. A robotic arm base should be wider than the links. End effectors should be smaller than the arm segments. Joints should match the link diameters.
 14. GROUND CONTACT: The lowest part of any assembly should have its bottom at y=0 (position.y = height/2).
-
-POSITIONING MATH EXAMPLES:
-- Cylinder (r=0.5, h=2) at [0,1,0] → top face at y=2, bottom at y=0
-- Box on top: box.y = 2 + box.height/2
-- Shaft through cylinder center: shaft.x = cylinder.x, shaft.z = cylinder.z
-- Rotated link (45°): endpoint.y = start.y + length * sin(45°), endpoint.z = start.z + length * cos(45°)
+15. MATHEMATICAL VERIFICATION: Before outputting positions, mentally verify: for EACH part, does its bounding box overlap or touch at least ONE other part's bounding box? If |pos_A[axis] - pos_B[axis]| > (size_A[axis]/2 + size_B[axis]/2 + 0.1) on ANY axis, they are NOT connected.
+16. WHEELS TOUCH GROUND: Wheel parts must have position.y = wheel_radius (so bottom of wheel is at y=0). Chassis must sit ABOVE the wheels.
+17. SUSPENSION CONNECTS: Rocker/bogie arms must physically bridge between chassis pivot points and wheel mounts — no floating suspension members.
 ${researchContext ? `\n\nREFERENCE RESEARCH (use for accurate proportions and structure):\n${researchContext}` : ""}
 
 You MUST call the parse_cad function.`;
@@ -1274,7 +1271,7 @@ function partDist(a: any, b: any): number {
 }
 
 // Check if two parts are "connected" (bounding boxes touch or overlap with tolerance)
-function partsConnect(a: any, b: any, tolerance = 0.15): boolean {
+function partsConnect(a: any, b: any, tolerance = 0.25): boolean {
   const ea = getPartExtent(a), eb = getPartExtent(b);
   const ap = a.position, bp = b.position;
   for (let axis = 0; axis < 3; axis++) {
@@ -1284,75 +1281,190 @@ function partsConnect(a: any, b: any, tolerance = 0.15): boolean {
   return true;
 }
 
-// Fix floating parts by moving them to touch their nearest neighbor
+// Get all connected component sets via BFS
+function getConnectedComponents(parts: any[], tolerance = 0.25): number[][] {
+  const visited = new Set<number>();
+  const components: number[][] = [];
+  
+  for (let start = 0; start < parts.length; start++) {
+    if (visited.has(start)) continue;
+    const component: number[] = [];
+    const queue = [start];
+    visited.add(start);
+    while (queue.length > 0) {
+      const idx = queue.shift()!;
+      component.push(idx);
+      for (let j = 0; j < parts.length; j++) {
+        if (visited.has(j)) continue;
+        if (partsConnect(parts[idx], parts[j], tolerance)) {
+          visited.add(j);
+          queue.push(j);
+        }
+      }
+    }
+    components.push(component);
+  }
+  return components;
+}
+
+// Determine the best axis and direction to snap a floating part to a target
+function snapPartToTarget(floatingPart: any, targetPart: any) {
+  const fe = getPartExtent(floatingPart);
+  const te = getPartExtent(targetPart);
+  const fp = floatingPart.position;
+  const tp = targetPart.position;
+  
+  // Determine best attachment point based on part types
+  const fType = floatingPart.type;
+  const tType = targetPart.type;
+  
+  // Parts that should go ON TOP
+  const topMountTypes = ["camera", "antenna", "lidar", "transceiver", "sbc", "imu", "proxsensor", "solarpanel", "rtg"];
+  // Parts that should go to the SIDE
+  const sideMountTypes = ["rocker", "bogie", "dronearm", "bracket", "wing", "omspod", "fin"];
+  // Parts that should go BELOW
+  const bottomMountTypes = ["wheel", "track", "knuckle", "motor"];
+  // Parts that should be INSIDE or CENTERED
+  const internalTypes = ["battery", "harness", "bearing", "shaft", "heatpipe", "avionicsbox"];
+  
+  if (topMountTypes.includes(fType)) {
+    // Place on top of target
+    fp[0] = tp[0] + (fp[0] - tp[0]) * 0.3; // Keep some X/Z offset but reduce it
+    fp[1] = tp[1] + te[1] / 2 + fe[1] / 2;
+    fp[2] = tp[2] + (fp[2] - tp[2]) * 0.3;
+  } else if (bottomMountTypes.includes(fType)) {
+    // Place below target (e.g., wheels under chassis)
+    fp[1] = tp[1] - te[1] / 2 - fe[1] / 2 + fe[1] * 0.1;
+    // Keep X/Z but ensure within target footprint
+    const maxXOffset = te[0] / 2 + fe[0] / 2;
+    const maxZOffset = te[2] / 2 + fe[2] / 2;
+    if (Math.abs(fp[0] - tp[0]) > maxXOffset) {
+      fp[0] = tp[0] + Math.sign(fp[0] - tp[0]) * maxXOffset * 0.8;
+    }
+    if (Math.abs(fp[2] - tp[2]) > maxZOffset) {
+      fp[2] = tp[2] + Math.sign(fp[2] - tp[2]) * maxZOffset * 0.8;
+    }
+  } else if (sideMountTypes.includes(fType)) {
+    // Attach to side of target
+    const dx = fp[0] - tp[0];
+    const dz = fp[2] - tp[2];
+    if (Math.abs(dx) >= Math.abs(dz)) {
+      fp[0] = tp[0] + Math.sign(dx || 1) * (te[0] / 2 + fe[0] / 2);
+      fp[1] = tp[1]; // Match Y
+    } else {
+      fp[2] = tp[2] + Math.sign(dz || 1) * (te[2] / 2 + fe[2] / 2);
+      fp[1] = tp[1];
+    }
+  } else if (internalTypes.includes(fType)) {
+    // Place inside/centered on target
+    fp[0] = tp[0] + (fp[0] - tp[0]) * 0.5;
+    fp[1] = tp[1] + (fp[1] - tp[1]) * 0.5;
+    fp[2] = tp[2] + (fp[2] - tp[2]) * 0.5;
+  } else {
+    // Generic: close ALL axis gaps to make bounding boxes touch
+    for (let axis = 0; axis < 3; axis++) {
+      const gap = Math.abs(fp[axis] - tp[axis]) - (te[axis] / 2 + fe[axis] / 2);
+      if (gap > 0.1) {
+        const dir = fp[axis] > tp[axis] ? 1 : -1;
+        fp[axis] = tp[axis] + dir * (te[axis] / 2 + fe[axis] / 2);
+      }
+    }
+  }
+}
+
+// Fix floating parts by ensuring full connectivity
 function fixFloatingParts(parts: any[]) {
   if (parts.length < 2) return;
-
-  // Build connectivity graph
-  const connected = new Set<number>();
-  const queue: number[] = [0]; // Start from first part
-  connected.add(0);
-
-  // BFS to find all connected parts
-  while (queue.length > 0) {
-    const idx = queue.shift()!;
-    for (let j = 0; j < parts.length; j++) {
-      if (connected.has(j)) continue;
-      if (partsConnect(parts[idx], parts[j])) {
-        connected.add(j);
-        queue.push(j);
-      }
-    }
-  }
-
-  // Find floating parts (not connected to main body)
-  const floating = [];
+  
+  // Find the largest part as the anchor (most likely the base/chassis)
+  let baseIdx = 0;
+  let maxVol = 0;
   for (let i = 0; i < parts.length; i++) {
-    if (!connected.has(i)) floating.push(i);
+    const e = getPartExtent(parts[i]);
+    const vol = e[0] * e[1] * e[2];
+    if (vol > maxVol) { maxVol = vol; baseIdx = i; }
   }
-
-  if (floating.length === 0) return;
-  console.log(`Fixing ${floating.length} floating parts out of ${parts.length}`);
-
-  // For each floating part, find nearest connected part and snap to it
-  for (const fi of floating) {
-    const fp = parts[fi];
-    let nearestIdx = 0;
-    let nearestDist = Infinity;
-
-    for (const ci of connected) {
-      const d = partDist(fp, parts[ci]);
-      if (d < nearestDist) {
-        nearestDist = d;
-        nearestIdx = ci;
+  
+  // Ensure base touches ground
+  const baseExtent = getPartExtent(parts[baseIdx]);
+  const baseBottom = parts[baseIdx].position[1] - baseExtent[1] / 2;
+  
+  // Iteratively fix connectivity (multiple passes to handle chains)
+  for (let pass = 0; pass < 5; pass++) {
+    const components = getConnectedComponents(parts);
+    if (components.length <= 1) break; // All connected
+    
+    // Find which component contains the base
+    let baseComponent = 0;
+    for (let c = 0; c < components.length; c++) {
+      if (components[c].includes(baseIdx)) { baseComponent = c; break; }
+    }
+    
+    const baseSet = new Set(components[baseComponent]);
+    
+    // For each disconnected component, snap it to the nearest part in the base component
+    for (let c = 0; c < components.length; c++) {
+      if (c === baseComponent) continue;
+      
+      // Find the closest pair between this component and the base component
+      let bestFI = components[c][0];
+      let bestTI = components[baseComponent][0];
+      let bestDist = Infinity;
+      
+      for (const fi of components[c]) {
+        for (const ti of components[baseComponent]) {
+          const d = partDist(parts[fi], parts[ti]);
+          if (d < bestDist) {
+            bestDist = d;
+            bestFI = fi;
+            bestTI = ti;
+          }
+        }
+      }
+      
+      // Snap the closest floating part to the closest base part
+      snapPartToTarget(parts[bestFI], parts[bestTI]);
+      
+      // Also move all other parts in this component by the same delta
+      // (preserve relative positions within the disconnected group)
+    }
+    
+    console.log(`Pass ${pass + 1}: ${components.length} components → fixing ${components.length - 1} disconnected groups`);
+  }
+  
+  // Final validation: any remaining floaters get aggressively snapped
+  const finalComponents = getConnectedComponents(parts, 0.35);
+  if (finalComponents.length > 1) {
+    let baseComponent = 0;
+    for (let c = 0; c < finalComponents.length; c++) {
+      if (finalComponents[c].includes(baseIdx)) { baseComponent = c; break; }
+    }
+    
+    for (let c = 0; c < finalComponents.length; c++) {
+      if (c === baseComponent) continue;
+      for (const fi of finalComponents[c]) {
+        // Find absolute nearest connected part
+        let nearIdx = 0;
+        let nearDist = Infinity;
+        for (const bi of finalComponents[baseComponent]) {
+          const d = partDist(parts[fi], parts[bi]);
+          if (d < nearDist) { nearDist = d; nearIdx = bi; }
+        }
+        // Force snap all axes
+        const fe = getPartExtent(parts[fi]);
+        const te = getPartExtent(parts[nearIdx]);
+        const fp = parts[fi].position;
+        const tp = parts[nearIdx].position;
+        for (let axis = 0; axis < 3; axis++) {
+          const gap = Math.abs(fp[axis] - tp[axis]) - (te[axis] / 2 + fe[axis] / 2);
+          if (gap > 0.05) {
+            const dir = fp[axis] > tp[axis] ? 1 : -1;
+            fp[axis] = tp[axis] + dir * (te[axis] / 2 + fe[axis] / 2) * 0.95;
+          }
+        }
       }
     }
-
-    const target = parts[nearestIdx];
-    const te = getPartExtent(target);
-    const fe = getPartExtent(fp);
-
-    // Find which axis has the largest gap and close it
-    const ap = fp.position, bp = target.position;
-    let maxGapAxis = 0, maxGap = 0;
-    for (let axis = 0; axis < 3; axis++) {
-      const gap = Math.abs(ap[axis] - bp[axis]) - (te[axis] / 2 + fe[axis] / 2);
-      if (gap > maxGap) {
-        maxGap = gap;
-        maxGapAxis = axis;
-      }
-    }
-
-    // Move the floating part along the largest gap axis to close the gap
-    if (maxGap > 0.15) {
-      const dir = ap[maxGapAxis] > bp[maxGapAxis] ? 1 : -1;
-      const targetPos = bp[maxGapAxis] + dir * (te[maxGapAxis] / 2 + fe[maxGapAxis] / 2);
-      fp.position[maxGapAxis] = targetPos;
-      console.log(`  Snapped "${fp.label}" axis ${maxGapAxis}: ${ap[maxGapAxis].toFixed(2)} → ${targetPos.toFixed(2)}`);
-    }
-
-    // After snapping, add to connected set so other floating parts can chain-connect
-    connected.add(fi);
+    console.log(`Final fix: force-snapped ${finalComponents.length - 1} remaining groups`);
   }
 }
 

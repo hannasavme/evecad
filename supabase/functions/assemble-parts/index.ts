@@ -51,11 +51,38 @@ interface BBox {
 /** Get the effective size of a part based on type and scale */
 function getPartSize(m: PartModel): [number, number, number] {
   const s = m.scale || [1, 1, 1];
+  const p = m.params || {};
   switch (m.type) {
-    case "cylinder": return [s[0], s[1], s[0]]; // diameter = X, height = Y
-    case "gear":     return [s[0] * 1.2, s[1] * 0.4, s[0] * 1.2];
-    case "bracket":  return [s[0], s[1], s[2] * 0.6];
-    default:         return [s[0], s[1], s[2]]; // box
+    case "cylinder": case "tube": case "motor": case "bodytube": case "motortube":
+      return [(p.radius || 0.5) * 2 * s[0], (p.height || 1.5) * s[1], (p.radius || 0.5) * 2 * s[2]];
+    case "gear":
+      return [s[0] * 1.2, (p.thickness || 0.4) * s[1], s[0] * 1.2];
+    case "bracket":
+      return [(p.armLength || 1.0) * s[0], (p.width || 0.8) * s[1], (p.thickness || 0.3) * s[2]];
+    case "wheel":
+      return [(p.width || 0.3) * s[0], (p.radius || 0.5) * 2 * s[1], (p.radius || 0.5) * 2 * s[2]];
+    case "sphere":
+      return [(p.radius || 0.5) * 2 * s[0], (p.radius || 0.5) * 2 * s[1], (p.radius || 0.5) * 2 * s[2]];
+    case "box": case "chassis": case "avionicsbox":
+      return [(p.width || 1.2) * s[0], (p.height || 1.2) * s[1], (p.depth || 1.2) * s[2]];
+    case "plate":
+      return [(p.width || 1.0) * s[0], (p.thickness || 0.05) * s[1], (p.depth || 1.0) * s[2]];
+    case "antenna":
+      return [(p.dishRadius || 0.4) * 2 * s[0], (p.mastHeight || 0.5) * s[1], (p.dishRadius || 0.4) * 2 * s[2]];
+    case "camera":
+      return [(p.bodyWidth || 0.2) * s[0], (p.bodyHeight || 0.15) * s[1], (p.bodyDepth || 0.2) * s[2]];
+    case "rocker":
+      return [(p.rockerLength || 2.0) * s[0], (p.rockerWidth || 0.3) * s[1], (p.rockerThickness || 0.12) * s[2]];
+    case "bogie":
+      return [(p.bogieLength || 1.2) * s[0], (p.bogieWidth || 0.25) * s[1], (p.bogieThickness || 0.1) * s[2]];
+    case "knuckle":
+      return [(p.knuckleRadius || 0.1) * 2 * s[0], (p.knuckleHeight || 0.2) * s[1], (p.knuckleRadius || 0.1) * 2 * s[2]];
+    case "battery":
+      return [(p.batteryWidth || 0.5) * s[0], (p.batteryHeight || 0.3) * s[1], (p.batteryLength || 0.5) * s[2]];
+    case "rtg":
+      return [(p.rtgRadius || 0.2) * 2 * s[0], (p.rtgLength || 0.8) * s[1], (p.rtgRadius || 0.2) * 2 * s[2]];
+    default:
+      return [s[0], s[1], s[2]];
   }
 }
 
@@ -138,61 +165,126 @@ interface AssemblyClassification {
   additionalParts: { type: string; label: string; position: [number, number, number]; scale: [number, number, number]; reason: string }[];
 }
 
-/** Determine how parts should mate based on their types */
+/** Determine how parts should mate based on their types and engineering logic */
 function inferConstraint(parent: PartModel, child: PartModel): Constraint & { modification: string } {
-  const parentType = parent.type;
-  const childType = child.type;
+  const pType = parent.type;
+  const cType = child.type;
 
-  // Gear + Cylinder → Insert (gear onto shaft)
-  if (childType === "gear" && parentType === "cylinder") {
-    return { type: "insert", fromFace: "bottom", toFace: "top", modification: "Bore aligned to shaft diameter" };
+  // ─── Rotation/axis parts (shafts, gears, bearings) ───
+  if (cType === "gear" && (pType === "cylinder" || pType === "shaft")) {
+    return { type: "insert", fromFace: "bottom", toFace: "top", modification: "Gear bore aligned to shaft" };
   }
-  if (parentType === "gear" && childType === "cylinder") {
+  if (pType === "gear" && (cType === "cylinder" || cType === "shaft")) {
     return { type: "insert", fromFace: "bottom", toFace: "top", modification: "Shaft inserted through gear bore" };
   }
-
-  // Gear + Gear → Stack side by side (meshing)
-  if (parentType === "gear" && childType === "gear") {
-    const parentSize = getPartSize(parent);
-    return {
-      type: "mate", fromFace: "left", toFace: "right",
-      offset: [0, 0, 0],
-      modification: "Gears meshed at pitch circle",
-    };
+  if (pType === "gear" && cType === "gear") {
+    return { type: "mate", fromFace: "left", toFace: "right", modification: "Gears meshed at pitch circle" };
+  }
+  if (cType === "bearing" && (pType === "shaft" || pType === "cylinder")) {
+    return { type: "insert", fromFace: "bottom", toFace: "top", modification: "Bearing press-fit onto shaft" };
+  }
+  if (cType === "pulley" && (pType === "shaft" || pType === "cylinder")) {
+    return { type: "insert", fromFace: "bottom", toFace: "top", modification: "Pulley keyed to shaft" };
   }
 
-  // Bracket + anything → Mount on bracket face
-  if (parentType === "bracket") {
-    if (childType === "cylinder") {
-      return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Cylinder mounted on bracket top face" };
+  // ─── Wheels/mobility ───
+  if (cType === "wheel") {
+    if (pType === "knuckle" || pType === "motor") {
+      return { type: "mate", fromFace: "left", toFace: "right", modification: "Wheel mounted on drive axle" };
     }
-    if (childType === "gear") {
-      return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Gear hub mounted on bracket" };
+    if (pType === "rocker" || pType === "bogie") {
+      return { type: "mate", fromFace: "top", toFace: "bottom", modification: "Wheel attached to suspension arm" };
     }
-    return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Component fastened to bracket" };
+    return { type: "mate", fromFace: "top", toFace: "bottom", modification: "Wheel mounted below frame" };
+  }
+  if (cType === "knuckle") {
+    if (pType === "rocker" || pType === "bogie") {
+      return { type: "mate", fromFace: "top", toFace: "bottom", modification: "Knuckle attached to suspension endpoint" };
+    }
+    return { type: "mate", fromFace: "top", toFace: "bottom", modification: "Knuckle attached below" };
+  }
+  if (cType === "motor") {
+    if (pType === "wheel" || pType === "knuckle") {
+      return { type: "mate", fromFace: "right", toFace: "left", modification: "Drive motor mounted to wheel hub" };
+    }
+    return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Motor mounted on surface" };
+  }
+  if (cType === "rocker" || cType === "bogie") {
+    return { type: "mate", fromFace: "right", toFace: "left", modification: "Suspension arm pivoted on chassis side" };
+  }
+  if (cType === "track") {
+    return { type: "mate", fromFace: "top", toFace: "bottom", modification: "Track system under chassis" };
   }
 
-  // Anything + Bracket → Attach bracket to side
-  if (childType === "bracket") {
-    return { type: "mate", fromFace: "back", toFace: "front", modification: "Bracket bolted to component face" };
+  // ─── Brackets and structural ───
+  if (pType === "bracket" || pType === "chassis") {
+    return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Component mounted on structure" };
+  }
+  if (cType === "bracket") {
+    return { type: "mate", fromFace: "back", toFace: "front", modification: "Bracket bolted to face" };
   }
 
-  // Box + Cylinder → Cylinder on top of box
-  if (parentType === "box" && childType === "cylinder") {
-    return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Cylinder seated on box top surface" };
+  // ─── Sensors/instruments mount ON TOP ───
+  if (["camera", "antenna", "lidar", "transceiver", "solarpanel", "rtg", "proxsensor"].includes(cType)) {
+    return { type: "mate", fromFace: "bottom", toFace: "top", modification: `${cType} mounted on top surface` };
   }
 
-  // Cylinder + Box → Box at base of cylinder
-  if (parentType === "cylinder" && childType === "box") {
-    return { type: "mate", fromFace: "top", toFace: "bottom", modification: "Box serves as base plate for cylinder" };
+  // ─── Electronics go INSIDE ───
+  if (["sbc", "imu", "battery", "harness", "avionicsbox"].includes(cType)) {
+    if (pType === "box" || pType === "chassis") {
+      return { type: "mate", fromFace: "bottom", toFace: "top", offset: [0, -0.1, 0], modification: `${cType} housed inside ${pType}` };
+    }
+    return { type: "mate", fromFace: "bottom", toFace: "top", modification: `${cType} placed on surface` };
   }
 
-  // Box + Box → Stack on top
-  if (parentType === "box" && childType === "box") {
+  // ─── Fasteners ───
+  if (["bolt", "screw", "nut"].includes(cType)) {
+    return { type: "insert", fromFace: "bottom", toFace: "top", modification: `Fastener through ${pType}` };
+  }
+
+  // ─── Plate on box/chassis ───
+  if (cType === "plate" && (pType === "box" || pType === "chassis")) {
+    return { type: "stack", fromFace: "bottom", toFace: "top", modification: "Plate flush on top surface" };
+  }
+
+  // ─── Box + Cylinder ───
+  if (pType === "box" && cType === "cylinder") {
+    return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Cylinder seated on box top" };
+  }
+  if (pType === "cylinder" && cType === "box") {
+    return { type: "mate", fromFace: "top", toFace: "bottom", modification: "Box as base plate for cylinder" };
+  }
+
+  // ─── Box + Box → Stack ───
+  if (pType === "box" && cType === "box") {
     return { type: "stack", fromFace: "bottom", toFace: "top", modification: "Stacked and aligned" };
   }
 
-  // Default: stack on top
+  // ─── Rocket parts ───
+  if (["nosecone", "bodytube", "ebay", "coupler", "fin", "bulkhead", "motortube"].includes(cType)) {
+    return { type: "stack", fromFace: "bottom", toFace: "top", modification: `Rocket section stacked: ${cType}` };
+  }
+
+  // ─── Drone parts ───
+  if (cType === "dronearm") {
+    return { type: "mate", fromFace: "back", toFace: "front", modification: "Arm attached to frame slot" };
+  }
+  if (cType === "propeller" || cType === "propguard") {
+    return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Prop mounted on motor shaft" };
+  }
+  if (cType === "brushlessmotor") {
+    return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Motor bolted to arm tip" };
+  }
+
+  // ─── Wing/fuselage ───
+  if (cType === "wing") {
+    return { type: "mate", fromFace: "right", toFace: "left", modification: "Wing root attached to fuselage" };
+  }
+  if (cType === "enginebell") {
+    return { type: "mate", fromFace: "top", toFace: "bottom", modification: "Engine mounted at aft" };
+  }
+
+  // ─── Default: stack on top ───
   return { type: "mate", fromFace: "bottom", toFace: "top", modification: "Mated to adjacent face" };
 }
 
@@ -584,10 +676,45 @@ function validateAssembly(
     return executeAssembly(originalModels);
   }
 
-  // Build connectivity graph to detect floating parts
   const tolerance = 0.3;
 
+  // Helper: check if two positioned parts touch
+  function partsTouch(pi: any, pj: any, origI: PartModel, origJ: PartModel): boolean {
+    const sizeI = getPartSize({ ...origI, scale: pi.new_scale || origI.scale });
+    const posI = pi.new_position || [0, 0, 0];
+    const sizeJ = getPartSize({ ...origJ, scale: pj.new_scale || origJ.scale });
+    const posJ = pj.new_position || [0, 0, 0];
+    return [0, 1, 2].every(axis => {
+      const minI = posI[axis] - sizeI[axis] / 2;
+      const maxI = posI[axis] + sizeI[axis] / 2;
+      const minJ = posJ[axis] - sizeJ[axis] / 2;
+      const maxJ = posJ[axis] + sizeJ[axis] / 2;
+      return maxI + tolerance >= minJ && maxJ + tolerance >= minI;
+    });
+  }
+
+  // Build connectivity graph via BFS
+  const visited = new Set<number>();
+  const queue = [0];
+  visited.add(0);
+  while (queue.length > 0) {
+    const idx = queue.shift()!;
+    for (let j = 0; j < plan.parts.length; j++) {
+      if (visited.has(j)) continue;
+      const origI = originalModels.find(m => m.id === plan.parts[idx].id);
+      const origJ = originalModels.find(m => m.id === plan.parts[j].id);
+      if (!origI || !origJ) continue;
+      if (partsTouch(plan.parts[idx], plan.parts[j], origI, origJ)) {
+        visited.add(j);
+        queue.push(j);
+      }
+    }
+  }
+
+  // Fix any floating parts
   for (let i = 0; i < plan.parts.length; i++) {
+    if (visited.has(i)) continue;
+
     const pi = plan.parts[i];
     const origI = originalModels.find(m => m.id === pi.id);
     if (!origI) continue;
@@ -595,52 +722,66 @@ function validateAssembly(
     const sizeI = getPartSize({ ...origI, scale: pi.new_scale || origI.scale });
     const posI = pi.new_position || [0, 0, 0];
 
-    let connected = false;
-    for (let j = 0; j < plan.parts.length; j++) {
-      if (i === j) continue;
+    // Find nearest connected part
+    let bestJ = 0;
+    let bestDist = Infinity;
+    for (const j of visited) {
       const pj = plan.parts[j];
-      const origJ = originalModels.find(m => m.id === pj.id);
-      if (!origJ) continue;
-
-      const sizeJ = getPartSize({ ...origJ, scale: pj.new_scale || origJ.scale });
       const posJ = pj.new_position || [0, 0, 0];
-
-      // Check if bounding boxes touch or overlap (within tolerance)
-      const touching = [0, 1, 2].every(axis => {
-        const minI = posI[axis] - sizeI[axis] / 2;
-        const maxI = posI[axis] + sizeI[axis] / 2;
-        const minJ = posJ[axis] - sizeJ[axis] / 2;
-        const maxJ = posJ[axis] + sizeJ[axis] / 2;
-        return maxI + tolerance >= minJ && maxJ + tolerance >= minI;
-      });
-
-      if (touching) { connected = true; break; }
+      const dist = Math.sqrt(
+        (posI[0] - posJ[0]) ** 2 + (posI[1] - posJ[1]) ** 2 + (posI[2] - posJ[2]) ** 2
+      );
+      if (dist < bestDist) { bestDist = dist; bestJ = j; }
     }
 
-    // If floating, snap to nearest part
-    if (!connected && i > 0) {
-      let bestJ = 0;
-      let bestDist = Infinity;
-      for (let j = 0; j < plan.parts.length; j++) {
-        if (i === j) continue;
-        const pj = plan.parts[j];
-        const posJ = pj.new_position || [0, 0, 0];
-        const dist = Math.sqrt(
-          (posI[0] - posJ[0]) ** 2 + (posI[1] - posJ[1]) ** 2 + (posI[2] - posJ[2]) ** 2
-        );
-        if (dist < bestDist) { bestDist = dist; bestJ = j; }
-      }
+    const pj = plan.parts[bestJ];
+    const origJ = originalModels.find(m => m.id === pj.id);
+    if (!origJ) continue;
 
-      // Snap: place this part on top of the nearest part
-      const pj = plan.parts[bestJ];
-      const origJ = originalModels.find(m => m.id === pj.id);
-      if (origJ) {
-        const sizeJ = getPartSize({ ...origJ, scale: pj.new_scale || origJ.scale });
-        const posJ = pj.new_position || [0, 0, 0];
-        pi.new_position = [posJ[0], posJ[1] + sizeJ[1] / 2 + sizeI[1] / 2, posJ[2]];
-        pi.modification = (pi.modification || "") + " [auto-snapped to prevent floating]";
+    const sizeJ = getPartSize({ ...origJ, scale: pj.new_scale || origJ.scale });
+    const posJ = pj.new_position || [0, 0, 0];
+
+    // Determine best snap strategy based on part types
+    const cType = origI.type;
+    const topMountTypes = ["camera", "antenna", "lidar", "transceiver", "solarpanel", "rtg", "proxsensor", "sbc", "imu"];
+    const bottomMountTypes = ["wheel", "track", "knuckle"];
+    const sideMountTypes = ["rocker", "bogie", "dronearm", "bracket", "wing", "motor"];
+
+    if (bottomMountTypes.includes(cType)) {
+      // Place below target
+      pi.new_position = [posJ[0], posJ[1] - sizeJ[1] / 2 - sizeI[1] / 2, posJ[2]];
+      // Preserve X/Z offset if reasonable
+      if (Math.abs(posI[0] - posJ[0]) < sizeJ[0]) pi.new_position[0] = posI[0];
+      if (Math.abs(posI[2] - posJ[2]) < sizeJ[2]) pi.new_position[2] = posI[2];
+    } else if (sideMountTypes.includes(cType)) {
+      // Attach to side
+      const dx = posI[0] - posJ[0];
+      const side = dx >= 0 ? 1 : -1;
+      pi.new_position = [posJ[0] + side * (sizeJ[0] / 2 + sizeI[0] / 2), posJ[1], posJ[2]];
+    } else if (topMountTypes.includes(cType)) {
+      // Place on top
+      pi.new_position = [posI[0], posJ[1] + sizeJ[1] / 2 + sizeI[1] / 2, posI[2]];
+      // Ensure X/Z within parent footprint
+      for (const axis of [0, 2]) {
+        const maxOff = sizeJ[axis] / 2;
+        if (Math.abs(pi.new_position[axis] - posJ[axis]) > maxOff) {
+          pi.new_position[axis] = posJ[axis] + Math.sign(pi.new_position[axis] - posJ[axis]) * maxOff * 0.8;
+        }
+      }
+    } else {
+      // Generic: close all gaps
+      pi.new_position = [...posI];
+      for (let axis = 0; axis < 3; axis++) {
+        const gap = Math.abs(posI[axis] - posJ[axis]) - (sizeJ[axis] / 2 + sizeI[axis] / 2);
+        if (gap > 0.05) {
+          const dir = posI[axis] > posJ[axis] ? 1 : -1;
+          pi.new_position[axis] = posJ[axis] + dir * (sizeJ[axis] / 2 + sizeI[axis] / 2);
+        }
       }
     }
+
+    pi.modification = (pi.modification || "") + " [auto-snapped: no floating parts]";
+    visited.add(i);
   }
 
   return plan;
