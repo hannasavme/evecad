@@ -254,7 +254,7 @@ function SceneCapture({ onSceneReady, onControlsReady }: { onSceneReady: (scene:
   return null;
 }
 
-function Scene({ models, selectedModelId, onSelectModel }: ModelViewerProps) {
+function Scene({ models, selectedModelIds, onSelectModel }: ModelViewerProps) {
   return (
     <>
       <ambientLight intensity={0.6} />
@@ -266,8 +266,8 @@ function Scene({ models, selectedModelId, onSelectModel }: ModelViewerProps) {
         <SceneModelComponent
           key={m.id}
           model={m}
-          isSelected={selectedModelId === m.id}
-          onSelect={() => onSelectModel(m.id)}
+          isSelected={selectedModelIds.has(m.id)}
+          onSelect={(e) => onSelectModel(m.id, e.ctrlKey || e.metaKey || e.shiftKey)}
         />
       ))}
 
