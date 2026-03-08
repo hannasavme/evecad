@@ -376,6 +376,8 @@ const PARAM_DEFS: Record<string, ParamDef[]> = {
     { key: "avionicsSlots", label: "Slots", type: "int", min: 1, max: 8, step: 1, default: 4, hasDimension: false },
   ],
 };
+
+interface PropertiesPanelProps {
   models: SceneModel[];
   onUpdate: (id: string, updates: Partial<SceneModel>) => void;
   onBatchUpdate: (ids: string[], updates: Partial<SceneModel>) => void;
