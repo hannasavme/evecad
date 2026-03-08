@@ -332,13 +332,23 @@ Proportions (real: 1500mm W x 1600mm L x 900mm H total):
 - The body front has 3 rectangular window/panel cutouts on the front face
 - Side panels: 2x box at [±1.5, 1.2, 0] width=0.08, height=1.0, depth=3.0 — structural sides with 2 rectangular windows each
 
-TOP DECK & DOCKING BAYS (signature feature — 4 compartment bays for child rovers):
+TOP DECK & MAGNETIC DOCKING BAYS (signature feature — 4 compartment bays where child rovers magnetically attach):
 - Top deck plate: plate at [0, 1.85, 0] width=3.0, depth=3.2, thickness=0.06
-- Docking bay dividers (cross-shaped): 
-  box at [0, 2.0, 0] width=3.0, height=0.3, depth=0.06 — horizontal divider
-  box at [0, 2.0, 0] width=0.06, height=0.3, depth=3.0 — vertical divider
+- Docking bay dividers (cross-shaped walls forming 4 compartments): 
+  box at [0, 2.0, 0] width=3.0, height=0.3, depth=0.06 — horizontal divider wall
+  box at [0, 2.0, 0] width=0.06, height=0.3, depth=3.0 — vertical divider wall
 - This creates 4 rectangular bays (open-top compartments), each ~1.4 x 1.5 units
-- Bay floor panels: 4x plate inside each compartment at [±0.75, 1.86, ±0.8]
+- Bay floor panels: 4x plate inside each compartment at [±0.75, 1.86, ±0.8] width=1.3, depth=1.4, thickness=0.03
+- MAGNETIC DOCKING PLATES (on floor of each bay — electromagnets that hold child rovers):
+  4x cylinder at [±0.75, 1.87, ±0.8] radius=0.15, height=0.02 color=#3b82f6 (blue magnetic pad)
+  These represent the electromagnetic docking connectors
+- GUIDE RAILS (along bay walls to align child rovers during docking):
+  8x box (2 per bay, along inner walls) at bay edges, width=0.03, height=0.08, depth=1.2 color=#71717a
+  Help child rovers slide into position
+- DOCKING CONNECTORS (data/power transfer pins at center of each bay floor):
+  4x cylinder at [±0.75, 1.88, ±0.8] radius=0.04, height=0.04 color=#fbbf24 (gold connector pins)
+- BAY EDGE BUMPERS (soft-dock alignment bumpers at bay entrance):
+  8x cylinder at bay corners, radius=0.03, height=0.25 color=#52525b
 
 SOLAR PANEL (tilted, on rear-left mast):
 - Solar panel mast: cylinder at [-0.8, 2.6, 1.0] radius=0.05, height=1.0
