@@ -920,7 +920,11 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
 
   // BOM table dimensions
   const bomW = 300;
+  const maxBomRows = 10;
+  const bomDisplayModels = models.slice(0, maxBomRows);
+  const bomDisplayH = showBOMOnPage ? (bomDisplayModels.length + 1) * bomRowH + 4 : 0;
   const bomX = svgWidth - margin - bomW;
+  const bomY = margin + 10;
   const bomY = margin + 10;
 
   // Title block
