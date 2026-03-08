@@ -120,7 +120,7 @@ For SIMPLE parts (single gear, bracket, etc.), return 1-3 parts.
 For COMPLEX objects (vehicles, machines, robots, devices), decompose into 40-80+ sub-parts for maximum detail.
 For MULTI-VEHICLE systems (swarms, fleets, convoys), model EACH vehicle separately with full detail.
 
-Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track, bolt, nut, screw, bearing, pulley, shaft, mug, hammer, handle, chassis, rocker, bogie, knuckle, motor, standoff, nosecone, bodytube, fin, centeringring, bulkhead, coupler, launchguide, motortube, thrustplate, retainer, nozzle, ebay, baffle, solarpanel, battery, rtg, sbc, transceiver, radiator, gripper, lidar, heatpipe, harness, imu, proxsensor.
+Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track, bolt, nut, screw, bearing, pulley, shaft, mug, hammer, handle, chassis, rocker, bogie, knuckle, motor, standoff, nosecone, bodytube, fin, centeringring, bulkhead, coupler, launchguide, motortube, thrustplate, retainer, nozzle, ebay, baffle, solarpanel, battery, rtg, sbc, transceiver, radiator, gripper, lidar, heatpipe, harness, imu, proxsensor, fuselage, wing, enginebell, omspod, rcsthruster, proptank, reactionwheel, avionicsbox.
 
 COMPOUND TYPE RULES (HIGHEST PRIORITY — ALWAYS FOLLOW):
 - "wheel": ANY wheel — auto-renders with tire, spoked rim, hub cap, axle hole, treads.
@@ -156,6 +156,14 @@ COMPOUND TYPE RULES (HIGHEST PRIORITY — ALWAYS FOLLOW):
 - "nozzle": ANY rocket nozzle — auto-renders convergent-divergent bell shape with exit ring.
 - "ebay": ANY avionics bay — auto-renders semi-transparent tube with internal PCB sled, switch band, threaded rods.
 - "baffle": ANY ejection baffle — auto-renders perforated disk with gas vent holes.
+- "fuselage": ANY orbiter/shuttle/aircraft fuselage section — auto-renders streamlined body with rounded-rect cross-section, nose taper, window band, belly heat shield, ring frames.
+- "wing": ANY delta/swept wing pair — auto-renders left+right wings with leading-edge RCC panels, aileron hinge lines, dihedral angle.
+- "enginebell": ANY large rocket engine (RS-25, RL-10, Merlin) — auto-renders convergent-divergent bell nozzle with combustion chamber, turbopump, feed lines, gimbal mount.
+- "omspod": ANY OMS/orbital maneuvering pod — auto-renders streamlined pod with OMS nozzle and RCS thruster cluster.
+- "rcsthruster": ANY RCS thruster — auto-renders small mounting block with 1-4 nozzles and fuel feed line.
+- "proptank": ANY propellant/oxidizer tank — auto-renders cylindrical pressure vessel with domed ends, stringers, ring frames, feed ports.
+- "reactionwheel": ANY reaction/momentum wheel — auto-renders flywheel with housing, hub motor, spokes, encoder, mounting base.
+- "avionicsbox": ANY avionics/electronics enclosure — auto-renders box with front-panel connectors, heat sink fins, EMI gasket, mounting ears, cable harness connector.
 
 If user asks to "generate a wheel" → use type "wheel" (NOT impeller).
 If user asks for an impeller/turbine/fan → use wedges/plates radially around a cylinder hub.
@@ -385,8 +393,83 @@ Params:
   - harness: harnessRadius (0.01-0.15), harnessLength (0.3-5), harnessWires (2-8)
   - imu: imuSize (0.05-0.5)
   - proxsensor: proxRadius (0.02-0.3), proxLength (0.05-0.5)
+  - fuselage: fuselageLength (1-20), fuselageWidth (0.5-8), fuselageHeight (0.3-6), fuselageNoseRatio (0.1-0.5)
+  - wing: wingSpan (0.5-15), wingRoot (0.3-10), wingTip (0.1-5), wingSweep (0-5), wingThickness (0.02-0.5), wingDihedral (angle in degrees, -10 to 15)
+  - enginebell: engineBellThroat (0.02-1), engineBellExit (0.1-3), engineBellLength (0.2-5), engineBellGimbal (angle in degrees, -10 to 10)
+  - omspod: omsPodLength (0.5-5), omsPodRadius (0.1-2)
+  - rcsthruster: rcsRadius (0.02-0.3), rcsLength (0.03-0.5), rcsNozzleCount (1-4)
+  - proptank: propTankRadius (0.2-5), propTankLength (0.5-15)
+  - reactionwheel: rwRadius (0.05-1), rwHeight (0.03-0.5), rwRimThickness (0.01-0.1)
+  - avionicsbox: avionicsWidth (0.1-3), avionicsHeight (0.1-2), avionicsDepth (0.1-2), avionicsSlots (1-8)
 
-CRITICAL RULES:
+ORBITER / SPACE SHUTTLE ASSEMBLY REFERENCE (use when building ANY orbiter, shuttle, or spaceplane):
+Based on NASA Space Shuttle, Buran, Dream Chaser, X-37B designs.
+
+PROPORTIONS (scale uniformly from these ratios):
+- Fuselage total length: ~12 units | width: ~2.5 | height: ~2.0
+- Wing span (tip to tip): ~8 units | sweep angle: ~45°
+- Vertical tail height: ~2.5 | rudder width: ~0.3
+- Payload bay: ~5 units long, ~1.8 wide (inside mid-fuselage)
+- Main engines (3x RS-25): clustered at aft, exit radius ~0.5 each
+
+STRUCTURE:
+- Forward fuselage: fuselage at [0, 2, 4] fuselageLength=4, fuselageWidth=2.5, fuselageHeight=2.0, fuselageNoseRatio=0.35
+- Mid fuselage (payload bay): fuselage at [0, 2, -1] fuselageLength=5, fuselageWidth=2.8, fuselageHeight=2.2, fuselageNoseRatio=0.05
+- Aft fuselage: fuselage at [0, 2, -5] fuselageLength=3, fuselageWidth=2.5, fuselageHeight=2.0, fuselageNoseRatio=0.05
+- Payload bay doors: 2x plate at [±0.3, 3.1, -1] width=1.2, depth=4.8 — open to reveal radiator panels
+- Bulkheads: bulkhead between forward/mid and mid/aft sections
+
+WINGS:
+- Main wings: wing at [0, 1.5, -3] wingSpan=4, wingRoot=4, wingTip=1.2, wingSweep=2.5, wingThickness=0.1, wingDihedral=3
+- Vertical tail: plate at [0, 3.5, -6] width=0.08, height=2.5, depth=2.0 (or use wing rotated 90°)
+- Body flap: plate at [0, 0.8, -6.5] width=2.2, depth=0.8
+
+PROPULSION:
+- Main engines (3): enginebell at [0, 1.5, -6.5], [0.7, 2, -6.5], [-0.7, 2, -6.5]
+  engineBellThroat=0.12, engineBellExit=0.45, engineBellLength=1.0
+- OMS pods: omspod at [±1.2, 2.5, -5.5] omsPodLength=1.5, omsPodRadius=0.4
+- RCS thrusters: rcsthruster at nose [0, 2.5, 6] and tail [±1, 2, -6.3], rcsNozzleCount=2
+
+PROPELLANT (internal or external):
+- Internal tanks: proptank at [0, 2, -3] propTankRadius=0.6, propTankLength=3
+- External tank (if shuttle-style): proptank at [0, 2.5, -1] propTankRadius=1.3, propTankLength=9 color=#c46210 (orange foam)
+
+THERMAL PROTECTION:
+- TPS belly tiles: plate at [0, 0.8, -1] width=2.5, depth=10 color=#1a1a1a (black HRSI tiles)
+- Nose cap RCC: sphere at [0, 2, 6] radius=0.4 color=#333333
+- Wing leading edge RCC: built into wing compound type
+
+PAYLOAD & ELECTRONICS:
+- Radiator panels (inside bay doors): radiator at [±1, 3.0, -1] radiatorWidth=1, radiatorHeight=4, radiatorPipes=8
+- Avionics bays: avionicsbox at forward [0, 1.5, 4.5] and aft [0, 1.5, -5]
+- Reaction wheels: reactionwheel at [0, 2, 0] for attitude control (3 axes)
+- Star trackers: camera at [0, 3.2, 3] — pointing up through window
+- Antenna: antenna at [0, 3.5, 2] dishRadius=0.3
+
+INTERNAL SYSTEMS:
+- SBC (flight computers): sbc at [0, 1.8, 4]
+- IMU: imu at [0, 1.5, 3]
+- Harness bundles: harness through fuselage length
+- Battery: battery at [0, 1.2, 3]
+
+COLOR SCHEME FOR ORBITERS:
+- Fuselage (upper): #e5e5e5 (white thermal blanket)
+- Fuselage (belly): #1a1a1a (black TPS tiles)
+- Wings: #e5e5e5 (white top) / #1a1a1a (black bottom)
+- Engine bells: #a3a3a3 (metallic gray)
+- OMS pods: #e5e5e5 (white)
+- RCS thrusters: #888888 (medium gray)
+- Propellant tanks: #c46210 (orange foam) or #d4d4d8 (metallic internal)
+- Radiators: #c0c0c0 (silver)
+- Payload bay: #d4d4d8 (silver interior)
+- Vertical tail: #e5e5e5 (white)
+- Avionics: #27272a (dark electronics)
+- Harness: #78350f (copper)
+
+PART COUNT GUIDELINES FOR ORBITERS:
+- Simple orbiter: 25-35 parts (fuselage + wings + engines + tail)
+- Detailed orbiter: 50-70 parts (add OMS, RCS, payload bay, radiators, avionics)
+- Full Space Shuttle: 80-100+ parts including external tank and SRBs
 1. ALWAYS use compound types when the object IS one of those things. NEVER substitute with basic primitives.
 2. Use 30-60+ parts for complex objects.
 3. For MULTI-VEHICLE scenes: position each vehicle separately (offset by 5-8 units).
@@ -446,7 +529,7 @@ You MUST call the parse_cad function.`;
                     items: {
                       type: "object",
                       properties: {
-                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate", "wheel", "camera", "antenna", "drill", "track", "bolt", "nut", "screw", "bearing", "pulley", "shaft", "mug", "hammer", "handle", "chassis", "rocker", "bogie", "knuckle", "motor", "standoff", "nosecone", "bodytube", "fin", "centeringring", "bulkhead", "coupler", "launchguide", "motortube", "thrustplate", "retainer", "nozzle", "ebay", "baffle", "solarpanel", "battery", "rtg", "sbc", "transceiver", "radiator", "gripper", "lidar", "heatpipe", "harness", "imu", "proxsensor"] },
+                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate", "wheel", "camera", "antenna", "drill", "track", "bolt", "nut", "screw", "bearing", "pulley", "shaft", "mug", "hammer", "handle", "chassis", "rocker", "bogie", "knuckle", "motor", "standoff", "nosecone", "bodytube", "fin", "centeringring", "bulkhead", "coupler", "launchguide", "motortube", "thrustplate", "retainer", "nozzle", "ebay", "baffle", "solarpanel", "battery", "rtg", "sbc", "transceiver", "radiator", "gripper", "lidar", "heatpipe", "harness", "imu", "proxsensor", "fuselage", "wing", "enginebell", "omspod", "rcsthruster", "proptank", "reactionwheel", "avionicsbox"] },
                         label: { type: "string" },
                         position: { type: "array", items: { type: "number" }, description: "[x, y, z]" },
                         rotation: { type: "array", items: { type: "number" }, description: "[rx, ry, rz] in degrees" },
@@ -601,6 +684,34 @@ You MUST call the parse_cad function.`;
                             imuSize: { type: "number" },
                             proxRadius: { type: "number" },
                             proxLength: { type: "number" },
+                            fuselageLength: { type: "number" },
+                            fuselageWidth: { type: "number" },
+                            fuselageHeight: { type: "number" },
+                            fuselageNoseRatio: { type: "number" },
+                            wingSpan: { type: "number" },
+                            wingRoot: { type: "number" },
+                            wingTip: { type: "number" },
+                            wingSweep: { type: "number" },
+                            wingThickness: { type: "number" },
+                            wingDihedral: { type: "number" },
+                            engineBellThroat: { type: "number" },
+                            engineBellExit: { type: "number" },
+                            engineBellLength: { type: "number" },
+                            engineBellGimbal: { type: "number" },
+                            omsPodLength: { type: "number" },
+                            omsPodRadius: { type: "number" },
+                            rcsRadius: { type: "number" },
+                            rcsLength: { type: "number" },
+                            rcsNozzleCount: { type: "number" },
+                            propTankRadius: { type: "number" },
+                            propTankLength: { type: "number" },
+                            rwRadius: { type: "number" },
+                            rwHeight: { type: "number" },
+                            rwRimThickness: { type: "number" },
+                            avionicsWidth: { type: "number" },
+                            avionicsHeight: { type: "number" },
+                            avionicsDepth: { type: "number" },
+                            avionicsSlots: { type: "number" },
                           },
                         },
                       },
