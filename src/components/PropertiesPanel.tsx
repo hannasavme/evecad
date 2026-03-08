@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Scaling, Palette, X, Settings2, ToggleLeft, ToggleRight } from "lucide-react";
+import { Scaling, Palette, X, Settings2, Ruler } from "lucide-react";
 import type { SceneModel, ModelParams } from "@/components/ModelViewer";
 
 const KAWAII_COLORS = [
@@ -17,42 +18,66 @@ const KAWAII_COLORS = [
   { name: "Cream", hex: "#fef3c7" },
 ];
 
+type Unit = "mm" | "cm" | "m" | "in" | "ft";
+const UNITS: { value: Unit; label: string }[] = [
+  { value: "mm", label: "mm" },
+  { value: "cm", label: "cm" },
+  { value: "m", label: "m" },
+  { value: "in", label: "in" },
+  { value: "ft", label: "ft" },
+];
+
+// Conversion factors to internal units (1 internal unit = 1 cm)
+const TO_INTERNAL: Record<Unit, number> = {
+  mm: 0.1,
+  cm: 1,
+  m: 100,
+  in: 2.54,
+  ft: 30.48,
+};
+
+function toDisplay(internal: number, unit: Unit): number {
+  return parseFloat((internal / TO_INTERNAL[unit]).toFixed(4));
+}
+
+function toInternal(display: number, unit: Unit): number {
+  return display * TO_INTERNAL[unit];
+}
+
 interface ParamDef {
   key: keyof ModelParams;
   label: string;
-  type: "slider" | "toggle" | "int";
+  type: "number" | "int";
   min?: number;
   max?: number;
   step?: number;
-  default: number | boolean;
+  default: number;
+  hasDimension: boolean; // whether this uses the unit system
 }
 
 const PARAM_DEFS: Record<string, ParamDef[]> = {
   gear: [
-    { key: "teeth", label: "Teeth", type: "int", min: 6, max: 40, step: 1, default: 16 },
-    { key: "holeDiameter", label: "Hole size", type: "slider", min: 0, max: 0.8, step: 0.05, default: 0.35 },
-    { key: "thickness", label: "Thickness", type: "slider", min: 0.1, max: 1.5, step: 0.05, default: 0.4 },
+    { key: "teeth", label: "Teeth", type: "int", min: 4, max: 80, step: 1, default: 16, hasDimension: false },
+    { key: "holeDiameter", label: "Hole ⌀", type: "number", min: 0, max: 2, step: 0.01, default: 0.35, hasDimension: true },
+    { key: "thickness", label: "Thickness", type: "number", min: 0.05, max: 3, step: 0.01, default: 0.4, hasDimension: true },
   ],
   bracket: [
-    { key: "armLength", label: "Arm length", type: "slider", min: 0.3, max: 3.0, step: 0.1, default: 1.0 },
-    { key: "thickness", label: "Thickness", type: "slider", min: 0.05, max: 0.8, step: 0.05, default: 0.2 },
-    { key: "width", label: "Width", type: "slider", min: 0.3, max: 2.0, step: 0.1, default: 0.8 },
-    { key: "hasHoles", label: "Bolt holes", type: "toggle", default: false },
+    { key: "armLength", label: "Arm len.", type: "number", min: 0.1, max: 5, step: 0.1, default: 1.0, hasDimension: true },
+    { key: "thickness", label: "Thickness", type: "number", min: 0.02, max: 1, step: 0.01, default: 0.2, hasDimension: true },
+    { key: "width", label: "Width", type: "number", min: 0.1, max: 4, step: 0.1, default: 0.8, hasDimension: true },
   ],
   box: [
-    { key: "width", label: "Width", type: "slider", min: 0.3, max: 4.0, step: 0.1, default: 1.2 },
-    { key: "height", label: "Height", type: "slider", min: 0.3, max: 4.0, step: 0.1, default: 1.2 },
-    { key: "depth", label: "Depth", type: "slider", min: 0.3, max: 4.0, step: 0.1, default: 1.2 },
-    { key: "slots", label: "Vent slots", type: "int", min: 0, max: 10, step: 1, default: 0 },
-    { key: "hollow", label: "Hollow", type: "toggle", default: false },
-    { key: "wallThickness", label: "Wall", type: "slider", min: 0.03, max: 0.4, step: 0.01, default: 0.1 },
+    { key: "width", label: "Width", type: "number", min: 0.1, max: 10, step: 0.1, default: 1.2, hasDimension: true },
+    { key: "height", label: "Height", type: "number", min: 0.1, max: 10, step: 0.1, default: 1.2, hasDimension: true },
+    { key: "depth", label: "Depth", type: "number", min: 0.1, max: 10, step: 0.1, default: 1.2, hasDimension: true },
+    { key: "slots", label: "Vent slots", type: "int", min: 0, max: 20, step: 1, default: 0, hasDimension: false },
+    { key: "wallThickness", label: "Wall", type: "number", min: 0.01, max: 1, step: 0.01, default: 0.1, hasDimension: true },
   ],
   cylinder: [
-    { key: "radius", label: "Radius", type: "slider", min: 0.1, max: 3.0, step: 0.05, default: 0.8 },
-    { key: "height", label: "Height", type: "slider", min: 0.3, max: 4.0, step: 0.1, default: 1.5 },
-    { key: "hollow", label: "Hollow", type: "toggle", default: false },
-    { key: "wallThickness", label: "Wall", type: "slider", min: 0.03, max: 0.4, step: 0.01, default: 0.15 },
-    { key: "segments", label: "Smoothness", type: "int", min: 8, max: 64, step: 4, default: 32 },
+    { key: "radius", label: "Radius", type: "number", min: 0.05, max: 5, step: 0.05, default: 0.8, hasDimension: true },
+    { key: "height", label: "Height", type: "number", min: 0.1, max: 10, step: 0.1, default: 1.5, hasDimension: true },
+    { key: "wallThickness", label: "Wall", type: "number", min: 0.01, max: 1, step: 0.01, default: 0.15, hasDimension: true },
+    { key: "segments", label: "Smoothness", type: "int", min: 8, max: 64, step: 1, default: 32, hasDimension: false },
   ],
 };
 
@@ -63,6 +88,8 @@ interface PropertiesPanelProps {
 }
 
 export default function PropertiesPanel({ model, onUpdate, onClose }: PropertiesPanelProps) {
+  const [unit, setUnit] = useState<Unit>("cm");
+
   const handleScaleChange = (axis: 0 | 1 | 2, value: number) => {
     const newScale: [number, number, number] = [...model.scale];
     newScale[axis] = value;
@@ -73,7 +100,7 @@ export default function PropertiesPanel({ model, onUpdate, onClose }: Properties
     onUpdate(model.id, { scale: [value, value, value] });
   };
 
-  const handleParamChange = (key: keyof ModelParams, value: number | boolean | string) => {
+  const handleParamChange = (key: keyof ModelParams, value: number) => {
     onUpdate(model.id, {
       params: { ...(model.params || {}), [key]: value },
     });
@@ -98,6 +125,27 @@ export default function PropertiesPanel({ model, onUpdate, onClose }: Properties
           </button>
         </div>
 
+        {/* Unit selector */}
+        <div className="flex items-center gap-2">
+          <Ruler className="w-3 h-3 text-muted-foreground" />
+          <span className="text-[10px] font-bold text-muted-foreground uppercase">Unit</span>
+          <div className="flex gap-0.5 ml-auto">
+            {UNITS.map((u) => (
+              <button
+                key={u.value}
+                onClick={() => setUnit(u.value)}
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-lg transition-all ${
+                  unit === u.value
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                {u.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Geometry / Dimensions */}
         {paramDefs.length > 0 && (
           <div className="space-y-2">
@@ -106,36 +154,27 @@ export default function PropertiesPanel({ model, onUpdate, onClose }: Properties
             </label>
             <div className="space-y-1.5">
               {paramDefs.map((p) => {
-                const val = model.params?.[p.key] ?? p.default;
-
-                if (p.type === "toggle") {
-                  return (
-                    <div key={p.key} className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-muted-foreground">{p.label}</span>
-                      <button
-                        onClick={() => handleParamChange(p.key, !val)}
-                        className="text-primary"
-                      >
-                        {val ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5 text-muted-foreground" />}
-                      </button>
-                    </div>
-                  );
-                }
+                const rawVal = (model.params?.[p.key] as number) ?? p.default;
+                const displayVal = p.hasDimension ? toDisplay(rawVal, unit) : rawVal;
 
                 return (
                   <div key={p.key} className="flex items-center gap-2">
                     <span className="text-[10px] font-bold text-muted-foreground w-16 shrink-0">{p.label}</span>
                     <input
-                      type="range"
-                      min={p.min}
-                      max={p.max}
-                      step={p.step}
-                      value={val as number}
-                      onChange={(e) => handleParamChange(p.key, p.type === "int" ? parseInt(e.target.value) : parseFloat(e.target.value))}
-                      className="flex-1 h-1.5 rounded-full appearance-none bg-muted accent-primary"
+                      type="number"
+                      min={p.hasDimension ? toDisplay(p.min ?? 0, unit) : p.min}
+                      max={p.hasDimension ? toDisplay(p.max ?? 100, unit) : p.max}
+                      step={p.type === "int" ? 1 : (p.hasDimension ? toDisplay(p.step ?? 0.1, unit) || 0.01 : p.step)}
+                      value={p.type === "int" ? displayVal : parseFloat(displayVal.toFixed(3))}
+                      onChange={(e) => {
+                        const v = p.type === "int" ? parseInt(e.target.value) : parseFloat(e.target.value);
+                        if (isNaN(v)) return;
+                        handleParamChange(p.key, p.hasDimension ? toInternal(v, unit) : v);
+                      }}
+                      className="flex-1 h-7 rounded-lg bg-muted border border-border text-xs font-bold text-foreground text-center px-2 focus:border-primary focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
-                    <span className="text-[10px] font-bold text-foreground w-8 text-right">
-                      {p.type === "int" ? val : (val as number).toFixed(2)}
+                    <span className="text-[10px] font-bold text-muted-foreground w-6 text-right">
+                      {p.hasDimension ? unit : ""}
                     </span>
                   </div>
                 );
