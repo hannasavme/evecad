@@ -18,7 +18,7 @@ interface CadDrawingPanelProps {
   onClose: () => void;
 }
 
-type ViewType = "front" | "top" | "side" | "isometric";
+type ViewType = "front" | "top" | "side" | "isometric" | "perspective" | "dimetric" | "trimetric";
 
 // ─── Shape profile data for each primitive type ──────────
 
@@ -190,6 +190,210 @@ function getIsometricView(type: string, pw: number, ph: number, pd: number, cx: 
     );
   }
   return isometricBox(cx, cy, pw, ph, pd);
+}
+
+// ─── Dimetric projection helpers (unequal foreshortening) ──────────
+
+function dimetricProject(cx: number, cy: number, x: number, y: number, z: number) {
+  // Dimetric: 7° and 42° axes, x foreshortened to ~0.5
+  const cosA = Math.cos(Math.PI / 26); // ~7°
+  const sinA = Math.sin(Math.PI / 26);
+  const cosB = Math.cos(Math.PI / 4.3); // ~42°
+  const sinB = Math.sin(Math.PI / 4.3);
+  return {
+    x: cx + x * cosA * 0.5 - z * cosB,
+    y: cy - y + x * sinA * 0.5 + z * sinB,
+  };
+}
+
+function dimetricBox(cx: number, cy: number, w: number, h: number, d: number) {
+  const hw = w / 2, hh = h / 2, hd = d / 2;
+  const p = (x: number, y: number, z: number) => dimetricProject(cx, cy, x, y, z);
+  const fbl = p(-hw, -hh, -hd), fbr = p(hw, -hh, -hd), ftl = p(-hw, hh, -hd), ftr = p(hw, hh, -hd);
+  const bbl = p(-hw, -hh, hd), bbr = p(hw, -hh, hd), btl = p(-hw, hh, hd), btr = p(hw, hh, hd);
+  return (
+    <>
+      <polygon points={`${fbl.x},${fbl.y} ${fbr.x},${fbr.y} ${ftr.x},${ftr.y} ${ftl.x},${ftl.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <polygon points={`${ftl.x},${ftl.y} ${ftr.x},${ftr.y} ${btr.x},${btr.y} ${btl.x},${btl.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.2} />
+      <polygon points={`${fbr.x},${fbr.y} ${bbr.x},${bbr.y} ${btr.x},${btr.y} ${ftr.x},${ftr.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.2} />
+      <line x1={bbl.x} y1={bbl.y} x2={bbr.x} y2={bbr.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={bbl.x} y1={bbl.y} x2={btl.x} y2={btl.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={bbl.x} y1={bbl.y} x2={fbl.x} y2={fbl.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+    </>
+  );
+}
+
+function dimetricCylinder(cx: number, cy: number, w: number, h: number) {
+  const r = w / 2;
+  const hh = h / 2;
+  const ry = r * 0.25;
+  return (
+    <>
+      <ellipse cx={cx} cy={cy - hh} rx={r} ry={ry} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <path d={`M${cx - r},${cy + hh} A${r},${ry} 0 0,0 ${cx + r},${cy + hh}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <path d={`M${cx - r},${cy + hh} A${r},${ry} 0 0,1 ${cx + r},${cy + hh}`} fill="none" stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={cx - r} y1={cy - hh} x2={cx - r} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+      <line x1={cx + r} y1={cy - hh} x2={cx + r} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+      {centerLines(cx, cy, r, hh + ry)}
+    </>
+  );
+}
+
+function getDimetricView(type: string, pw: number, ph: number, pd: number, cx: number, cy: number): JSX.Element {
+  const roundTypes = ["cylinder", "tube", "shaft", "drill"];
+  const sphereTypes = ["sphere"];
+  const discTypes = ["gear", "bearing", "pulley", "wheel"];
+  if (roundTypes.includes(type)) return dimetricCylinder(cx, cy, pw, ph);
+  if (sphereTypes.includes(type)) return isometricSphere(cx, cy, pw / 2); // sphere looks same
+  if (discTypes.includes(type)) return dimetricCylinder(cx, cy, pw, pd);
+  return dimetricBox(cx, cy, pw, ph, pd);
+}
+
+// ─── Trimetric projection helpers (all axes different) ──────────
+
+function trimetricProject(cx: number, cy: number, x: number, y: number, z: number) {
+  // Trimetric: ~15° and ~35° axes
+  const cosA = Math.cos(Math.PI / 12);  // 15°
+  const sinA = Math.sin(Math.PI / 12);
+  const cosB = Math.cos(Math.PI / 5.1); // ~35°
+  const sinB = Math.sin(Math.PI / 5.1);
+  return {
+    x: cx + x * cosA - z * cosB * 0.7,
+    y: cy - y + x * sinA + z * sinB * 0.7,
+  };
+}
+
+function trimetricBox(cx: number, cy: number, w: number, h: number, d: number) {
+  const hw = w / 2, hh = h / 2, hd = d / 2;
+  const p = (x: number, y: number, z: number) => trimetricProject(cx, cy, x, y, z);
+  const fbl = p(-hw, -hh, -hd), fbr = p(hw, -hh, -hd), ftl = p(-hw, hh, -hd), ftr = p(hw, hh, -hd);
+  const bbl = p(-hw, -hh, hd), bbr = p(hw, -hh, hd), btl = p(-hw, hh, hd), btr = p(hw, hh, hd);
+  return (
+    <>
+      <polygon points={`${fbl.x},${fbl.y} ${fbr.x},${fbr.y} ${ftr.x},${ftr.y} ${ftl.x},${ftl.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <polygon points={`${ftl.x},${ftl.y} ${ftr.x},${ftr.y} ${btr.x},${btr.y} ${btl.x},${btl.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.2} />
+      <polygon points={`${fbr.x},${fbr.y} ${bbr.x},${bbr.y} ${btr.x},${btr.y} ${ftr.x},${ftr.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.2} />
+      <line x1={bbl.x} y1={bbl.y} x2={bbr.x} y2={bbr.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={bbl.x} y1={bbl.y} x2={btl.x} y2={btl.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={bbl.x} y1={bbl.y} x2={fbl.x} y2={fbl.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+    </>
+  );
+}
+
+function trimetricCylinder(cx: number, cy: number, w: number, h: number) {
+  const r = w / 2;
+  const hh = h / 2;
+  const ry = r * 0.3;
+  return (
+    <>
+      <ellipse cx={cx - r * 0.1} cy={cy - hh} rx={r} ry={ry} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <path d={`M${cx - r * 1.1},${cy + hh} A${r},${ry} 0 0,0 ${cx + r * 0.9},${cy + hh}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <path d={`M${cx - r * 1.1},${cy + hh} A${r},${ry} 0 0,1 ${cx + r * 0.9},${cy + hh}`} fill="none" stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={cx - r * 1.1} y1={cy - hh} x2={cx - r * 1.1} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+      <line x1={cx + r * 0.9} y1={cy - hh} x2={cx + r * 0.9} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+      {centerLines(cx, cy, r * 1.1, hh + ry)}
+    </>
+  );
+}
+
+function getTrimetricView(type: string, pw: number, ph: number, pd: number, cx: number, cy: number): JSX.Element {
+  const roundTypes = ["cylinder", "tube", "shaft", "drill"];
+  const sphereTypes = ["sphere"];
+  const discTypes = ["gear", "bearing", "pulley", "wheel"];
+  if (roundTypes.includes(type)) return trimetricCylinder(cx, cy, pw, ph);
+  if (sphereTypes.includes(type)) return isometricSphere(cx, cy, pw / 2);
+  if (discTypes.includes(type)) return trimetricCylinder(cx, cy, pw, pd);
+  return trimetricBox(cx, cy, pw, ph, pd);
+}
+
+// ─── Perspective projection helpers (1-point perspective) ──────────
+
+function perspectiveProject(cx: number, cy: number, x: number, y: number, z: number, focalLength: number = 300) {
+  const d = focalLength / (focalLength + z);
+  return {
+    x: cx + x * d,
+    y: cy - y * d,
+  };
+}
+
+function perspectiveBox(cx: number, cy: number, w: number, h: number, d: number) {
+  const hw = w / 2, hh = h / 2, hd = d / 2;
+  const fl = 250;
+  const p = (x: number, y: number, z: number) => perspectiveProject(cx, cy, x, y, z, fl);
+  const fbl = p(-hw, -hh, -hd), fbr = p(hw, -hh, -hd), ftl = p(-hw, hh, -hd), ftr = p(hw, hh, -hd);
+  const bbl = p(-hw, -hh, hd), bbr = p(hw, -hh, hd), btl = p(-hw, hh, hd), btr = p(hw, hh, hd);
+  return (
+    <>
+      {/* Front face */}
+      <polygon points={`${fbl.x},${fbl.y} ${fbr.x},${fbr.y} ${ftr.x},${ftr.y} ${ftl.x},${ftl.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      {/* Top face */}
+      <polygon points={`${ftl.x},${ftl.y} ${ftr.x},${ftr.y} ${btr.x},${btr.y} ${btl.x},${btl.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.0} />
+      {/* Right face */}
+      <polygon points={`${fbr.x},${fbr.y} ${bbr.x},${bbr.y} ${btr.x},${btr.y} ${ftr.x},${ftr.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.0} />
+      {/* Hidden edges */}
+      <line x1={bbl.x} y1={bbl.y} x2={bbr.x} y2={bbr.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={bbl.x} y1={bbl.y} x2={btl.x} y2={btl.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={bbl.x} y1={bbl.y} x2={fbl.x} y2={fbl.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+    </>
+  );
+}
+
+function perspectiveCylinder(cx: number, cy: number, w: number, h: number) {
+  const r = w / 2;
+  const hh = h / 2;
+  // Front ellipse is larger (closer), back is smaller (farther)
+  const frontScale = 250 / (250 - hh * 0.4);
+  const backScale = 250 / (250 + hh * 0.4);
+  const frontR = r * Math.min(frontScale, 1.15);
+  const backR = r * Math.max(backScale, 0.75);
+  const frontRy = frontR * 0.35;
+  const backRy = backR * 0.35;
+  return (
+    <>
+      <ellipse cx={cx} cy={cy - hh} rx={backR} ry={backRy} fill="none" stroke={LINE_COLOR} strokeWidth={1.2} />
+      <path d={`M${cx - frontR},${cy + hh} A${frontR},${frontRy} 0 0,0 ${cx + frontR},${cy + hh}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <path d={`M${cx - frontR},${cy + hh} A${frontR},${frontRy} 0 0,1 ${cx + frontR},${cy + hh}`} fill="none" stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={cx - backR} y1={cy - hh} x2={cx - frontR} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+      <line x1={cx + backR} y1={cy - hh} x2={cx + frontR} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+      {centerLines(cx, cy, frontR, hh + frontRy)}
+    </>
+  );
+}
+
+function perspectiveSphere(cx: number, cy: number, r: number) {
+  return (
+    <>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <ellipse cx={cx} cy={cy + r * 0.05} rx={r * 0.95} ry={r * 0.32} fill="none" stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      {centerLines(cx, cy, r, r)}
+    </>
+  );
+}
+
+function getPerspectiveView(type: string, pw: number, ph: number, pd: number, cx: number, cy: number): JSX.Element {
+  const roundTypes = ["cylinder", "tube", "shaft", "drill"];
+  const sphereTypes = ["sphere"];
+  const discTypes = ["gear", "bearing", "pulley", "wheel"];
+  if (roundTypes.includes(type)) return perspectiveCylinder(cx, cy, pw, ph);
+  if (sphereTypes.includes(type)) return perspectiveSphere(cx, cy, pw / 2);
+  if (discTypes.includes(type)) return perspectiveCylinder(cx, cy, pw, pd);
+  if (type === "cone") {
+    const topR = pw * 0.15;
+    const botR = pw / 2;
+    const hh = ph / 2;
+    const frontScale = Math.min(250 / (250 - hh * 0.3), 1.1);
+    const backScale = Math.max(250 / (250 + hh * 0.3), 0.8);
+    return (
+      <>
+        <ellipse cx={cx} cy={cy - hh} rx={topR * backScale} ry={topR * backScale * 0.35} fill="none" stroke={LINE_COLOR} strokeWidth={1} />
+        <path d={`M${cx - botR * frontScale},${cy + hh} A${botR * frontScale},${botR * frontScale * 0.35} 0 0,0 ${cx + botR * frontScale},${cy + hh}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+        <line x1={cx - topR * backScale} y1={cy - hh} x2={cx - botR * frontScale} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+        <line x1={cx + topR * backScale} y1={cy - hh} x2={cx + botR * frontScale} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+        {centerLines(cx, cy, botR * frontScale, hh + botR * frontScale * 0.35)}
+      </>
+    );
+  }
+  return perspectiveBox(cx, cy, pw, ph, pd);
 }
 
 const PROFILES: Record<string, Partial<ShapeProfile>> = {
@@ -1123,7 +1327,7 @@ function dimStr(val: number) {
   return (val * 25.4).toFixed(1);
 }
 
-function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotation, onMoveAnnotation, titleText, onUpdateTitle, showSection, showBOM, showIsometric, page, partsPerPage, isAssemblyMode }: {
+function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotation, onMoveAnnotation, titleText, onUpdateTitle, showSection, showBOM, showIsometric, showPerspective, showDimetric, showTrimetric, page, partsPerPage, isAssemblyMode }: {
   models: SceneModel[];
   annotations: Annotation[];
   onUpdateAnnotation: (id: string, text: string) => void;
@@ -1131,6 +1335,7 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
   onMoveAnnotation: (id: string, x: number, y: number) => void;
   titleText: string; onUpdateTitle: (t: string) => void;
   showSection: boolean; showBOM: boolean; showIsometric: boolean;
+  showPerspective: boolean; showDimetric: boolean; showTrimetric: boolean;
   page: number; partsPerPage: number;
   isAssemblyMode: boolean;
 }) {
@@ -1529,20 +1734,26 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const fh = dims.h * viewScale;
 
         // View zone widths
-        const numViews = 3 + (showSection ? 1 : 0) + (showIsometric ? 1 : 0);
-        const viewZoneW = (drawAreaW - 20) / Math.min(numViews, showIsometric ? 4 : 3);
+        const extraViewCount = (showSection ? 1 : 0) + (showIsometric ? 1 : 0) + (showPerspective ? 1 : 0) + (showDimetric ? 1 : 0) + (showTrimetric ? 1 : 0);
+        const numViews = 3 + extraViewCount;
+        const viewZoneW = (drawAreaW - 20) / Math.min(numViews, 4);
         const viewZoneH = 180;
 
         // Default positions for each view
+        let colIdx = 0;
         const partDefaults: Record<string, { x: number; y: number }> = {
           [`part-${globalIdx}-front`]: { x: margin + 10, y: partY + 20 },
           [`part-${globalIdx}-side`]: { x: margin + 10 + viewZoneW, y: partY + 20 },
           [`part-${globalIdx}-top`]: { x: margin + 10, y: partY + 20 + viewZoneH + 5 },
-          [`part-${globalIdx}-section`]: { x: margin + 10 + viewZoneW * 2, y: partY + 20 },
-          [`part-${globalIdx}-iso`]: { x: margin + 10 + viewZoneW * (showSection ? 3 : 2), y: partY + 20 },
         };
+        colIdx = 2;
+        if (showSection) { partDefaults[`part-${globalIdx}-section`] = { x: margin + 10 + viewZoneW * colIdx, y: partY + 20 }; colIdx++; }
+        if (showIsometric) { partDefaults[`part-${globalIdx}-iso`] = { x: margin + 10 + viewZoneW * (colIdx % 4), y: partY + 20 + (colIdx >= 4 ? viewZoneH + 5 : 0) }; colIdx++; }
+        if (showPerspective) { partDefaults[`part-${globalIdx}-perspective`] = { x: margin + 10 + viewZoneW * (colIdx % 4), y: partY + 20 + (colIdx >= 4 ? viewZoneH + 5 : 0) }; colIdx++; }
+        if (showDimetric) { partDefaults[`part-${globalIdx}-dimetric`] = { x: margin + 10 + viewZoneW * (colIdx % 4), y: partY + 20 + (colIdx >= 4 ? viewZoneH + 5 : 0) }; colIdx++; }
+        if (showTrimetric) { partDefaults[`part-${globalIdx}-trimetric`] = { x: margin + 10 + viewZoneW * (colIdx % 4), y: partY + 20 + (colIdx >= 4 ? viewZoneH + 5 : 0) }; colIdx++; }
 
-        const getPartViewPos = (key: string) => viewPositions[key] || partDefaults[key];
+        const getPartViewPos = (key: string) => viewPositions[key] || partDefaults[key] || { x: margin + 10, y: partY + 20 };
 
         const partViewRects = (): ViewRect[] => {
           const rects: ViewRect[] = [
@@ -1552,6 +1763,9 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
           ];
           if (showSection) rects.push({ id: `part-${globalIdx}-section`, ...getPartViewPos(`part-${globalIdx}-section`), w: viewZoneW - 10, h: viewZoneH });
           if (showIsometric) rects.push({ id: `part-${globalIdx}-iso`, ...getPartViewPos(`part-${globalIdx}-iso`), w: viewZoneW - 10, h: viewZoneH });
+          if (showPerspective) rects.push({ id: `part-${globalIdx}-perspective`, ...getPartViewPos(`part-${globalIdx}-perspective`), w: viewZoneW - 10, h: viewZoneH });
+          if (showDimetric) rects.push({ id: `part-${globalIdx}-dimetric`, ...getPartViewPos(`part-${globalIdx}-dimetric`), w: viewZoneW - 10, h: viewZoneH });
+          if (showTrimetric) rects.push({ id: `part-${globalIdx}-trimetric`, ...getPartViewPos(`part-${globalIdx}-trimetric`), w: viewZoneW - 10, h: viewZoneH });
           return rects;
         };
 
@@ -1572,6 +1786,9 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const tPos = getPartViewPos(`part-${globalIdx}-top`);
         const secPos = getPartViewPos(`part-${globalIdx}-section`);
         const iPos = getPartViewPos(`part-${globalIdx}-iso`);
+        const perspPos = getPartViewPos(`part-${globalIdx}-perspective`);
+        const dimPos = getPartViewPos(`part-${globalIdx}-dimetric`);
+        const trimPos = getPartViewPos(`part-${globalIdx}-trimetric`);
 
         const vw = viewZoneW - 10;
         const frontCx = fPos.x + vw / 2;
@@ -1584,6 +1801,12 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const sectionCy = secPos.y + viewZoneH / 2 + 10;
         const isoCx = iPos.x + vw / 2;
         const isoCy = iPos.y + viewZoneH / 2 + 10;
+        const perspCx = perspPos.x + vw / 2;
+        const perspCy = perspPos.y + viewZoneH / 2 + 10;
+        const dimCx = dimPos.x + vw / 2;
+        const dimCy = dimPos.y + viewZoneH / 2 + 10;
+        const trimCx = trimPos.x + vw / 2;
+        const trimCy = trimPos.y + viewZoneH / 2 + 10;
 
         return (
           <g key={model.id}>
@@ -1643,7 +1866,33 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
               </DraggableViewPanel>
             )}
 
-            {/* Projection lines */}
+            {/* PERSPECTIVE VIEW */}
+            {showPerspective && (
+              <DraggableViewPanel id={`part-${globalIdx}-perspective`} x={perspPos.x} y={perspPos.y} w={vw} h={viewZoneH} onDragEnd={handlePartViewDrag} label="PERSPECTIVE">
+                <text x={perspCx} y={perspPos.y + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">PERSPECTIVE VIEW</text>
+                <rect x={perspPos.x} y={perspPos.y + 12} width={vw} height={viewZoneH - 15} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" rx={2} />
+                {getPerspectiveView(model.type, dims.w * viewScale, dims.h * viewScale, dims.d * viewScale, perspCx, perspCy)}
+              </DraggableViewPanel>
+            )}
+
+            {/* DIMETRIC VIEW */}
+            {showDimetric && (
+              <DraggableViewPanel id={`part-${globalIdx}-dimetric`} x={dimPos.x} y={dimPos.y} w={vw} h={viewZoneH} onDragEnd={handlePartViewDrag} label="DIMETRIC">
+                <text x={dimCx} y={dimPos.y + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">DIMETRIC VIEW</text>
+                <rect x={dimPos.x} y={dimPos.y + 12} width={vw} height={viewZoneH - 15} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" rx={2} />
+                {getDimetricView(model.type, dims.w * viewScale, dims.h * viewScale, dims.d * viewScale, dimCx, dimCy)}
+              </DraggableViewPanel>
+            )}
+
+            {/* TRIMETRIC VIEW */}
+            {showTrimetric && (
+              <DraggableViewPanel id={`part-${globalIdx}-trimetric`} x={trimPos.x} y={trimPos.y} w={vw} h={viewZoneH} onDragEnd={handlePartViewDrag} label="TRIMETRIC">
+                <text x={trimCx} y={trimPos.y + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">TRIMETRIC VIEW</text>
+                <rect x={trimPos.x} y={trimPos.y + 12} width={vw} height={viewZoneH - 15} fill="none" stroke="#e0e0e0" strokeWidth={0.3} strokeDasharray="4 3" rx={2} />
+                {getTrimetricView(model.type, dims.w * viewScale, dims.h * viewScale, dims.d * viewScale, trimCx, trimCy)}
+              </DraggableViewPanel>
+            )}
+
             <line x1={frontCx + fw / 2 + 10} y1={frontCy} x2={sideCx - dims.d * viewScale / 2 - 10} y2={sideCy} stroke={HIDDEN_COLOR} strokeWidth={0.2} strokeDasharray="4 3" />
             <line x1={frontCx} y1={frontCy + fh / 2 + 10} x2={topCx} y2={topCy - dims.d * viewScale / 2 - 10} stroke={HIDDEN_COLOR} strokeWidth={0.2} strokeDasharray="4 3" />
 
@@ -1671,6 +1920,9 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
   const [titleText, setTitleText] = useState("EveCAD Drawing");
   const [showSection, setShowSection] = useState(true);
   const [showIsometric, setShowIsometric] = useState(false);
+  const [showPerspective, setShowPerspective] = useState(false);
+  const [showDimetric, setShowDimetric] = useState(false);
+  const [showTrimetric, setShowTrimetric] = useState(false);
   const [showBOM, setShowBOM] = useState(true);
   const [visibleIds, setVisibleIds] = useState<Set<string>>(() => new Set(models.map(m => m.id)));
   const [showComponentDropdown, setShowComponentDropdown] = useState(false);
@@ -1814,7 +2066,16 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
               <Crosshair className="w-3 h-3 inline mr-1" />Section
             </button>
             <button onClick={() => setShowIsometric(!showIsometric)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showIsometric ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
-              <Layers className="w-3 h-3 inline mr-1" />Isometric
+              <Layers className="w-3 h-3 inline mr-1" />Iso
+            </button>
+            <button onClick={() => setShowPerspective(!showPerspective)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showPerspective ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+              <Eye className="w-3 h-3 inline mr-1" />Persp
+            </button>
+            <button onClick={() => setShowDimetric(!showDimetric)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showDimetric ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+              <Layers className="w-3 h-3 inline mr-1" />Dimet
+            </button>
+            <button onClick={() => setShowTrimetric(!showTrimetric)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showTrimetric ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+              <Layers className="w-3 h-3 inline mr-1" />Trimet
             </button>
             <button onClick={() => setShowBOM(!showBOM)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showBOM ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
               <List className="w-3 h-3 inline mr-1" />BOM
@@ -1862,6 +2123,9 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
             showSection={showSection}
             showBOM={showBOM}
             showIsometric={showIsometric}
+            showPerspective={showPerspective}
+            showDimetric={showDimetric}
+            showTrimetric={showTrimetric}
             page={drawingPage}
             partsPerPage={PARTS_PER_PAGE}
             isAssemblyMode={isAssemblyMode}
