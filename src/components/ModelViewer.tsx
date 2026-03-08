@@ -1,7 +1,28 @@
-import { Canvas, useThree, useFrame } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, Environment, Float, Grid } from "@react-three/drei";
-import { Suspense, useMemo, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
+import { Suspense, useMemo, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import * as THREE from "three";
+
+export interface ModelParams {
+  // Gear
+  teeth?: number;
+  holeDiameter?: number;
+  thickness?: number;
+  // Bracket
+  armLength?: number;
+  width?: number;
+  hasHoles?: boolean;
+  // Box
+  height?: number;
+  depth?: number;
+  slots?: number;
+  slotDirection?: "x" | "z";
+  hollow?: boolean;
+  wallThickness?: number;
+  // Cylinder
+  radius?: number;
+  segments?: number;
+}
 
 export interface SceneModel {
   id: string;
@@ -10,6 +31,7 @@ export interface SceneModel {
   scale: [number, number, number];
   color: string;
   label: string;
+  params?: ModelParams;
 }
 
 export interface ModelViewerHandle {
@@ -23,10 +45,13 @@ interface ModelViewerProps {
   onSelectModel: (id: string | null) => void;
 }
 
-function GearMesh({ color }: { color: string }) {
+function GearMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const teeth = params?.teeth || 16;
+  const holeDiam = params?.holeDiameter ?? 0.35;
+  const thickness = params?.thickness ?? 0.4;
+
   const geometry = useMemo(() => {
     const shape = new THREE.Shape();
-    const teeth = 16;
     const innerR = 0.9;
     const toothDepth = 0.15;
     for (let i = 0; i < teeth; i++) {
@@ -42,40 +67,151 @@ function GearMesh({ color }: { color: string }) {
       shape.lineTo(Math.cos(m3) * r1, Math.sin(m3) * r1);
       shape.lineTo(Math.cos(nextAngle) * r1, Math.sin(nextAngle) * r1);
     }
-    const hole = new THREE.Path();
-    hole.absellipse(0, 0, 0.35, 0.35, 0, Math.PI * 2, true, 0);
-    shape.holes.push(hole);
-    return new THREE.ExtrudeGeometry(shape, { depth: 0.4, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 3 });
-  }, []);
-  return <mesh geometry={geometry} rotation={[Math.PI / 2, 0, 0]}><meshStandardMaterial color={color} metalness={0.3} roughness={0.4} /></mesh>;
+    if (holeDiam > 0) {
+      const hole = new THREE.Path();
+      hole.absellipse(0, 0, holeDiam, holeDiam, 0, Math.PI * 2, true, 0);
+      shape.holes.push(hole);
+    }
+    return new THREE.ExtrudeGeometry(shape, {
+      depth: thickness,
+      bevelEnabled: true,
+      bevelThickness: 0.03,
+      bevelSize: 0.03,
+      bevelSegments: 3,
+    });
+  }, [teeth, holeDiam, thickness]);
+
+  return (
+    <mesh geometry={geometry} rotation={[Math.PI / 2, 0, 0]}>
+      <meshStandardMaterial color={color} metalness={0.3} roughness={0.4} />
+    </mesh>
+  );
 }
 
-function BracketMesh({ color }: { color: string }) {
+function BracketMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const armLen = params?.armLength ?? 1.0;
+  const thick = params?.thickness ?? 0.2;
+  const w = params?.width ?? 0.8;
+  const hasHoles = params?.hasHoles ?? false;
+  const baseW = armLen * 2;
+
   return (
     <group>
-      <mesh><boxGeometry args={[2, 0.2, 0.8]} /><meshStandardMaterial color={color} metalness={0.3} roughness={0.4} /></mesh>
-      <mesh position={[-0.8, 0.5, 0]}><boxGeometry args={[0.2, 1, 0.8]} /><meshStandardMaterial color={color} metalness={0.3} roughness={0.4} /></mesh>
-      <mesh position={[0.8, 0.5, 0]}><boxGeometry args={[0.2, 1, 0.8]} /><meshStandardMaterial color={color} metalness={0.3} roughness={0.4} /></mesh>
+      {/* Base plate */}
+      <mesh>
+        <boxGeometry args={[baseW, thick, w]} />
+        <meshStandardMaterial color={color} metalness={0.3} roughness={0.4} />
+      </mesh>
+      {/* Left arm */}
+      <mesh position={[-(baseW / 2 - thick / 2), armLen / 2, 0]}>
+        <boxGeometry args={[thick, armLen, w]} />
+        <meshStandardMaterial color={color} metalness={0.3} roughness={0.4} />
+      </mesh>
+      {/* Right arm */}
+      <mesh position={[(baseW / 2 - thick / 2), armLen / 2, 0]}>
+        <boxGeometry args={[thick, armLen, w]} />
+        <meshStandardMaterial color={color} metalness={0.3} roughness={0.4} />
+      </mesh>
+      {/* Mounting holes */}
+      {hasHoles && (
+        <>
+          <mesh position={[-(baseW / 4), thick / 2 + 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.08, 0.08, thick + 0.02, 16]} />
+            <meshStandardMaterial color="#333" metalness={0.5} roughness={0.3} />
+          </mesh>
+          <mesh position={[(baseW / 4), thick / 2 + 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.08, 0.08, thick + 0.02, 16]} />
+            <meshStandardMaterial color="#333" metalness={0.5} roughness={0.3} />
+          </mesh>
+        </>
+      )}
     </group>
   );
 }
 
-function CylinderMesh({ color }: { color: string }) {
+function CylinderMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.radius ?? 0.8;
+  const h = params?.height ?? 1.5;
+  const isHollow = params?.hollow ?? false;
+  const wall = params?.wallThickness ?? 0.15;
+  const seg = params?.segments ?? 32;
+
   return (
     <group>
-      <mesh><cylinderGeometry args={[0.8, 0.8, 1.5, 32]} /><meshStandardMaterial color={color} metalness={0.3} roughness={0.4} /></mesh>
-      <mesh><cylinderGeometry args={[0.3, 0.3, 1.6, 32]} /><meshStandardMaterial color={color} metalness={0.2} roughness={0.5} opacity={0.3} transparent /></mesh>
+      <mesh>
+        <cylinderGeometry args={[r, r, h, seg]} />
+        <meshStandardMaterial color={color} metalness={0.3} roughness={0.4} />
+      </mesh>
+      {isHollow && (
+        <mesh>
+          <cylinderGeometry args={[r - wall, r - wall, h + 0.02, seg]} />
+          <meshStandardMaterial color="#1a1a2e" metalness={0.2} roughness={0.5} />
+        </mesh>
+      )}
     </group>
   );
 }
 
-function BoxMesh({ color }: { color: string }) {
+function BoxMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const w = params?.width ?? 1.2;
+  const h = params?.height ?? 1.2;
+  const d = params?.depth ?? 1.2;
+  const slotCount = params?.slots ?? 0;
+  const slotDir = params?.slotDirection ?? "x";
+  const isHollow = params?.hollow ?? false;
+  const wall = params?.wallThickness ?? 0.1;
+
+  const slotElements = useMemo(() => {
+    if (slotCount <= 0) return null;
+    const slots: JSX.Element[] = [];
+    const slotW = slotDir === "x" ? w * 0.6 : 0.05;
+    const slotD = slotDir === "z" ? d * 0.6 : 0.05;
+    const slotH = 0.06;
+    const spacing = h / (slotCount + 1);
+
+    for (let i = 0; i < slotCount; i++) {
+      const yPos = -h / 2 + spacing * (i + 1);
+      // Front face slots
+      slots.push(
+        <mesh key={`slot-f-${i}`} position={[0, yPos, d / 2 + 0.001]}>
+          <boxGeometry args={[slotW, slotH, 0.05]} />
+          <meshStandardMaterial color="#1a1a2e" metalness={0.1} roughness={0.8} />
+        </mesh>
+      );
+      // Back face slots
+      slots.push(
+        <mesh key={`slot-b-${i}`} position={[0, yPos, -(d / 2 + 0.001)]}>
+          <boxGeometry args={[slotW, slotH, 0.05]} />
+          <meshStandardMaterial color="#1a1a2e" metalness={0.1} roughness={0.8} />
+        </mesh>
+      );
+    }
+    return slots;
+  }, [slotCount, slotDir, w, h, d]);
+
   return (
-    <mesh><boxGeometry args={[1.2, 1.2, 1.2]} /><meshStandardMaterial color={color} metalness={0.2} roughness={0.4} /></mesh>
+    <group>
+      <mesh>
+        <boxGeometry args={[w, h, d]} />
+        <meshStandardMaterial color={color} metalness={0.2} roughness={0.4} />
+      </mesh>
+      {isHollow && (
+        <mesh position={[0, wall, 0]}>
+          <boxGeometry args={[w - wall * 2, h, d - wall * 2]} />
+          <meshStandardMaterial color="#1a1a2e" metalness={0.1} roughness={0.5} />
+        </mesh>
+      )}
+      {slotElements}
+    </group>
   );
 }
 
-const meshMap: Record<string, React.FC<{ color: string }>> = { gear: GearMesh, bracket: BracketMesh, box: BoxMesh, cylinder: CylinderMesh };
+const meshMap: Record<string, React.FC<{ color: string; params?: ModelParams }>> = {
+  gear: GearMesh,
+  bracket: BracketMesh,
+  box: BoxMesh,
+  cylinder: CylinderMesh,
+};
 
 function SceneModelComponent({ model, isSelected, onSelect }: { model: SceneModel; isSelected: boolean; onSelect: () => void }) {
   const groupRef = useRef<THREE.Group>(null);
@@ -88,7 +224,7 @@ function SceneModelComponent({ model, isSelected, onSelect }: { model: SceneMode
       scale={model.scale}
       onClick={(e) => { e.stopPropagation(); onSelect(); }}
     >
-      <MeshComp color={model.color} />
+      <MeshComp color={model.color} params={model.params} />
       {isSelected && (
         <mesh>
           <sphereGeometry args={[2, 16, 16]} />

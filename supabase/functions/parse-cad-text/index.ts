@@ -11,9 +11,11 @@ serve(async (req) => {
   }
 
   try {
-    const { text } = await req.json();
-    if (!text || typeof text !== "string") {
-      return new Response(JSON.stringify({ error: "Missing 'text' field" }), {
+    const body = await req.json();
+    const { text, imageBase64 } = body;
+
+    if (!text && !imageBase64) {
+      return new Response(JSON.stringify({ error: "Missing 'text' or 'imageBase64' field" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -21,10 +23,29 @@ serve(async (req) => {
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      // Fallback: local parsing without AI
       console.warn("LOVABLE_API_KEY not configured, using local parsing");
-      return new Response(JSON.stringify(localParse(text)), {
+      return new Response(JSON.stringify(localParse(text || "box")), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userContent: any[] = [];
+
+    if (imageBase64) {
+      userContent.push({
+        type: "image_url",
+        image_url: { url: imageBase64 },
+      });
+      userContent.push({
+        type: "text",
+        text: text
+          ? `Analyze this image of a mechanical part/sketch AND this description: "${text}". Extract the shape type and geometry parameters.`
+          : "Analyze this image of a mechanical part or engineering sketch. Determine what type of CAD shape it represents and extract geometry parameters.",
+      });
+    } else {
+      userContent.push({
+        type: "text",
+        text: text!,
       });
     }
 
@@ -35,37 +56,70 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: imageBase64 ? "google/gemini-2.5-flash" : "google/gemini-3-flash-preview",
         messages: [
           {
             role: "system",
-            content: `You are a CAD description parser. Given a text description of a 3D part, extract the shape type and a short label.
+            content: `You are a precise CAD geometry parser. Given a description or image of a 3D mechanical part, extract the shape type AND detailed geometry parameters.
+
 Available shape types: gear, bracket, box, cylinder.
-If the description doesn't match any, pick the closest one.
+
+For each type, extract relevant parameters:
+- gear: teeth (number of teeth, default 16), holeDiameter (0-1 range, 0=no hole, default 0.35), thickness (extrusion depth 0.1-1.0, default 0.4)
+- bracket: armLength (0.5-3.0, default 1.0), thickness (0.1-0.5, default 0.2), width (0.3-2.0, default 0.8), hasHoles (boolean, default false)
+- box: width (0.5-3.0, default 1.2), height (0.5-3.0, default 1.2), depth (0.5-3.0, default 1.2), slots (number of ventilation slots 0-8, default 0), slotDirection ("x" or "z", default "x"), hollow (boolean, is it open/hollow, default false), wallThickness (0.05-0.3 if hollow, default 0.1)
+- cylinder: radius (0.2-2.0, default 0.8), height (0.5-3.0, default 1.5), hollow (boolean, is it a pipe/tube, default false), wallThickness (0.05-0.3 if hollow, default 0.15), segments (smoothness 8-64, default 32)
+
+Pay close attention to specifics mentioned: number of teeth, dimensions, whether something has holes/slots/is hollow, etc.
 You MUST call the parse_cad function with your result.`,
           },
-          { role: "user", content: text },
+          ...(Array.isArray(userContent) && userContent.length > 1
+            ? [{ role: "user" as const, content: userContent }]
+            : [{ role: "user" as const, content: userContent[0]?.text || text }]),
         ],
         tools: [
           {
             type: "function",
             function: {
               name: "parse_cad",
-              description: "Return the parsed CAD shape type and label from the description.",
+              description: "Return parsed CAD shape type, label, and geometry parameters.",
               parameters: {
                 type: "object",
                 properties: {
                   type: {
                     type: "string",
                     enum: ["gear", "bracket", "box", "cylinder"],
-                    description: "The shape type that best matches the description",
                   },
                   label: {
                     type: "string",
-                    description: "A short descriptive label for this part (max 30 chars)",
+                    description: "Short descriptive label (max 30 chars)",
+                  },
+                  params: {
+                    type: "object",
+                    description: "Geometry parameters specific to the shape type",
+                    properties: {
+                      // Gear
+                      teeth: { type: "number" },
+                      holeDiameter: { type: "number" },
+                      thickness: { type: "number" },
+                      // Bracket
+                      armLength: { type: "number" },
+                      width: { type: "number" },
+                      hasHoles: { type: "boolean" },
+                      // Box
+                      height: { type: "number" },
+                      depth: { type: "number" },
+                      slots: { type: "number" },
+                      slotDirection: { type: "string", enum: ["x", "z"] },
+                      hollow: { type: "boolean" },
+                      wallThickness: { type: "number" },
+                      // Cylinder
+                      radius: { type: "number" },
+                      segments: { type: "number" },
+                    },
                   },
                 },
-                required: ["type", "label"],
+                required: ["type", "label", "params"],
                 additionalProperties: false,
               },
             },
@@ -92,8 +146,7 @@ You MUST call the parse_cad function with your result.`,
         });
       }
 
-      // Fallback to local parsing
-      return new Response(JSON.stringify(localParse(text)), {
+      return new Response(JSON.stringify(localParse(text || "box")), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -103,13 +156,13 @@ You MUST call the parse_cad function with your result.`,
 
     if (toolCall?.function?.arguments) {
       const parsed = JSON.parse(toolCall.function.arguments);
+      console.log("AI parsed result:", JSON.stringify(parsed));
       return new Response(JSON.stringify(parsed), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Fallback
-    return new Response(JSON.stringify(localParse(text)), {
+    return new Response(JSON.stringify(localParse(text || "box")), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
@@ -121,11 +174,27 @@ You MUST call the parse_cad function with your result.`,
   }
 });
 
-function localParse(text: string): { type: string; label: string } {
+function localParse(text: string): { type: string; label: string; params: Record<string, any> } {
   const t = text.toLowerCase();
   let type = "box";
-  if (t.includes("gear") || t.includes("cog") || t.includes("sprocket")) type = "gear";
-  else if (t.includes("bracket") || t.includes("l-shape") || t.includes("mount")) type = "bracket";
-  else if (t.includes("cylinder") || t.includes("pipe") || t.includes("tube") || t.includes("rod")) type = "cylinder";
-  return { type, label: text.slice(0, 30) };
+  const params: Record<string, any> = {};
+
+  if (t.includes("gear") || t.includes("cog") || t.includes("sprocket")) {
+    type = "gear";
+    const teethMatch = t.match(/(\d+)\s*teeth/);
+    if (teethMatch) params.teeth = parseInt(teethMatch[1]);
+    if (t.includes("hole")) params.holeDiameter = 0.35;
+  } else if (t.includes("bracket") || t.includes("l-shape") || t.includes("mount")) {
+    type = "bracket";
+    if (t.includes("hole")) params.hasHoles = true;
+  } else if (t.includes("cylinder") || t.includes("pipe") || t.includes("tube") || t.includes("rod")) {
+    type = "cylinder";
+    if (t.includes("pipe") || t.includes("tube") || t.includes("hollow")) params.hollow = true;
+  } else {
+    type = "box";
+    if (t.includes("ventilation") || t.includes("slot") || t.includes("vent")) params.slots = 4;
+    if (t.includes("hollow") || t.includes("open")) params.hollow = true;
+  }
+
+  return { type, label: text.slice(0, 30), params };
 }
