@@ -162,21 +162,26 @@ Be EXHAUSTIVE. List every single component that would need to be modeled as a se
 
 CRITICAL: When a paper describes MULTIPLE vehicles or robots (e.g., mother rover + child rovers + drillers), you MUST model ALL of them as separate sub-assemblies positioned in a scene together.
 
-Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate.
+Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track.
 
 Shape guide:
 - box: rectangular solids (chassis, panels, frames, housings)
-- cylinder: round columns, rods, axles, shafts, wheels
-- sphere: balls, domes, sensor heads, joints
-- cone: nozzles, funnels, pointed tips, antenna bases
+- cylinder: round columns, rods, axles, shafts
+- sphere: balls, domes, joints, pressure vessels
+- cone: nozzles, funnels, pointed tips
 - wedge: ramps, angled supports, aerodynamic noses
-- torus: rings, seals, wheel rims
-- tube: hollow pipes, exhaust, handles, structural tubes
+- torus: rings, seals
+- tube: hollow pipes, exhaust, structural tubes
 - plate: flat panels, solar panels, fins, wings, shelves
 - gear: toothed wheels, sprockets, cogs
 - bracket: L-shaped mounts, supports, arms
+- **wheel**: DETAILED wheel with tire, rim, hub, spokes, treads (USE for any wheel!)
+- **camera**: DETAILED camera with body, lens, glass, LED, mount (USE for cameras/sensors!)
+- **antenna**: DETAILED antenna with parabolic dish, mast, feed horn, struts (USE for antennas!)
+- **drill**: DETAILED drill with motor, chuck, spiral bit, tip (USE for drills!)
+- **track**: DETAILED tank track with road wheels, sprocket, idler, pads (USE for tracked vehicles!)
 
-For each part provide: type, label (max 30 chars), position [x,y,z], rotation [rx,ry,rz] in degrees, color (hex from: #f9a8d4, #c4b5fd, #99f6e4, #fde68a, #fecaca, #e9d5ff, #a5f3fc, #86efac, #fdba74, #fda4af), and params.
+For each part provide: type, label (max 30 chars), position [x,y,z], rotation [rx,ry,rz] in degrees, color hex, and params.
 
 Params by type:
 - gear: teeth, holeDiameter, thickness
@@ -189,22 +194,27 @@ Params by type:
 - torus: radius, tube, segments
 - tube: radius, height, wallThickness, segments
 - plate: radius, thickness, width, depth
+- wheel: radius, width, spokes, hubRadius, treadDepth
+- camera: lensRadius, bodyWidth, bodyHeight, bodyDepth
+- antenna: dishRadius, mastHeight, mastRadius
+- drill: bitLength, bitRadius, spirals
+- track: trackLength, trackWidth, wheelCount, radius
 
 CRITICAL RULES:
 1. Generate 40-80+ parts. Every wheel, strut, panel, sensor, joint, axle, and detail is a separate part.
 2. For MULTI-VEHICLE systems: model each vehicle separately, positioned apart in the scene.
    - Mother rover at center (0,0,0), child rovers offset at (6,0,3), (-5,0,4), etc.
    - Each vehicle gets its own full set of parts: chassis, wheels, axles, sensors, etc.
-3. WHEELS: Each wheel is a cylinder + torus rim + axle cylinder. A 4-wheeled rover needs 12+ parts just for wheels.
-4. CHASSIS: Build from multiple boxes/plates — main body, side panels, top cover, bottom plate, internal frame.
-5. SUSPENSION: Use brackets at angles (rotation!) connecting wheel assemblies to chassis.
-6. TOOLS (drills, arms): Build from multiple cylinders + cones + brackets with proper rotation.
-7. ANTENNAS: Thin cylinders for masts + spheres/cones for dish heads.
-8. DOCKING BAYS: Tall box structures with internal cylinders, plates for shelves.
+3. WHEELS: Use the 'wheel' type (not cylinder+torus). Each wheel auto-renders with tire, rim, hub, spokes, treads.
+4. CAMERAS: Use the 'camera' type (not sphere). Auto-renders with lens barrel, glass, body, LED.
+5. ANTENNAS: Use the 'antenna' type (not cone+cylinder). Auto-renders with parabolic dish, mast, feed horn.
+6. DRILLS: Use the 'drill' type (not cylinder+cone). Auto-renders with spiral bit, motor housing, chuck.
+7. TRACKS: Use the 'track' type for tracked vehicles. Auto-renders with road wheels, sprocket, track pads.
+8. CHASSIS: Build from multiple boxes/plates — main body, side panels, top cover, bottom plate.
 9. Use ROTATION extensively — suspension arms at 30-45°, angled solar panels, tilted cameras.
-10. Use VARIED COLORS to distinguish sub-systems (wheels=one color, chassis=another, sensors=another).
-11. Position parts with MILLIMETER precision — wheels must touch the ground (y=wheel_radius), axles must align.
-12. Think like a real engineer assembling the vehicle: frame → axles → wheels → body panels → subsystems → details.
+10. Use VARIED COLORS to distinguish sub-systems.
+11. Position parts with PRECISION — wheels touch ground at y=wheel_radius, parts connect properly.
+12. Think like an engineer: frame → wheels → body panels → subsystems → sensors → details.
 You MUST call the parse_cad function.`,
           },
           {
@@ -226,7 +236,7 @@ You MUST call the parse_cad function.`,
                     items: {
                       type: "object",
                       properties: {
-                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate"] },
+                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate", "wheel", "camera", "antenna", "drill", "track"] },
                         label: { type: "string" },
                         position: { type: "array", items: { type: "number" }, description: "[x, y, z]" },
                         rotation: { type: "array", items: { type: "number" }, description: "[rx, ry, rz] degrees" },
@@ -248,6 +258,22 @@ You MUST call the parse_cad function.`,
                             radiusTop: { type: "number" },
                             radiusBottom: { type: "number" },
                             tube: { type: "number" },
+                            spokes: { type: "number" },
+                            hubRadius: { type: "number" },
+                            treadDepth: { type: "number" },
+                            lensRadius: { type: "number" },
+                            bodyWidth: { type: "number" },
+                            bodyHeight: { type: "number" },
+                            bodyDepth: { type: "number" },
+                            dishRadius: { type: "number" },
+                            mastHeight: { type: "number" },
+                            mastRadius: { type: "number" },
+                            bitLength: { type: "number" },
+                            bitRadius: { type: "number" },
+                            spirals: { type: "number" },
+                            trackLength: { type: "number" },
+                            trackWidth: { type: "number" },
+                            wheelCount: { type: "number" },
                           },
                         },
                       },

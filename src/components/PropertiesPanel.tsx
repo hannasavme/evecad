@@ -98,6 +98,35 @@ const PARAM_DEFS: Record<string, ParamDef[]> = {
     { key: "width", label: "Width", type: "number", min: 0.1, max: 10, step: 0.1, default: 1.0, hasDimension: true },
     { key: "depth", label: "Depth", type: "number", min: 0.1, max: 10, step: 0.1, default: 1.0, hasDimension: true },
   ],
+  wheel: [
+    { key: "radius", label: "Radius", type: "number", min: 0.1, max: 3, step: 0.05, default: 0.4, hasDimension: true },
+    { key: "width", label: "Width", type: "number", min: 0.1, max: 1, step: 0.05, default: 0.25, hasDimension: true },
+    { key: "spokes", label: "Spokes", type: "int", min: 3, max: 12, step: 1, default: 6, hasDimension: false },
+    { key: "hubRadius", label: "Hub R", type: "number", min: 0.02, max: 1, step: 0.01, default: 0.12, hasDimension: true },
+    { key: "treadDepth", label: "Tread", type: "number", min: 0.02, max: 0.1, step: 0.01, default: 0.04, hasDimension: true },
+  ],
+  camera: [
+    { key: "lensRadius", label: "Lens R", type: "number", min: 0.03, max: 0.3, step: 0.01, default: 0.12, hasDimension: true },
+    { key: "bodyWidth", label: "Body W", type: "number", min: 0.1, max: 0.6, step: 0.05, default: 0.3, hasDimension: true },
+    { key: "bodyHeight", label: "Body H", type: "number", min: 0.08, max: 0.4, step: 0.02, default: 0.2, hasDimension: true },
+    { key: "bodyDepth", label: "Body D", type: "number", min: 0.1, max: 0.5, step: 0.05, default: 0.25, hasDimension: true },
+  ],
+  antenna: [
+    { key: "dishRadius", label: "Dish R", type: "number", min: 0.2, max: 2, step: 0.05, default: 0.5, hasDimension: true },
+    { key: "mastHeight", label: "Mast H", type: "number", min: 0.5, max: 5, step: 0.1, default: 1.2, hasDimension: true },
+    { key: "mastRadius", label: "Mast R", type: "number", min: 0.02, max: 0.1, step: 0.01, default: 0.03, hasDimension: true },
+  ],
+  drill: [
+    { key: "bitLength", label: "Bit Len", type: "number", min: 0.5, max: 5, step: 0.1, default: 1.5, hasDimension: true },
+    { key: "bitRadius", label: "Bit R", type: "number", min: 0.05, max: 0.5, step: 0.01, default: 0.12, hasDimension: true },
+    { key: "spirals", label: "Spirals", type: "int", min: 2, max: 8, step: 1, default: 4, hasDimension: false },
+  ],
+  track: [
+    { key: "trackLength", label: "Length", type: "number", min: 1, max: 6, step: 0.1, default: 2.0, hasDimension: true },
+    { key: "trackWidth", label: "Width", type: "number", min: 0.1, max: 0.8, step: 0.05, default: 0.3, hasDimension: true },
+    { key: "wheelCount", label: "Wheels", type: "int", min: 3, max: 8, step: 1, default: 4, hasDimension: false },
+    { key: "radius", label: "Wheel R", type: "number", min: 0.1, max: 0.5, step: 0.05, default: 0.2, hasDimension: true },
+  ],
 };
 
 interface PropertiesPanelProps {
