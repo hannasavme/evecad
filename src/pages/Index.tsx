@@ -221,6 +221,19 @@ export default function Index() {
               Assemble
             </button>
           )}
+          {models.length > 0 && (
+            <button
+              onClick={() => setShowDrawing(!showDrawing)}
+              className={`flex items-center gap-1.5 text-[10px] font-bold transition-colors px-2.5 py-1.5 rounded-xl border-2 bg-card/60 ${
+                showDrawing
+                  ? "border-primary/40 text-primary"
+                  : "border-border text-muted-foreground hover:text-primary hover:border-primary/40"
+              }`}
+            >
+              <Ruler className="w-3 h-3" />
+              Drawing
+            </button>
+          )}
           <ExportDropdown hasModel={models.length > 0} getScene={getScene} />
         </div>
       </header>
