@@ -1048,9 +1048,9 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
             const dims = getScaledDims(model);
             const viewScale = scl * 0.7;
 
-            const offsetX = (model.params?.posX || 0) * viewScale * 0.3;
-            const offsetY = -(model.params?.posY || 0) * viewScale * 0.3;
-            const offsetZ = (model.params?.posZ || 0) * viewScale * 0.3;
+            const offsetX = (model.position?.[0] || 0) * viewScale * 0.3;
+            const offsetY = -(model.position?.[1] || 0) * viewScale * 0.3;
+            const offsetZ = (model.position?.[2] || 0) * viewScale * 0.3;
 
             const frontCx = margin + drawAreaW * 0.22 + offsetX;
             const frontCy = viewsStartY + 150 + offsetY;
