@@ -617,30 +617,32 @@ function AntennaMesh({ color, params }: { color: string; params?: ModelParams })
 
   return (
     <group>
-      {/* Mast */}
-      <mesh position={[0, mastH / 2, 0]}><cylinderGeometry args={[mastR, mastR * 1.3, mastH, 12]} /><meshStandardMaterial color="#888" metalness={0.6} roughness={0.3} /></mesh>
+      {/* Base mounting flange - sits flush on surface */}
+      <mesh position={[0, 0.02, 0]}><cylinderGeometry args={[mastR * 6, mastR * 7, 0.04, 16]} /><meshStandardMaterial color="#555" metalness={0.5} roughness={0.4} /></mesh>
+      {/* Base collar */}
+      <mesh position={[0, 0.06, 0]}><cylinderGeometry args={[mastR * 3, mastR * 5, 0.04, 16]} /><meshStandardMaterial color="#666" metalness={0.4} roughness={0.4} /></mesh>
+      {/* Mast - starts from base, goes up */}
+      <mesh position={[0, mastH / 2 + 0.08, 0]}><cylinderGeometry args={[mastR, mastR * 1.3, mastH, 12]} /><meshStandardMaterial color="#888" metalness={0.6} roughness={0.3} /></mesh>
       {/* Mast joint */}
-      <mesh position={[0, mastH, 0]}><sphereGeometry args={[mastR * 2.5, 12, 12]} /><meshStandardMaterial color="#666" metalness={0.5} roughness={0.3} /></mesh>
+      <mesh position={[0, mastH + 0.08, 0]}><sphereGeometry args={[mastR * 2.5, 12, 12]} /><meshStandardMaterial color="#666" metalness={0.5} roughness={0.3} /></mesh>
       {/* Dish */}
-      <mesh geometry={dishGeometry} position={[0, mastH + dishR * 0.15, 0]} rotation={[Math.PI, 0, 0]}>
+      <mesh geometry={dishGeometry} position={[0, mastH + 0.08 + dishR * 0.15, 0]} rotation={[Math.PI, 0, 0]}>
         <meshStandardMaterial color={color} metalness={0.7} roughness={0.2} side={THREE.DoubleSide} />
       </mesh>
       {/* Feed horn */}
-      <mesh position={[0, mastH + dishR * 0.4, 0]}><cylinderGeometry args={[mastR * 0.8, mastR * 2, dishR * 0.15, 8]} /><meshStandardMaterial color="#555" metalness={0.6} roughness={0.3} /></mesh>
+      <mesh position={[0, mastH + 0.08 + dishR * 0.4, 0]}><cylinderGeometry args={[mastR * 0.8, mastR * 2, dishR * 0.15, 8]} /><meshStandardMaterial color="#555" metalness={0.6} roughness={0.3} /></mesh>
       {/* Feed support struts */}
       {[0, 120, 240].map((angle) => {
         const rad = (angle * Math.PI) / 180;
         const strutLen = dishR * 0.4;
         return (
-          <mesh key={angle} position={[Math.cos(rad) * dishR * 0.35, mastH + dishR * 0.25, Math.sin(rad) * dishR * 0.35]}
+          <mesh key={angle} position={[Math.cos(rad) * dishR * 0.35, mastH + 0.08 + dishR * 0.25, Math.sin(rad) * dishR * 0.35]}
             rotation={[Math.sin(rad) * 0.5, 0, -Math.cos(rad) * 0.5]}>
             <cylinderGeometry args={[mastR * 0.3, mastR * 0.3, strutLen, 6]} />
             <meshStandardMaterial color="#777" metalness={0.5} roughness={0.3} />
           </mesh>
         );
       })}
-      {/* Base mount */}
-      <mesh position={[0, -0.02, 0]}><cylinderGeometry args={[mastR * 4, mastR * 5, 0.04, 16]} /><meshStandardMaterial color="#666" metalness={0.4} roughness={0.4} /></mesh>
     </group>
   );
 }
