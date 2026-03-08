@@ -88,7 +88,7 @@ interface PropertiesPanelProps {
 }
 
 export default function PropertiesPanel({ model, onUpdate, onClose }: PropertiesPanelProps) {
-  const [unit, setUnit] = useState<Unit>("cm");
+  const [unit, setUnit] = useState<Unit>("mm");
 
   const handleScaleChange = (axis: 0 | 1 | 2, value: number) => {
     const newScale: [number, number, number] = [...model.scale];
