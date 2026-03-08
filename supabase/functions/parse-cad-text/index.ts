@@ -529,7 +529,7 @@ You MUST call the parse_cad function.`;
                     items: {
                       type: "object",
                       properties: {
-                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate", "wheel", "camera", "antenna", "drill", "track", "bolt", "nut", "screw", "bearing", "pulley", "shaft", "mug", "hammer", "handle", "chassis", "rocker", "bogie", "knuckle", "motor", "standoff", "nosecone", "bodytube", "fin", "centeringring", "bulkhead", "coupler", "launchguide", "motortube", "thrustplate", "retainer", "nozzle", "ebay", "baffle", "solarpanel", "battery", "rtg", "sbc", "transceiver", "radiator", "gripper", "lidar", "heatpipe", "harness", "imu", "proxsensor"] },
+                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate", "wheel", "camera", "antenna", "drill", "track", "bolt", "nut", "screw", "bearing", "pulley", "shaft", "mug", "hammer", "handle", "chassis", "rocker", "bogie", "knuckle", "motor", "standoff", "nosecone", "bodytube", "fin", "centeringring", "bulkhead", "coupler", "launchguide", "motortube", "thrustplate", "retainer", "nozzle", "ebay", "baffle", "solarpanel", "battery", "rtg", "sbc", "transceiver", "radiator", "gripper", "lidar", "heatpipe", "harness", "imu", "proxsensor", "fuselage", "wing", "enginebell", "omspod", "rcsthruster", "proptank", "reactionwheel", "avionicsbox"] },
                         label: { type: "string" },
                         position: { type: "array", items: { type: "number" }, description: "[x, y, z]" },
                         rotation: { type: "array", items: { type: "number" }, description: "[rx, ry, rz] in degrees" },
