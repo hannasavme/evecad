@@ -1,8 +1,17 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { X, Download, Ruler, Eye } from "lucide-react";
+import { X, Download, Ruler, Eye, Plus, Type } from "lucide-react";
 import type { SceneModel } from "@/components/ModelViewer";
 import { toast } from "sonner";
+
+interface Annotation {
+  id: string;
+  x: number;
+  y: number;
+  text: string;
+}
+
+let annotationId = 0;
 
 interface CadDrawingPanelProps {
   models: SceneModel[];
@@ -175,13 +184,91 @@ function OrthographicView({
   );
 }
 
-function DrawingSVG({ models, showDimensions }: { models: SceneModel[]; showDimensions: boolean }) {
+function EditableText({
+  x, y, text, fontSize, fill, fontWeight, fontFamily, textAnchor, transform, onUpdate,
+}: {
+  x: number; y: number; text: string; fontSize: number; fill: string;
+  fontWeight?: string; fontFamily?: string; textAnchor?: string; transform?: string;
+  onUpdate: (newText: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(text);
+
+  if (editing) {
+    const inputW = Math.max(text.length * fontSize * 0.65, 60);
+    const inputH = fontSize + 6;
+    const fx = textAnchor === "middle" ? x - inputW / 2 : x;
+    const fy = y - fontSize;
+
+    return (
+      <foreignObject x={fx} y={fy} width={inputW + 10} height={inputH + 4}>
+        <input
+          autoFocus
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={() => { setEditing(false); onUpdate(value); }}
+          onKeyDown={(e) => { if (e.key === "Enter") { setEditing(false); onUpdate(value); } }}
+          style={{
+            width: "100%",
+            height: "100%",
+            fontSize: `${fontSize}px`,
+            fontFamily: fontFamily || "monospace",
+            fontWeight: fontWeight || "normal",
+            background: "hsl(330, 30%, 97%)",
+            border: "1px solid hsl(330, 80%, 65%)",
+            borderRadius: 3,
+            outline: "none",
+            padding: "0 2px",
+            color: fill,
+          }}
+        />
+      </foreignObject>
+    );
+  }
+
+  return (
+    <text
+      x={x} y={y}
+      textAnchor={textAnchor}
+      fontSize={fontSize}
+      fontWeight={fontWeight}
+      fill={fill}
+      fontFamily={fontFamily}
+      transform={transform}
+      style={{ cursor: "text" }}
+      onClick={() => setEditing(true)}
+    >
+      {value}
+    </text>
+  );
+}
+
+function DrawingSVG({
+  models,
+  showDimensions,
+  annotations,
+  onUpdateAnnotation,
+  onDeleteAnnotation,
+  titleText,
+  onUpdateTitle,
+  subtitleText,
+  onUpdateSubtitle,
+}: {
+  models: SceneModel[];
+  showDimensions: boolean;
+  annotations: Annotation[];
+  onUpdateAnnotation: (id: string, text: string) => void;
+  onDeleteAnnotation: (id: string) => void;
+  titleText: string;
+  onUpdateTitle: (t: string) => void;
+  subtitleText: string;
+  onUpdateSubtitle: (t: string) => void;
+}) {
   const svgWidth = 800;
   const svgHeight = 560;
   const viewPadding = 30;
   const scale = 55;
 
-  // Layout: 3 views per model row — Front, Top, Side
   const viewWidth = (svgWidth - viewPadding * 4) / 3;
   const rowHeight = 180;
 
@@ -191,21 +278,25 @@ function DrawingSVG({ models, showDimensions }: { models: SceneModel[]; showDime
       className="w-full h-full"
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Background */}
       <rect width={svgWidth} height={svgHeight} fill="hsl(0, 0%, 100%)" />
 
-      {/* Border */}
       <rect x={8} y={8} width={svgWidth - 16} height={svgHeight - 16} fill="none" stroke="hsl(280, 30%, 25%)" strokeWidth={1.5} />
       <rect x={12} y={12} width={svgWidth - 24} height={svgHeight - 24} fill="none" stroke="hsl(280, 30%, 25%)" strokeWidth={0.5} />
 
       {/* Title block */}
       <rect x={svgWidth - 220} y={svgHeight - 50} width={208} height={38} fill="none" stroke="hsl(280, 30%, 25%)" strokeWidth={1} />
-      <text x={svgWidth - 116} y={svgHeight - 32} textAnchor="middle" fontSize={12} fontWeight="bold" fill="hsl(280, 30%, 25%)" fontFamily="monospace">
-        EveCAD Drawing
-      </text>
-      <text x={svgWidth - 116} y={svgHeight - 18} textAnchor="middle" fontSize={8} fill="hsl(280, 15%, 55%)" fontFamily="monospace">
-        {models.length} part{models.length !== 1 ? "s" : ""} — Scale 1:1 — mm
-      </text>
+      <EditableText
+        x={svgWidth - 116} y={svgHeight - 32}
+        text={titleText} fontSize={12} fontWeight="bold"
+        fill="hsl(280, 30%, 25%)" fontFamily="monospace" textAnchor="middle"
+        onUpdate={onUpdateTitle}
+      />
+      <EditableText
+        x={svgWidth - 116} y={svgHeight - 18}
+        text={subtitleText} fontSize={8}
+        fill="hsl(280, 15%, 55%)" fontFamily="monospace" textAnchor="middle"
+        onUpdate={onUpdateSubtitle}
+      />
 
       {models.map((model, idx) => {
         const rowY = 60 + idx * rowHeight;
@@ -214,10 +305,13 @@ function DrawingSVG({ models, showDimensions }: { models: SceneModel[]; showDime
 
         return (
           <g key={model.id}>
-            {/* Part label */}
-            <text x={20} y={rowY - 8} fontSize={10} fontWeight="bold" fill="hsl(330, 80%, 65%)" fontFamily="monospace">
-              Part {idx + 1}: {model.label} ({model.type})
-            </text>
+            <EditableText
+              x={20} y={rowY - 8}
+              text={`Part ${idx + 1}: ${model.label} (${model.type})`}
+              fontSize={10} fontWeight="bold"
+              fill="hsl(330, 80%, 65%)" fontFamily="monospace"
+              onUpdate={() => {}}
+            />
 
             {views.map((view, vi) => {
               const vCx = viewPadding + viewWidth * vi + viewWidth / 2;
@@ -225,41 +319,70 @@ function DrawingSVG({ models, showDimensions }: { models: SceneModel[]; showDime
 
               return (
                 <g key={view}>
-                  {/* View label */}
                   <text x={vCx} y={rowY + 2} textAnchor="middle" fontSize={8} fill="hsl(280, 15%, 55%)" fontFamily="monospace">
                     {viewLabels[vi]}
                   </text>
-                  {showDimensions ? (
-                    <OrthographicView model={model} view={view} cx={vCx} cy={vCy} scale={scale} />
-                  ) : (
-                    <OrthographicView model={model} view={view} cx={vCx} cy={vCy} scale={scale} />
-                  )}
+                  <OrthographicView model={model} view={view} cx={vCx} cy={vCy} scale={scale} />
                 </g>
               );
             })}
 
-            {/* Separator line */}
             {idx < models.length - 1 && (
               <line
-                x1={16}
-                y1={rowY + rowHeight - 10}
-                x2={svgWidth - 16}
-                y2={rowY + rowHeight - 10}
-                stroke="hsl(330, 25%, 88%)"
-                strokeWidth={0.5}
-                strokeDasharray="4 3"
+                x1={16} y1={rowY + rowHeight - 10}
+                x2={svgWidth - 16} y2={rowY + rowHeight - 10}
+                stroke="hsl(330, 25%, 88%)" strokeWidth={0.5} strokeDasharray="4 3"
               />
             )}
           </g>
         );
       })}
+
+      {/* User annotations */}
+      {annotations.map((a) => (
+        <g key={a.id}>
+          <rect x={a.x - 2} y={a.y - 11} width={Math.max(a.text.length * 5.5, 30)} height={14} rx={2} fill="hsl(45, 90%, 95%)" stroke="hsl(45, 70%, 70%)" strokeWidth={0.5} />
+          <EditableText
+            x={a.x} y={a.y}
+            text={a.text} fontSize={9}
+            fill="hsl(280, 30%, 25%)" fontFamily="monospace"
+            onUpdate={(t) => {
+              if (t.trim() === "") onDeleteAnnotation(a.id);
+              else onUpdateAnnotation(a.id, t);
+            }}
+          />
+        </g>
+      ))}
     </svg>
   );
 }
 
 export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProps) {
   const [showDimensions, setShowDimensions] = useState(true);
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const [titleText, setTitleText] = useState("EveCAD Drawing");
+  const [subtitleText, setSubtitleText] = useState(
+    `${models.length} part${models.length !== 1 ? "s" : ""} — Scale 1:1 — mm`
+  );
   const svgContainerRef = useRef<HTMLDivElement>(null);
+
+  const addAnnotation = () => {
+    const newA: Annotation = {
+      id: `ann-${++annotationId}`,
+      x: 30 + Math.random() * 200,
+      y: 40 + Math.random() * 100,
+      text: "Note: edit me",
+    };
+    setAnnotations((prev) => [...prev, newA]);
+  };
+
+  const updateAnnotation = useCallback((id: string, text: string) => {
+    setAnnotations((prev) => prev.map((a) => (a.id === id ? { ...a, text } : a)));
+  }, []);
+
+  const deleteAnnotation = useCallback((id: string) => {
+    setAnnotations((prev) => prev.filter((a) => a.id !== id));
+  }, []);
 
   const handleExportSVG = () => {
     const svgEl = svgContainerRef.current?.querySelector("svg");
@@ -355,6 +478,12 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
           </span>
           <div className="flex items-center gap-2">
             <button
+              onClick={addAnnotation}
+              className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-primary px-2.5 py-1.5 rounded-xl border-2 border-border hover:border-primary/40 transition-all"
+            >
+              <Type className="w-3 h-3" /> Add Note
+            </button>
+            <button
               onClick={() => setShowDimensions(!showDimensions)}
               className={`flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-xl border-2 transition-all ${
                 showDimensions
@@ -384,7 +513,17 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
 
         {/* Drawing area */}
         <div ref={svgContainerRef} className="flex-1 overflow-auto p-4 bg-muted/30">
-          <DrawingSVG models={models} showDimensions={showDimensions} />
+          <DrawingSVG
+            models={models}
+            showDimensions={showDimensions}
+            annotations={annotations}
+            onUpdateAnnotation={updateAnnotation}
+            onDeleteAnnotation={deleteAnnotation}
+            titleText={titleText}
+            onUpdateTitle={setTitleText}
+            subtitleText={subtitleText}
+            onUpdateSubtitle={setSubtitleText}
+          />
         </div>
       </div>
     </motion.div>
