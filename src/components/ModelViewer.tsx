@@ -215,7 +215,7 @@ const meshMap: Record<string, React.FC<{ color: string; params?: ModelParams }>>
   cylinder: CylinderMesh,
 };
 
-function SceneModelComponent({ model, isSelected, onSelect }: { model: SceneModel; isSelected: boolean; onSelect: () => void }) {
+function SceneModelComponent({ model, isSelected, onSelect }: { model: SceneModel; isSelected: boolean; onSelect: (e: MouseEvent) => void }) {
   const groupRef = useRef<THREE.Group>(null);
   const MeshComp = meshMap[model.type] || BoxMesh;
 
