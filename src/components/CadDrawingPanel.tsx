@@ -910,12 +910,12 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
   const margin = 20;
   const scl = 55;
   const svgWidth = 1190;
-  const partRowH = 280;
+  const svgHeight = 842;
+  const partRowH = 250;
   const bomRowH = 16;
-  const bomH = (models.length + 1) * bomRowH + 4;
-  const viewsStartY = margin + (showBOM ? bomH + 30 : 30);
-  const minContentH = viewsStartY + models.length * partRowH + 150;
-  const svgHeight = Math.max(842, minContentH);
+  const showBOMOnPage = showBOM && page === 0;
+  const bomH = showBOMOnPage ? (models.length + 1) * bomRowH + 4 : 0;
+  const viewsStartY = margin + (showBOMOnPage ? Math.min(bomH, 200) + 30 : 30);
   const today = new Date().toISOString().slice(0, 10);
 
   // BOM table dimensions
