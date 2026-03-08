@@ -176,7 +176,7 @@ export default function Index() {
           color: DEFAULT_COLORS[p.type] || "#fde68a",
           label: p.label,
         }));
-        setModels((prev) => [...prev, ...newParts]);
+        setModelsImmediate((prev) => [...prev, ...newParts]);
         toast.success(`Added ${newParts.length} extra part(s) for assembly`);
       }
 
