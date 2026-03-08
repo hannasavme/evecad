@@ -121,7 +121,7 @@ export default function Index() {
           type: p.type as SceneModel["type"],
           position: (p.position || [0, 0.5, 0]) as [number, number, number],
           scale: [1, 1, 1] as [number, number, number],
-          color: p.color || DEFAULT_COLORS[p.type] || "#d8b4fe",
+          color: p.color || DEFAULT_COLORS[p.type] || "#f9a8d4",
           label: p.label || p.type,
           params: p.params || {},
           visible: true,
