@@ -35,7 +35,11 @@ export default function Index() {
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState("");
   const [showInput, setShowInput] = useState(false);
-  const [models, setModels] = useState<SceneModel[]>([]);
+  const { current: models, push: pushModels, undo, redo, canUndo, canRedo } = useUndoHistory<SceneModel[]>([]);
+
+  const setModels = useCallback((updater: SceneModel[] | ((prev: SceneModel[]) => SceneModel[])) => {
+    pushModels(typeof updater === "function" ? updater(models) : updater);
+  }, [models, pushModels]);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
   const [showDrawing, setShowDrawing] = useState(false);
   const [assemblyInstructions, setAssemblyInstructions] = useState<string | null>(null);
