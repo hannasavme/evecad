@@ -111,7 +111,7 @@ export default function Index() {
           color: DEFAULT_COLORS[type] || "#d8b4fe",
           label,
         };
-        setModels((prev) => [...prev, newModel]);
+        setModelsImmediate((prev) => [...prev, newModel]);
         setSelectedModelId(newModel.id);
         setShowInput(false);
         setIsGenerating(false);
