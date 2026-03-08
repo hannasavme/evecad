@@ -1465,6 +1465,402 @@ function BaffleMesh({ color, params }: { color: string; params?: ModelParams }) 
   );
 }
 
+// ─── Space Subsystem Compound Primitives ──────────────────────────
+
+function SolarPanelMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const w = params?.panelWidth ?? params?.width ?? 2.0;
+  const l = params?.panelLength ?? params?.depth ?? 3.0;
+  const t = params?.panelThickness ?? params?.thickness ?? 0.04;
+  const rows = params?.cellRows ?? 6;
+  const cols = params?.cellCols ?? 10;
+
+  const cells = useMemo(() => {
+    const els: JSX.Element[] = [];
+    const cw = (w * 0.9) / cols;
+    const cl = (l * 0.9) / rows;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        els.push(
+          <mesh key={`${r}-${c}`} position={[-w * 0.45 + cw * (c + 0.5), t / 2 + 0.002, -l * 0.45 + cl * (r + 0.5)]}>
+            <boxGeometry args={[cw * 0.9, 0.003, cl * 0.9]} />
+            <meshStandardMaterial color="#1a237e" metalness={0.8} roughness={0.15} />
+          </mesh>
+        );
+      }
+    }
+    return els;
+  }, [w, l, t, rows, cols]);
+
+  return (
+    <group>
+      {/* Substrate */}
+      <mesh><boxGeometry args={[w, t, l]} /><meshStandardMaterial color={color} metalness={0.3} roughness={0.5} /></mesh>
+      {/* Cells */}
+      {cells}
+      {/* Frame edges */}
+      <mesh position={[0, 0, l / 2]}><boxGeometry args={[w + 0.02, t * 1.5, 0.03]} /><meshStandardMaterial color="#888" metalness={0.6} roughness={0.3} /></mesh>
+      <mesh position={[0, 0, -l / 2]}><boxGeometry args={[w + 0.02, t * 1.5, 0.03]} /><meshStandardMaterial color="#888" metalness={0.6} roughness={0.3} /></mesh>
+      <mesh position={[w / 2, 0, 0]}><boxGeometry args={[0.03, t * 1.5, l]} /><meshStandardMaterial color="#888" metalness={0.6} roughness={0.3} /></mesh>
+      <mesh position={[-w / 2, 0, 0]}><boxGeometry args={[0.03, t * 1.5, l]} /><meshStandardMaterial color="#888" metalness={0.6} roughness={0.3} /></mesh>
+      {/* Hinge mount */}
+      <mesh position={[0, -t, -l / 2 - 0.04]}><boxGeometry args={[0.15, 0.06, 0.08]} /><meshStandardMaterial color="#666" metalness={0.5} roughness={0.3} /></mesh>
+      {/* Power cable */}
+      <mesh position={[w * 0.3, -t, -l / 2 - 0.02]}><cylinderGeometry args={[0.01, 0.01, 0.15, 8]} /><meshStandardMaterial color="#333" metalness={0.3} roughness={0.5} /></mesh>
+    </group>
+  );
+}
+
+function BatteryMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const w = params?.batteryWidth ?? params?.width ?? 0.8;
+  const l = params?.batteryLength ?? params?.depth ?? 1.2;
+  const h = params?.batteryHeight ?? params?.height ?? 0.5;
+  const cells = params?.cellCount ?? 4;
+
+  return (
+    <group>
+      {/* Main housing */}
+      <mesh><boxGeometry args={[w, h, l]} /><meshStandardMaterial color={color} metalness={0.4} roughness={0.4} /></mesh>
+      {/* Cell dividers */}
+      {Array.from({ length: cells - 1 }).map((_, i) => (
+        <mesh key={i} position={[0, 0, -l / 2 + (l / cells) * (i + 1)]}>
+          <boxGeometry args={[w * 0.98, h * 0.6, 0.01]} />
+          <meshStandardMaterial color="#555" metalness={0.5} roughness={0.3} />
+        </mesh>
+      ))}
+      {/* Positive terminal */}
+      <mesh position={[w * 0.25, h / 2 + 0.03, 0]}><cylinderGeometry args={[0.04, 0.04, 0.06, 12]} /><meshStandardMaterial color="#cc0000" metalness={0.7} roughness={0.2} /></mesh>
+      {/* Negative terminal */}
+      <mesh position={[-w * 0.25, h / 2 + 0.03, 0]}><cylinderGeometry args={[0.04, 0.04, 0.06, 12]} /><meshStandardMaterial color="#333" metalness={0.7} roughness={0.2} /></mesh>
+      {/* Label strip */}
+      <mesh position={[0, 0, l / 2 + 0.001]}><boxGeometry args={[w * 0.7, h * 0.3, 0.002]} /><meshStandardMaterial color="#ffa500" metalness={0.2} roughness={0.6} /></mesh>
+      {/* Mounting tabs */}
+      <mesh position={[w / 2 + 0.02, -h / 2 + 0.05, l * 0.3]}><boxGeometry args={[0.04, 0.1, 0.06]} /><meshStandardMaterial color="#888" metalness={0.5} roughness={0.3} /></mesh>
+      <mesh position={[w / 2 + 0.02, -h / 2 + 0.05, -l * 0.3]}><boxGeometry args={[0.04, 0.1, 0.06]} /><meshStandardMaterial color="#888" metalness={0.5} roughness={0.3} /></mesh>
+    </group>
+  );
+}
+
+function RTGMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.rtgRadius ?? params?.radius ?? 0.3;
+  const l = params?.rtgLength ?? params?.height ?? 1.2;
+  const fins = params?.rtgFinCount ?? 8;
+
+  return (
+    <group>
+      {/* Main cylinder body */}
+      <mesh><cylinderGeometry args={[r, r, l, 24]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      {/* Heat dissipation fins */}
+      {Array.from({ length: fins }).map((_, i) => {
+        const angle = (i / fins) * Math.PI * 2;
+        return (
+          <mesh key={i} position={[Math.cos(angle) * (r + 0.08), 0, Math.sin(angle) * (r + 0.08)]} rotation={[0, -angle, 0]}>
+            <boxGeometry args={[0.16, l * 0.7, 0.015]} />
+            <meshStandardMaterial color={color} metalness={0.6} roughness={0.2} />
+          </mesh>
+        );
+      })}
+      {/* Top cap */}
+      <mesh position={[0, l / 2 + 0.03, 0]}><cylinderGeometry args={[r * 0.85, r, 0.06, 24]} /><meshStandardMaterial color="#777" metalness={0.6} roughness={0.2} /></mesh>
+      {/* Bottom cap */}
+      <mesh position={[0, -l / 2 - 0.03, 0]}><cylinderGeometry args={[r, r * 0.85, 0.06, 24]} /><meshStandardMaterial color="#777" metalness={0.6} roughness={0.2} /></mesh>
+      {/* Power output connector */}
+      <mesh position={[0, l / 2 + 0.08, 0]}><cylinderGeometry args={[r * 0.2, r * 0.2, 0.08, 12]} /><meshStandardMaterial color="#c4a000" metalness={0.8} roughness={0.2} /></mesh>
+      {/* Radiation symbol indicator */}
+      <mesh position={[r + 0.001, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.06, 0.06, 0.002, 3]} />
+        <meshStandardMaterial color="#ff0" metalness={0.2} roughness={0.6} />
+      </mesh>
+    </group>
+  );
+}
+
+function SBCMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const w = params?.sbcWidth ?? params?.width ?? 0.85;
+  const l = params?.sbcLength ?? params?.depth ?? 0.56;
+  const h = params?.sbcHeight ?? params?.height ?? 0.02;
+
+  return (
+    <group>
+      {/* PCB board */}
+      <mesh><boxGeometry args={[w, h, l]} /><meshStandardMaterial color="#2d5a27" metalness={0.2} roughness={0.6} /></mesh>
+      {/* Main SoC chip */}
+      <mesh position={[w * 0.1, h / 2 + 0.02, 0]}><boxGeometry args={[0.15, 0.04, 0.15]} /><meshStandardMaterial color="#222" metalness={0.5} roughness={0.3} /></mesh>
+      {/* Heat spreader on SoC */}
+      <mesh position={[w * 0.1, h / 2 + 0.045, 0]}><boxGeometry args={[0.14, 0.01, 0.14]} /><meshStandardMaterial color="#ccc" metalness={0.8} roughness={0.1} /></mesh>
+      {/* USB ports */}
+      <mesh position={[w / 2 + 0.02, h / 2 + 0.03, l * 0.15]}><boxGeometry args={[0.04, 0.06, 0.14]} /><meshStandardMaterial color="#aaa" metalness={0.7} roughness={0.2} /></mesh>
+      <mesh position={[w / 2 + 0.02, h / 2 + 0.03, -l * 0.15]}><boxGeometry args={[0.04, 0.06, 0.14]} /><meshStandardMaterial color="#aaa" metalness={0.7} roughness={0.2} /></mesh>
+      {/* Ethernet port */}
+      <mesh position={[w / 2 + 0.02, h / 2 + 0.04, -l * 0.35]}><boxGeometry args={[0.04, 0.08, 0.16]} /><meshStandardMaterial color="#888" metalness={0.6} roughness={0.3} /></mesh>
+      {/* GPIO header */}
+      <mesh position={[-w * 0.15, h / 2 + 0.04, -l / 2 + 0.04]}><boxGeometry args={[w * 0.6, 0.08, 0.06]} /><meshStandardMaterial color="#333" metalness={0.3} roughness={0.5} /></mesh>
+      {/* SD card slot */}
+      <mesh position={[-w / 2 - 0.01, h / 2 + 0.01, 0]}><boxGeometry args={[0.02, 0.025, 0.12]} /><meshStandardMaterial color="#999" metalness={0.6} roughness={0.3} /></mesh>
+      {/* Power LED */}
+      <mesh position={[-w * 0.3, h / 2 + 0.005, l * 0.35]}><sphereGeometry args={[0.01, 6, 6]} /><meshStandardMaterial color="#00ff00" emissive="#00ff00" emissiveIntensity={0.5} /></mesh>
+      {/* Mounting holes (4 corners) */}
+      {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([sx, sz], i) => (
+        <mesh key={i} position={[sx * (w / 2 - 0.04), 0, sz * (l / 2 - 0.04)]}>
+          <cylinderGeometry args={[0.015, 0.015, h + 0.01, 8]} />
+          <meshStandardMaterial color="#c4a000" metalness={0.7} roughness={0.2} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function TransceiverMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const w = params?.transceiverWidth ?? params?.width ?? 0.4;
+  const h = params?.transceiverHeight ?? params?.height ?? 0.3;
+  const d = params?.transceiverDepth ?? params?.depth ?? 0.2;
+
+  return (
+    <group>
+      {/* Main housing */}
+      <mesh><boxGeometry args={[w, h, d]} /><meshStandardMaterial color={color} metalness={0.4} roughness={0.4} /></mesh>
+      {/* Antenna connector (SMA) */}
+      <mesh position={[0, h / 2 + 0.04, 0]}><cylinderGeometry args={[0.03, 0.03, 0.08, 12]} /><meshStandardMaterial color="#c4a000" metalness={0.8} roughness={0.15} /></mesh>
+      {/* Antenna thread */}
+      <mesh position={[0, h / 2 + 0.09, 0]}><cylinderGeometry args={[0.025, 0.025, 0.02, 6]} /><meshStandardMaterial color="#c4a000" metalness={0.8} roughness={0.15} /></mesh>
+      {/* Status LEDs */}
+      <mesh position={[w * 0.2, 0, d / 2 + 0.001]}><sphereGeometry args={[0.012, 6, 6]} /><meshStandardMaterial color="#00ff00" emissive="#00ff00" emissiveIntensity={0.4} /></mesh>
+      <mesh position={[w * 0.35, 0, d / 2 + 0.001]}><sphereGeometry args={[0.012, 6, 6]} /><meshStandardMaterial color="#ff0000" emissive="#ff0000" emissiveIntensity={0.3} /></mesh>
+      {/* Heat sink on top */}
+      {Array.from({ length: 5 }).map((_, i) => (
+        <mesh key={i} position={[w * 0.25, h / 2 + 0.005, -d * 0.3 + i * 0.04]}>
+          <boxGeometry args={[w * 0.3, 0.015, 0.008]} />
+          <meshStandardMaterial color="#aaa" metalness={0.7} roughness={0.2} />
+        </mesh>
+      ))}
+      {/* Connector pins */}
+      <mesh position={[-w / 2 - 0.015, -h * 0.2, 0]}><boxGeometry args={[0.03, 0.06, d * 0.6]} /><meshStandardMaterial color="#888" metalness={0.6} roughness={0.3} /></mesh>
+    </group>
+  );
+}
+
+function RadiatorMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const w = params?.radiatorWidth ?? params?.width ?? 1.5;
+  const h = params?.radiatorHeight ?? params?.height ?? 1.0;
+  const pipes = params?.radiatorPipes ?? 6;
+  const thick = 0.03;
+
+  return (
+    <group>
+      {/* Main panel */}
+      <mesh><boxGeometry args={[w, h, thick]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.15} /></mesh>
+      {/* Heat pipes running horizontally */}
+      {Array.from({ length: pipes }).map((_, i) => {
+        const y = -h / 2 + h / (pipes + 1) * (i + 1);
+        return (
+          <mesh key={i} position={[0, y, thick / 2 + 0.008]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.012, 0.012, w * 0.9, 8]} />
+            <meshStandardMaterial color="#c0c0c0" metalness={0.8} roughness={0.1} />
+          </mesh>
+        );
+      })}
+      {/* Header pipe top */}
+      <mesh position={[0, h / 2 - 0.02, thick / 2 + 0.015]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.02, 0.02, w, 12]} />
+        <meshStandardMaterial color="#aaa" metalness={0.7} roughness={0.2} />
+      </mesh>
+      {/* Header pipe bottom */}
+      <mesh position={[0, -h / 2 + 0.02, thick / 2 + 0.015]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.02, 0.02, w, 12]} />
+        <meshStandardMaterial color="#aaa" metalness={0.7} roughness={0.2} />
+      </mesh>
+      {/* Mounting brackets */}
+      <mesh position={[-w / 2 + 0.05, 0, -thick / 2 - 0.02]}><boxGeometry args={[0.06, h * 0.15, 0.04]} /><meshStandardMaterial color="#888" metalness={0.5} roughness={0.3} /></mesh>
+      <mesh position={[w / 2 - 0.05, 0, -thick / 2 - 0.02]}><boxGeometry args={[0.06, h * 0.15, 0.04]} /><meshStandardMaterial color="#888" metalness={0.5} roughness={0.3} /></mesh>
+    </group>
+  );
+}
+
+function GripperMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const w = params?.gripperWidth ?? params?.width ?? 0.5;
+  const fingers = params?.gripperFingers ?? 3;
+  const openAngle = params?.gripperOpenAngle ?? 25;
+  const fingerLen = w * 0.8;
+
+  return (
+    <group>
+      {/* Base housing */}
+      <mesh><cylinderGeometry args={[w * 0.3, w * 0.35, 0.15, 16]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
+      {/* Actuator cylinder */}
+      <mesh position={[0, 0.12, 0]}><cylinderGeometry args={[w * 0.15, w * 0.15, 0.1, 12]} /><meshStandardMaterial color="#666" metalness={0.6} roughness={0.3} /></mesh>
+      {/* Fingers */}
+      {Array.from({ length: fingers }).map((_, i) => {
+        const angle = (i / fingers) * Math.PI * 2;
+        const openRad = (openAngle * Math.PI) / 180;
+        return (
+          <group key={i} rotation={[0, angle, 0]}>
+            {/* Finger base */}
+            <mesh position={[w * 0.2, -0.05, 0]} rotation={[0, 0, openRad]}>
+              <boxGeometry args={[0.04, fingerLen, 0.06]} />
+              <meshStandardMaterial color={color} metalness={0.5} roughness={0.3} />
+            </mesh>
+            {/* Finger tip (curved) */}
+            <mesh position={[w * 0.2 + Math.sin(openRad) * fingerLen * 0.5, -0.05 - Math.cos(openRad) * fingerLen * 0.5, 0]}
+              rotation={[0, 0, openRad + 0.3]}>
+              <boxGeometry args={[0.035, fingerLen * 0.4, 0.05]} />
+              <meshStandardMaterial color="#888" metalness={0.6} roughness={0.2} />
+            </mesh>
+            {/* Pivot joint */}
+            <mesh position={[w * 0.2, -0.05 + fingerLen * 0.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
+              <cylinderGeometry args={[0.02, 0.02, 0.08, 8]} />
+              <meshStandardMaterial color="#aaa" metalness={0.7} roughness={0.2} />
+            </mesh>
+          </group>
+        );
+      })}
+      {/* Mount flange */}
+      <mesh position={[0, 0.2, 0]}><cylinderGeometry args={[w * 0.25, w * 0.25, 0.03, 16]} /><meshStandardMaterial color="#777" metalness={0.6} roughness={0.2} /></mesh>
+    </group>
+  );
+}
+
+function LidarMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.lidarRadius ?? params?.radius ?? 0.15;
+  const h = params?.lidarHeight ?? params?.height ?? 0.12;
+
+  return (
+    <group>
+      {/* Main cylindrical housing */}
+      <mesh><cylinderGeometry args={[r, r, h, 24]} /><meshStandardMaterial color={color} metalness={0.4} roughness={0.3} /></mesh>
+      {/* Top dome (rotating scanner) */}
+      <mesh position={[0, h / 2 + r * 0.25, 0]}><sphereGeometry args={[r * 0.9, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color="#222" metalness={0.6} roughness={0.2} /></mesh>
+      {/* Emitter window band */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[r, h * 0.12, 8, 32]} /><meshStandardMaterial color="#1a1a2e" metalness={0.3} roughness={0.4} transparent opacity={0.8} /></mesh>
+      {/* Laser emitter (red line) */}
+      <mesh position={[r + 0.002, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.005, 0.005, 0.02, 6]} />
+        <meshStandardMaterial color="#ff0000" emissive="#ff0000" emissiveIntensity={0.8} />
+      </mesh>
+      {/* Base plate */}
+      <mesh position={[0, -h / 2 - 0.01, 0]}><cylinderGeometry args={[r * 1.1, r * 1.1, 0.02, 24]} /><meshStandardMaterial color="#666" metalness={0.5} roughness={0.3} /></mesh>
+      {/* Connector cable */}
+      <mesh position={[0, -h / 2 - 0.03, r * 0.5]}><cylinderGeometry args={[0.015, 0.015, 0.04, 8]} /><meshStandardMaterial color="#333" metalness={0.3} roughness={0.5} /></mesh>
+    </group>
+  );
+}
+
+function HeatPipeMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.heatpipeRadius ?? params?.radius ?? 0.03;
+  const l = params?.heatpipeLength ?? params?.height ?? 1.5;
+
+  return (
+    <group>
+      {/* Main pipe */}
+      <mesh><cylinderGeometry args={[r, r, l, 16]} /><meshStandardMaterial color={color} metalness={0.8} roughness={0.1} /></mesh>
+      {/* Evaporator end (slightly wider) */}
+      <mesh position={[0, -l / 2 + l * 0.1, 0]}><cylinderGeometry args={[r * 1.3, r * 1.3, l * 0.2, 16]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.15} /></mesh>
+      {/* Condenser end */}
+      <mesh position={[0, l / 2 - l * 0.08, 0]}><cylinderGeometry args={[r * 1.2, r, l * 0.16, 16]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.15} /></mesh>
+      {/* Wick structure rings */}
+      {Array.from({ length: Math.floor(l / 0.15) }).map((_, i) => (
+        <mesh key={i} position={[0, -l / 2 + 0.15 * (i + 1), 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[r + 0.002, 0.004, 4, 12]} />
+          <meshStandardMaterial color="#aaa" metalness={0.7} roughness={0.2} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function HarnessMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.harnessRadius ?? params?.radius ?? 0.04;
+  const l = params?.harnessLength ?? params?.height ?? 2.0;
+  const wires = params?.harnessWires ?? 6;
+
+  const wireColors = ["#cc0000", "#0000cc", "#00cc00", "#cccc00", "#cc6600", "#ffffff"];
+
+  return (
+    <group>
+      {/* Outer sleeve */}
+      <mesh><cylinderGeometry args={[r, r, l, 12]} /><meshStandardMaterial color={color} metalness={0.2} roughness={0.7} transparent opacity={0.5} /></mesh>
+      {/* Individual wires */}
+      {Array.from({ length: Math.min(wires, 8) }).map((_, i) => {
+        const angle = (i / Math.min(wires, 8)) * Math.PI * 2;
+        const wr = r * 0.55;
+        return (
+          <mesh key={i} position={[Math.cos(angle) * wr, 0, Math.sin(angle) * wr]}>
+            <cylinderGeometry args={[r * 0.15, r * 0.15, l * 0.98, 6]} />
+            <meshStandardMaterial color={wireColors[i % wireColors.length]} metalness={0.3} roughness={0.5} />
+          </mesh>
+        );
+      })}
+      {/* Connector A (top) */}
+      <mesh position={[0, l / 2 + 0.03, 0]}><boxGeometry args={[r * 3, 0.06, r * 2.5]} /><meshStandardMaterial color="#333" metalness={0.5} roughness={0.3} /></mesh>
+      {/* Connector B (bottom) */}
+      <mesh position={[0, -l / 2 - 0.03, 0]}><boxGeometry args={[r * 3, 0.06, r * 2.5]} /><meshStandardMaterial color="#333" metalness={0.5} roughness={0.3} /></mesh>
+      {/* Tie wraps */}
+      {Array.from({ length: Math.floor(l / 0.4) }).map((_, i) => (
+        <mesh key={`tw${i}`} position={[0, -l / 2 + 0.2 + i * 0.4, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[r + 0.005, 0.005, 4, 12]} />
+          <meshStandardMaterial color="#111" metalness={0.3} roughness={0.5} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function IMUMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const s = params?.imuSize ?? 0.15;
+
+  return (
+    <group>
+      {/* Main IC package */}
+      <mesh><boxGeometry args={[s, s * 0.3, s]} /><meshStandardMaterial color={color} metalness={0.4} roughness={0.4} /></mesh>
+      {/* Chip marking dot */}
+      <mesh position={[-s * 0.35, s * 0.15 + 0.001, -s * 0.35]}>
+        <sphereGeometry args={[s * 0.05, 6, 6]} />
+        <meshStandardMaterial color="#fff" metalness={0.2} roughness={0.5} />
+      </mesh>
+      {/* Pin pads (BGA style) on bottom */}
+      {[[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]].map(([sx, sz], i) => (
+        <mesh key={i} position={[sx * s * 0.25, -s * 0.15 - 0.005, sz * s * 0.25]}>
+          <cylinderGeometry args={[s * 0.04, s * 0.04, 0.01, 6]} />
+          <meshStandardMaterial color="#c4a000" metalness={0.8} roughness={0.15} />
+        </mesh>
+      ))}
+      {/* Text label area */}
+      <mesh position={[0, s * 0.15 + 0.001, 0]}><boxGeometry args={[s * 0.6, 0.001, s * 0.2]} /><meshStandardMaterial color="#aaa" metalness={0.2} roughness={0.6} /></mesh>
+      {/* Axes indicator arrows (XYZ) */}
+      <mesh position={[s * 0.5, 0, 0]} rotation={[0, 0, -Math.PI / 2]}><coneGeometry args={[0.015, 0.04, 6]} /><meshStandardMaterial color="#ff0000" /></mesh>
+      <mesh position={[0, s * 0.25, 0]}><coneGeometry args={[0.015, 0.04, 6]} /><meshStandardMaterial color="#00ff00" /></mesh>
+      <mesh position={[0, 0, s * 0.5]} rotation={[Math.PI / 2, 0, 0]}><coneGeometry args={[0.015, 0.04, 6]} /><meshStandardMaterial color="#0000ff" /></mesh>
+    </group>
+  );
+}
+
+function ProxSensorMesh({ color, params }: { color: string; params?: ModelParams }) {
+  const r = params?.proxRadius ?? params?.radius ?? 0.08;
+  const l = params?.proxLength ?? params?.height ?? 0.15;
+
+  return (
+    <group>
+      {/* Cylindrical housing */}
+      <mesh><cylinderGeometry args={[r, r, l, 16]} /><meshStandardMaterial color={color} metalness={0.4} roughness={0.3} /></mesh>
+      {/* Sensor face (transducer) */}
+      <mesh position={[0, -l / 2 - 0.005, 0]}><cylinderGeometry args={[r * 0.75, r * 0.75, 0.01, 16]} /><meshStandardMaterial color="#333" metalness={0.3} roughness={0.5} /></mesh>
+      {/* Mesh/grille on face */}
+      <mesh position={[0, -l / 2 - 0.012, 0]}><cylinderGeometry args={[r * 0.7, r * 0.7, 0.004, 16]} /><meshStandardMaterial color="#555" metalness={0.5} roughness={0.3} wireframe /></mesh>
+      {/* Thread body */}
+      {Array.from({ length: 4 }).map((_, i) => (
+        <mesh key={i} position={[0, l * 0.1 + i * 0.03, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[r + 0.002, 0.004, 4, 16]} />
+          <meshStandardMaterial color="#999" metalness={0.6} roughness={0.3} />
+        </mesh>
+      ))}
+      {/* Lock nut */}
+      <mesh position={[0, l * 0.3, 0]}><cylinderGeometry args={[r * 1.2, r * 1.2, 0.04, 6]} /><meshStandardMaterial color="#888" metalness={0.7} roughness={0.2} flatShading /></mesh>
+      {/* Cable exit */}
+      <mesh position={[0, l / 2 + 0.02, 0]}><cylinderGeometry args={[r * 0.3, r * 0.3, 0.04, 8]} /><meshStandardMaterial color="#333" metalness={0.3} roughness={0.5} /></mesh>
+      {/* LED indicator */}
+      <mesh position={[r * 0.5, l * 0.2, 0]}><sphereGeometry args={[0.01, 6, 6]} /><meshStandardMaterial color="#ff6600" emissive="#ff6600" emissiveIntensity={0.4} /></mesh>
+    </group>
+  );
+}
+
 const meshMap: Record<string, React.FC<{ color: string; params?: ModelParams }>> = {
   gear: GearMesh,
   bracket: BracketMesh,
@@ -1509,6 +1905,18 @@ const meshMap: Record<string, React.FC<{ color: string; params?: ModelParams }>>
   nozzle: NozzleMesh,
   ebay: EBayMesh,
   baffle: BaffleMesh,
+  solarpanel: SolarPanelMesh,
+  battery: BatteryMesh,
+  rtg: RTGMesh,
+  sbc: SBCMesh,
+  transceiver: TransceiverMesh,
+  radiator: RadiatorMesh,
+  gripper: GripperMesh,
+  lidar: LidarMesh,
+  heatpipe: HeatPipeMesh,
+  harness: HarnessMesh,
+  imu: IMUMesh,
+  proxsensor: ProxSensorMesh,
 };
 
 // ─── Scene Components ──────────────────────────────────
