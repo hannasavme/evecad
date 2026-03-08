@@ -162,21 +162,26 @@ Be EXHAUSTIVE. List every single component that would need to be modeled as a se
 
 CRITICAL: When a paper describes MULTIPLE vehicles or robots (e.g., mother rover + child rovers + drillers), you MUST model ALL of them as separate sub-assemblies positioned in a scene together.
 
-Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate.
+Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track.
 
 Shape guide:
 - box: rectangular solids (chassis, panels, frames, housings)
-- cylinder: round columns, rods, axles, shafts, wheels
-- sphere: balls, domes, sensor heads, joints
-- cone: nozzles, funnels, pointed tips, antenna bases
+- cylinder: round columns, rods, axles, shafts
+- sphere: balls, domes, joints, pressure vessels
+- cone: nozzles, funnels, pointed tips
 - wedge: ramps, angled supports, aerodynamic noses
-- torus: rings, seals, wheel rims
-- tube: hollow pipes, exhaust, handles, structural tubes
+- torus: rings, seals
+- tube: hollow pipes, exhaust, structural tubes
 - plate: flat panels, solar panels, fins, wings, shelves
 - gear: toothed wheels, sprockets, cogs
 - bracket: L-shaped mounts, supports, arms
+- **wheel**: DETAILED wheel with tire, rim, hub, spokes, treads (USE for any wheel!)
+- **camera**: DETAILED camera with body, lens, glass, LED, mount (USE for cameras/sensors!)
+- **antenna**: DETAILED antenna with parabolic dish, mast, feed horn, struts (USE for antennas!)
+- **drill**: DETAILED drill with motor, chuck, spiral bit, tip (USE for drills!)
+- **track**: DETAILED tank track with road wheels, sprocket, idler, pads (USE for tracked vehicles!)
 
-For each part provide: type, label (max 30 chars), position [x,y,z], rotation [rx,ry,rz] in degrees, color (hex from: #f9a8d4, #c4b5fd, #99f6e4, #fde68a, #fecaca, #e9d5ff, #a5f3fc, #86efac, #fdba74, #fda4af), and params.
+For each part provide: type, label (max 30 chars), position [x,y,z], rotation [rx,ry,rz] in degrees, color hex, and params.
 
 Params by type:
 - gear: teeth, holeDiameter, thickness
@@ -189,6 +194,11 @@ Params by type:
 - torus: radius, tube, segments
 - tube: radius, height, wallThickness, segments
 - plate: radius, thickness, width, depth
+- wheel: radius, width, spokes, hubRadius, treadDepth
+- camera: lensRadius, bodyWidth, bodyHeight, bodyDepth
+- antenna: dishRadius, mastHeight, mastRadius
+- drill: bitLength, bitRadius, spirals
+- track: trackLength, trackWidth, wheelCount, radius
 
 CRITICAL RULES:
 1. Generate 40-80+ parts. Every wheel, strut, panel, sensor, joint, axle, and detail is a separate part.
