@@ -168,9 +168,11 @@ function Scene({ models, selectedModelId, onSelectModel }: ModelViewerProps) {
 const ModelViewer = forwardRef<ModelViewerHandle, ModelViewerProps>(
   ({ models, selectedModelId, onSelectModel }, ref) => {
     const sceneRef = useRef<THREE.Scene | null>(null);
+    const resetRef = useRef<(() => void) | null>(null);
 
     useImperativeHandle(ref, () => ({
       getScene: () => sceneRef.current,
+      resetCamera: () => resetRef.current?.(),
     }));
 
     return (
@@ -181,7 +183,10 @@ const ModelViewer = forwardRef<ModelViewerHandle, ModelViewerProps>(
           onPointerMissed={() => onSelectModel(null)}
         >
           <Suspense fallback={null}>
-            <SceneCapture onSceneReady={(s) => { sceneRef.current = s; }} />
+            <SceneCapture
+              onSceneReady={(s) => { sceneRef.current = s; }}
+              onControlsReady={(fn) => { resetRef.current = fn; }}
+            />
             <Scene models={models} selectedModelId={selectedModelId} onSelectModel={onSelectModel} />
           </Suspense>
         </Canvas>
