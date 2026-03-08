@@ -1123,7 +1123,7 @@ function BogieMesh({ color, params }: { color: string; params?: ModelParams }) {
 
 function KnuckleMesh({ color, params }: { color: string; params?: ModelParams }) {
   const r = params?.knuckleRadius ?? params?.radius ?? 0.2;
-  const h = params?.knuckleHeight ?? params?.height ?? 0.4;
+  const h = params?.knuckleHeight ?? params?.height ?? 0.15;
   const bore = params?.boreSize ?? r * 0.35;
 
   return (
