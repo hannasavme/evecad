@@ -91,6 +91,107 @@ const defaultProfile: ShapeProfile = {
   ),
 };
 
+// ─── Isometric projection helpers ──────────
+
+function isometricBox(cx: number, cy: number, w: number, h: number, d: number) {
+  const cos30 = Math.cos(Math.PI / 6);
+  const sin30 = 0.5;
+  
+  const project = (x: number, y: number, z: number) => ({
+    x: cx + (x - z) * cos30,
+    y: cy - y + (x + z) * sin30,
+  });
+  
+  const hw = w / 2, hh = h / 2, hd = d / 2;
+  const fbl = project(-hw, -hh, -hd);
+  const fbr = project(hw, -hh, -hd);
+  const ftl = project(-hw, hh, -hd);
+  const ftr = project(hw, hh, -hd);
+  const bbl = project(-hw, -hh, hd);
+  const bbr = project(hw, -hh, hd);
+  const btl = project(-hw, hh, hd);
+  const btr = project(hw, hh, hd);
+  
+  return (
+    <>
+      <polygon points={`${fbl.x},${fbl.y} ${fbr.x},${fbr.y} ${ftr.x},${ftr.y} ${ftl.x},${ftl.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <polygon points={`${ftl.x},${ftl.y} ${ftr.x},${ftr.y} ${btr.x},${btr.y} ${btl.x},${btl.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.2} />
+      <polygon points={`${fbr.x},${fbr.y} ${bbr.x},${bbr.y} ${btr.x},${btr.y} ${ftr.x},${ftr.y}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.2} />
+      <line x1={bbl.x} y1={bbl.y} x2={bbr.x} y2={bbr.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={bbl.x} y1={bbl.y} x2={btl.x} y2={btl.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={bbl.x} y1={bbl.y} x2={fbl.x} y2={fbl.y} stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+    </>
+  );
+}
+
+function isometricCylinder(cx: number, cy: number, w: number, h: number) {
+  const r = w / 2;
+  const hh = h / 2;
+  const ry = r * 0.35;
+  
+  return (
+    <>
+      <ellipse cx={cx} cy={cy - hh} rx={r} ry={ry} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <path d={`M${cx - r},${cy + hh} A${r},${ry} 0 0,0 ${cx + r},${cy + hh}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <path d={`M${cx - r},${cy + hh} A${r},${ry} 0 0,1 ${cx + r},${cy + hh}`} fill="none" stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <line x1={cx - r} y1={cy - hh} x2={cx - r} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+      <line x1={cx + r} y1={cy - hh} x2={cx + r} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+      {centerLines(cx, cy, r, hh + ry)}
+    </>
+  );
+}
+
+function isometricSphere(cx: number, cy: number, r: number) {
+  return (
+    <>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+      <ellipse cx={cx} cy={cy} rx={r} ry={r * 0.35} fill="none" stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      <ellipse cx={cx} cy={cy} rx={r * 0.35} ry={r} fill="none" stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+      {centerLines(cx, cy, r, r)}
+    </>
+  );
+}
+
+function getIsometricView(type: string, pw: number, ph: number, pd: number, cx: number, cy: number): JSX.Element {
+  const roundTypes = ["cylinder", "tube", "shaft", "drill"];
+  const sphereTypes = ["sphere"];
+  const discTypes = ["gear", "bearing", "pulley", "wheel"];
+  
+  if (roundTypes.includes(type)) return isometricCylinder(cx, cy, pw, ph);
+  if (sphereTypes.includes(type)) return isometricSphere(cx, cy, pw / 2);
+  if (discTypes.includes(type)) return isometricCylinder(cx, cy, pw, pd);
+  if (type === "cone") {
+    const topR = pw * 0.15;
+    const botR = pw / 2;
+    const hh = ph / 2;
+    const topRy = topR * 0.35;
+    const botRy = botR * 0.35;
+    return (
+      <>
+        <ellipse cx={cx} cy={cy - hh} rx={topR} ry={topRy} fill="none" stroke={LINE_COLOR} strokeWidth={1} />
+        <path d={`M${cx - botR},${cy + hh} A${botR},${botRy} 0 0,0 ${cx + botR},${cy + hh}`} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+        <path d={`M${cx - botR},${cy + hh} A${botR},${botRy} 0 0,1 ${cx + botR},${cy + hh}`} fill="none" stroke={HIDDEN_COLOR} strokeWidth={0.5} strokeDasharray="3 2" />
+        <line x1={cx - topR} y1={cy - hh} x2={cx - botR} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+        <line x1={cx + topR} y1={cy - hh} x2={cx + botR} y2={cy + hh} stroke={LINE_COLOR} strokeWidth={1.5} />
+        {centerLines(cx, cy, botR, hh + botRy)}
+      </>
+    );
+  }
+  if (type === "torus") {
+    const r = pw / 2;
+    const tubeR = r * 0.2;
+    return (
+      <>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={LINE_COLOR} strokeWidth={1.5} />
+        <circle cx={cx} cy={cy} r={r - tubeR * 2} fill="none" stroke={LINE_COLOR} strokeWidth={1} />
+        <ellipse cx={cx} cy={cy} rx={r} ry={r * 0.35} fill="none" stroke={LINE_COLOR} strokeWidth={0.8} />
+        {centerLines(cx, cy, r, r)}
+      </>
+    );
+  }
+  return isometricBox(cx, cy, pw, ph, pd);
+}
+
 const PROFILES: Record<string, Partial<ShapeProfile>> = {
   box: { w: 1.2, h: 1.2, d: 1.2 },
   cylinder: {
