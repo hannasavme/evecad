@@ -1,8 +1,17 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { X, Download, Ruler, Eye } from "lucide-react";
+import { X, Download, Ruler, Eye, Plus, Type } from "lucide-react";
 import type { SceneModel } from "@/components/ModelViewer";
 import { toast } from "sonner";
+
+interface Annotation {
+  id: string;
+  x: number;
+  y: number;
+  text: string;
+}
+
+let annotationId = 0;
 
 interface CadDrawingPanelProps {
   models: SceneModel[];
