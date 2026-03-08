@@ -120,7 +120,7 @@ For SIMPLE parts (single gear, bracket, etc.), return 1-3 parts.
 For COMPLEX objects (vehicles, machines, robots, devices), decompose into 40-80+ sub-parts for maximum detail.
 For MULTI-VEHICLE systems (swarms, fleets, convoys), model EACH vehicle separately with full detail.
 
-Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track, bolt, nut, screw, bearing, pulley, shaft, mug, hammer, handle, chassis, rocker, bogie, knuckle, motor, standoff, nosecone, bodytube, fin, centeringring, bulkhead, coupler, launchguide, motortube, thrustplate, retainer, nozzle, ebay, baffle.
+Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate, wheel, camera, antenna, drill, track, bolt, nut, screw, bearing, pulley, shaft, mug, hammer, handle, chassis, rocker, bogie, knuckle, motor, standoff, nosecone, bodytube, fin, centeringring, bulkhead, coupler, launchguide, motortube, thrustplate, retainer, nozzle, ebay, baffle, solarpanel, battery, rtg, sbc, transceiver, radiator, gripper, lidar, heatpipe, harness, imu, proxsensor.
 
 COMPOUND TYPE RULES (HIGHEST PRIORITY — ALWAYS FOLLOW):
 - "wheel": ANY wheel — auto-renders with tire, spoked rim, hub cap, axle hole, treads.
@@ -250,6 +250,18 @@ Params:
   - nozzle: nozzleThroat (0.02-0.5), nozzleExit (0.05-1), nozzleLength (0.1-2)
   - ebay: ebayRadius (0.1-3), ebayLength (0.2-3), ebayWall (0.01-0.1)
   - baffle: baffleRadius (0.1-3), baffleThickness (0.01-0.2), baffleHoles (4-24)
+  - solarpanel: panelWidth (0.5-10), panelLength (0.5-10), panelThickness (0.01-0.2), cellRows (2-20), cellCols (2-30)
+  - battery: batteryWidth (0.1-3), batteryLength (0.1-5), batteryHeight (0.1-2), cellCount (1-12)
+  - rtg: rtgRadius (0.1-2), rtgLength (0.3-5), rtgFinCount (4-16)
+  - sbc: sbcWidth (0.3-2), sbcLength (0.2-1.5), sbcHeight (0.005-0.1)
+  - transceiver: transceiverWidth (0.1-1), transceiverHeight (0.1-1), transceiverDepth (0.05-0.5)
+  - radiator: radiatorWidth (0.3-5), radiatorHeight (0.2-5), radiatorPipes (2-16)
+  - gripper: gripperWidth (0.1-2), gripperFingers (2-6), gripperOpenAngle (0-60)
+  - lidar: lidarRadius (0.05-0.5), lidarHeight (0.03-0.5)
+  - heatpipe: heatpipeRadius (0.01-0.2), heatpipeLength (0.2-5)
+  - harness: harnessRadius (0.01-0.15), harnessLength (0.3-5), harnessWires (2-8)
+  - imu: imuSize (0.05-0.5)
+  - proxsensor: proxRadius (0.02-0.3), proxLength (0.05-0.5)
 
 CRITICAL RULES:
 1. ALWAYS use compound types when the object IS one of those things. NEVER substitute with basic primitives.
@@ -310,7 +322,7 @@ You MUST call the parse_cad function.`;
                     items: {
                       type: "object",
                       properties: {
-                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate", "wheel", "camera", "antenna", "drill", "track", "bolt", "nut", "screw", "bearing", "pulley", "shaft", "mug", "hammer", "handle", "chassis", "rocker", "bogie", "knuckle", "motor", "standoff", "nosecone", "bodytube", "fin", "centeringring", "bulkhead", "coupler", "launchguide", "motortube", "thrustplate", "retainer", "nozzle", "ebay", "baffle"] },
+                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate", "wheel", "camera", "antenna", "drill", "track", "bolt", "nut", "screw", "bearing", "pulley", "shaft", "mug", "hammer", "handle", "chassis", "rocker", "bogie", "knuckle", "motor", "standoff", "nosecone", "bodytube", "fin", "centeringring", "bulkhead", "coupler", "launchguide", "motortube", "thrustplate", "retainer", "nozzle", "ebay", "baffle", "solarpanel", "battery", "rtg", "sbc", "transceiver", "radiator", "gripper", "lidar", "heatpipe", "harness", "imu", "proxsensor"] },
                         label: { type: "string" },
                         position: { type: "array", items: { type: "number" }, description: "[x, y, z]" },
                         rotation: { type: "array", items: { type: "number" }, description: "[rx, ry, rz] in degrees" },
@@ -431,6 +443,40 @@ You MUST call the parse_cad function.`;
                             baffleRadius: { type: "number" },
                             baffleThickness: { type: "number" },
                             baffleHoles: { type: "number" },
+                            panelWidth: { type: "number" },
+                            panelLength: { type: "number" },
+                            panelThickness: { type: "number" },
+                            cellRows: { type: "number" },
+                            cellCols: { type: "number" },
+                            batteryWidth: { type: "number" },
+                            batteryLength: { type: "number" },
+                            batteryHeight: { type: "number" },
+                            cellCount: { type: "number" },
+                            rtgRadius: { type: "number" },
+                            rtgLength: { type: "number" },
+                            rtgFinCount: { type: "number" },
+                            sbcWidth: { type: "number" },
+                            sbcLength: { type: "number" },
+                            sbcHeight: { type: "number" },
+                            transceiverWidth: { type: "number" },
+                            transceiverHeight: { type: "number" },
+                            transceiverDepth: { type: "number" },
+                            radiatorWidth: { type: "number" },
+                            radiatorHeight: { type: "number" },
+                            radiatorPipes: { type: "number" },
+                            gripperWidth: { type: "number" },
+                            gripperFingers: { type: "number" },
+                            gripperOpenAngle: { type: "number" },
+                            lidarRadius: { type: "number" },
+                            lidarHeight: { type: "number" },
+                            heatpipeRadius: { type: "number" },
+                            heatpipeLength: { type: "number" },
+                            harnessRadius: { type: "number" },
+                            harnessLength: { type: "number" },
+                            harnessWires: { type: "number" },
+                            imuSize: { type: "number" },
+                            proxRadius: { type: "number" },
+                            proxLength: { type: "number" },
                           },
                         },
                       },

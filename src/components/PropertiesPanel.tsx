@@ -273,6 +273,64 @@ const PARAM_DEFS: Record<string, ParamDef[]> = {
     { key: "baffleThickness", label: "Thickness", type: "number", min: 0.01, max: 0.2, step: 0.005, default: 0.04, hasDimension: true },
     { key: "baffleHoles", label: "Holes", type: "int", min: 4, max: 24, step: 1, default: 12, hasDimension: false },
   ],
+  solarpanel: [
+    { key: "panelWidth", label: "Width", type: "number", min: 0.5, max: 10, step: 0.1, default: 2.0, hasDimension: true },
+    { key: "panelLength", label: "Length", type: "number", min: 0.5, max: 10, step: 0.1, default: 3.0, hasDimension: true },
+    { key: "panelThickness", label: "Thickness", type: "number", min: 0.01, max: 0.2, step: 0.005, default: 0.04, hasDimension: true },
+    { key: "cellRows", label: "Cell rows", type: "int", min: 2, max: 20, step: 1, default: 6, hasDimension: false },
+    { key: "cellCols", label: "Cell cols", type: "int", min: 2, max: 30, step: 1, default: 10, hasDimension: false },
+  ],
+  battery: [
+    { key: "batteryWidth", label: "Width", type: "number", min: 0.1, max: 3, step: 0.05, default: 0.8, hasDimension: true },
+    { key: "batteryLength", label: "Length", type: "number", min: 0.1, max: 5, step: 0.1, default: 1.2, hasDimension: true },
+    { key: "batteryHeight", label: "Height", type: "number", min: 0.1, max: 2, step: 0.05, default: 0.5, hasDimension: true },
+    { key: "cellCount", label: "Cells", type: "int", min: 1, max: 12, step: 1, default: 4, hasDimension: false },
+  ],
+  rtg: [
+    { key: "rtgRadius", label: "Radius", type: "number", min: 0.1, max: 2, step: 0.05, default: 0.3, hasDimension: true },
+    { key: "rtgLength", label: "Length", type: "number", min: 0.3, max: 5, step: 0.1, default: 1.2, hasDimension: true },
+    { key: "rtgFinCount", label: "Fins", type: "int", min: 4, max: 16, step: 1, default: 8, hasDimension: false },
+  ],
+  sbc: [
+    { key: "sbcWidth", label: "Width", type: "number", min: 0.3, max: 2, step: 0.05, default: 0.85, hasDimension: true },
+    { key: "sbcLength", label: "Length", type: "number", min: 0.2, max: 1.5, step: 0.05, default: 0.56, hasDimension: true },
+    { key: "sbcHeight", label: "Height", type: "number", min: 0.005, max: 0.1, step: 0.005, default: 0.02, hasDimension: true },
+  ],
+  transceiver: [
+    { key: "transceiverWidth", label: "Width", type: "number", min: 0.1, max: 1, step: 0.05, default: 0.4, hasDimension: true },
+    { key: "transceiverHeight", label: "Height", type: "number", min: 0.1, max: 1, step: 0.05, default: 0.3, hasDimension: true },
+    { key: "transceiverDepth", label: "Depth", type: "number", min: 0.05, max: 0.5, step: 0.02, default: 0.2, hasDimension: true },
+  ],
+  radiator: [
+    { key: "radiatorWidth", label: "Width", type: "number", min: 0.3, max: 5, step: 0.1, default: 1.5, hasDimension: true },
+    { key: "radiatorHeight", label: "Height", type: "number", min: 0.2, max: 5, step: 0.1, default: 1.0, hasDimension: true },
+    { key: "radiatorPipes", label: "Pipes", type: "int", min: 2, max: 16, step: 1, default: 6, hasDimension: false },
+  ],
+  gripper: [
+    { key: "gripperWidth", label: "Width", type: "number", min: 0.1, max: 2, step: 0.05, default: 0.5, hasDimension: true },
+    { key: "gripperFingers", label: "Fingers", type: "int", min: 2, max: 6, step: 1, default: 3, hasDimension: false },
+    { key: "gripperOpenAngle", label: "Open °", type: "number", min: 0, max: 60, step: 5, default: 25, hasDimension: false },
+  ],
+  lidar: [
+    { key: "lidarRadius", label: "Radius", type: "number", min: 0.05, max: 0.5, step: 0.02, default: 0.15, hasDimension: true },
+    { key: "lidarHeight", label: "Height", type: "number", min: 0.03, max: 0.5, step: 0.02, default: 0.12, hasDimension: true },
+  ],
+  heatpipe: [
+    { key: "heatpipeRadius", label: "Radius", type: "number", min: 0.01, max: 0.2, step: 0.005, default: 0.03, hasDimension: true },
+    { key: "heatpipeLength", label: "Length", type: "number", min: 0.2, max: 5, step: 0.1, default: 1.5, hasDimension: true },
+  ],
+  harness: [
+    { key: "harnessRadius", label: "Radius", type: "number", min: 0.01, max: 0.15, step: 0.005, default: 0.04, hasDimension: true },
+    { key: "harnessLength", label: "Length", type: "number", min: 0.3, max: 5, step: 0.1, default: 2.0, hasDimension: true },
+    { key: "harnessWires", label: "Wires", type: "int", min: 2, max: 8, step: 1, default: 6, hasDimension: false },
+  ],
+  imu: [
+    { key: "imuSize", label: "Size", type: "number", min: 0.05, max: 0.5, step: 0.02, default: 0.15, hasDimension: true },
+  ],
+  proxsensor: [
+    { key: "proxRadius", label: "Radius", type: "number", min: 0.02, max: 0.3, step: 0.01, default: 0.08, hasDimension: true },
+    { key: "proxLength", label: "Length", type: "number", min: 0.05, max: 0.5, step: 0.02, default: 0.15, hasDimension: true },
+  ],
 };
 
 interface PropertiesPanelProps {
