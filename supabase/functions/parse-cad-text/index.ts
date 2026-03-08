@@ -393,6 +393,7 @@ CRITICAL RULES:
 4. Position with PRECISION: wheels touch ground, axles align, panels connect flush.
 5. Use ROTATION for realism: suspension arms, tilted panels, angled cameras.
 6. When user says "wheel" they mean a WHEEL — use type "wheel". Only use wedges for impeller/turbine blades.
+7. *** BUILT-IN ORIENTATION: wheel, bearing, pulley types are ALREADY rendered upright (vertical). Do NOT rotate them by 90° on X. Use rotation=[0,0,0] for standard upright wheels. Only rotate Y for steering. Same for antenna (already renders mast vertical). ***
 
 SPATIAL CONNECTIVITY RULES (CRITICAL — parts MUST physically connect):
 7. CHAIN POSITIONING: For articulated/linked objects (robotic arms, cranes, excavators, linkages), compute each part's position based on the PREVIOUS part's position + its dimensions. Example for a robotic arm:
