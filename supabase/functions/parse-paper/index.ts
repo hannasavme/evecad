@@ -158,7 +158,9 @@ Be EXHAUSTIVE. List every single component that would need to be modeled as a se
         messages: [
           {
             role: "system",
-            content: `You are a HIGH-DETAIL CAD geometry decomposition engine. Given engineering analysis from an academic paper, create a detailed 3D CAD model with 20-50+ parts.
+            content: `You are a MASTER CAD geometry decomposition engine that creates museum-quality 3D models from engineering descriptions. You must create 40-80+ parts for complex systems.
+
+CRITICAL: When a paper describes MULTIPLE vehicles or robots (e.g., mother rover + child rovers + drillers), you MUST model ALL of them as separate sub-assemblies positioned in a scene together.
 
 Available shape types: gear, bracket, box, cylinder, sphere, cone, wedge, torus, tube, plate.
 
