@@ -151,7 +151,7 @@ export default function Index() {
 
         setTimeout(() => {
           setModelsImmediate((prev) => [...prev, ...parts]);
-          if (parts.length > 0) setSelectedModelId(parts[0].id);
+          if (parts.length > 0) handleSelectModel(parts[0].id);
           setShowInput(false);
           setIsGenerating(false);
           if (parts.length > 1) {
