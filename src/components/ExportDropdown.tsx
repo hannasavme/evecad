@@ -1,0 +1,66 @@
+import { useState } from "react";
+import { Download, FileBox, Printer, Eye } from "lucide-react";
+import { toast } from "sonner";
+import { AnimatePresence, motion } from "framer-motion";
+
+const formats = [
+  { id: "step", label: "STEP", desc: "Pro CAD ⚙️", icon: FileBox },
+  { id: "stl", label: "STL", desc: "3D Print 🖨️", icon: Printer },
+  { id: "obj", label: "OBJ", desc: "Preview 👀", icon: Eye },
+];
+
+interface ExportDropdownProps {
+  hasModel: boolean;
+}
+
+export default function ExportDropdown({ hasModel }: ExportDropdownProps) {
+  const [open, setOpen] = useState(false);
+
+  const handleExport = (format: string) => {
+    toast.success(`${format.toUpperCase()} export started! 🎉`, {
+      description: "Connect a backend to enable real CAD file generation~",
+    });
+    setOpen(false);
+  };
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        onClick={() => setOpen((v) => !v)}
+        disabled={!hasModel}
+        className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed px-2.5 py-1.5 rounded-xl border-2 border-border hover:border-primary/40 bg-card/60"
+      >
+        <Download className="w-3 h-3" />
+        Export 📁
+      </button>
+
+      <AnimatePresence>
+        {open && hasModel && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 top-full mt-1.5 z-50 bg-card border-2 border-border rounded-2xl p-2 kawaii-shadow-sm min-w-[140px]"
+          >
+            {formats.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => handleExport(f.id)}
+                className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-xs font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+              >
+                <f.icon className="w-3.5 h-3.5" />
+                <span>{f.label}</span>
+                <span className="ml-auto text-[10px] text-muted-foreground">{f.desc}</span>
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

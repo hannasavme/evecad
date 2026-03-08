@@ -120,12 +120,14 @@ export default function Index() {
                 <Star className="w-3.5 h-3.5 text-primary" />
                 {hasModel ? `${modelType.toUpperCase()} ✅` : "Ready to create~ ✨"}
               </span>
-              <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground">
-                <span>🖱️ Left-drag: Orbit</span>
+              <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground">
+                <span>🖱️ Orbit</span>
                 <span className="text-border">·</span>
-                <span>🔍 Scroll: Zoom</span>
+                <span>🔍 Zoom</span>
                 <span className="text-border">·</span>
-                <span>✋ Right-drag: Pan</span>
+                <span>✋ Pan</span>
+                <span className="text-border">·</span>
+                <ExportDropdown hasModel={hasModel} />
               </div>
             </div>
 
