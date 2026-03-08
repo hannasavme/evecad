@@ -1222,6 +1222,7 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
             annotations={annotations}
             onUpdateAnnotation={updateAnnotation}
             onDeleteAnnotation={deleteAnnotation}
+            onMoveAnnotation={moveAnnotation}
             titleText={titleText}
             onUpdateTitle={setTitleText}
             showSection={showSection}
