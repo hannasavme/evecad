@@ -58,9 +58,9 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
     : !!paperFile;
 
   const modes = [
-    { key: "text" as const, label: "Text to CAD", icon: Type },
-    { key: "image" as const, label: "Image to CAD", icon: Image },
-    { key: "paper" as const, label: "Paper to CAD", icon: FileText },
+    { key: "text" as const, label: "Text to CAD" },
+    { key: "image" as const, label: "Image to CAD" },
+    { key: "paper" as const, label: "Paper to CAD" },
   ];
 
   return (
@@ -77,7 +77,7 @@ export default function InputPanel({ onGenerate, isGenerating }: InputPanelProps
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <m.icon className="w-3.5 h-3.5" />
+            
             {m.label}
           </button>
         ))}
