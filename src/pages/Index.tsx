@@ -91,7 +91,7 @@ export default function Index() {
 
       {/* Main */}
       <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 h-[calc(100vh-8rem)]">
+        <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 min-h-[500px]" style={{ height: "calc(100vh - 7rem)" }}>
           {/* Left Panel */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
