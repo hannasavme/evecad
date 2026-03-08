@@ -318,11 +318,11 @@ function WheelMesh({ color, params }: { color: string; params?: ModelParams }) {
       {/* Inner rim */}
       <mesh><torusGeometry args={[r * 0.75, w * 0.12, 12, seg]} /><meshStandardMaterial color={color} metalness={0.6} roughness={0.2} /></mesh>
       {/* Hub */}
-      <mesh><cylinderGeometry args={[hubR, hubR, w * 0.5, seg]} rotation={[Math.PI / 2, 0, 0]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.2} /></mesh>
+      <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[hubR, hubR, w * 0.5, seg]} /><meshStandardMaterial color={color} metalness={0.7} roughness={0.2} /></mesh>
       {/* Hub cap */}
-      <mesh position={[0, 0, w * 0.25]}><cylinderGeometry args={[hubR * 0.7, hubR * 0.7, 0.03, seg]} rotation={[Math.PI / 2, 0, 0]} /><meshStandardMaterial color="#ddd" metalness={0.8} roughness={0.1} /></mesh>
+      <mesh position={[0, 0, w * 0.25]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[hubR * 0.7, hubR * 0.7, 0.03, seg]} /><meshStandardMaterial color="#ddd" metalness={0.8} roughness={0.1} /></mesh>
       {/* Axle hole */}
-      <mesh><cylinderGeometry args={[hubR * 0.2, hubR * 0.2, w * 0.6, 12]} rotation={[Math.PI / 2, 0, 0]} /><meshStandardMaterial color="#222" metalness={0.5} roughness={0.3} /></mesh>
+      <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[hubR * 0.2, hubR * 0.2, w * 0.6, 12]} /><meshStandardMaterial color="#222" metalness={0.5} roughness={0.3} /></mesh>
       {/* Spokes */}
       {spokeElements}
       {/* Treads */}
