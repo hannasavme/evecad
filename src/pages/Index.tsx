@@ -51,17 +51,37 @@ export default function Index() {
     pushImmediate(typeof updater === "function" ? updater(modelsRef.current) : updater);
   }, [pushImmediate]);
 
-  const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
+  const [selectedModelIds, setSelectedModelIds] = useState<Set<string>>(new Set());
   const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
   const [editingLabelValue, setEditingLabelValue] = useState("");
   const [showDrawing, setShowDrawing] = useState(false);
   const [assemblyInstructions, setAssemblyInstructions] = useState<string | null>(null);
   const viewerRef = useRef<ModelViewerHandle>(null);
 
-  const selectedModel = models.find((m) => m.id === selectedModelId) || null;
+  const selectedModels = models.filter((m) => selectedModelIds.has(m.id));
+
+  const handleSelectModel = useCallback((id: string | null, additive?: boolean) => {
+    if (id === null) {
+      setSelectedModelIds(new Set());
+      return;
+    }
+    setSelectedModelIds((prev) => {
+      if (additive) {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      }
+      return new Set([id]);
+    });
+  }, []);
 
   const handleUpdateModel = useCallback((id: string, updates: Partial<SceneModel>) => {
     setModels((prev) => prev.map((m) => (m.id === id ? { ...m, ...updates } : m)));
+  }, [setModels]);
+
+  const handleBatchUpdate = useCallback((ids: string[], updates: Partial<SceneModel>) => {
+    setModels((prev) => prev.map((m) => ids.includes(m.id) ? { ...m, ...updates } : m));
   }, [setModels]);
 
   const handleGenerate = useCallback(
