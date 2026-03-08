@@ -842,11 +842,12 @@ function dimStr(val: number) {
   return (val * 25.4).toFixed(1);
 }
 
-function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotation, titleText, onUpdateTitle, showSection, showBOM }: {
+function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotation, onMoveAnnotation, titleText, onUpdateTitle, showSection, showBOM }: {
   models: SceneModel[];
   annotations: Annotation[];
   onUpdateAnnotation: (id: string, text: string) => void;
   onDeleteAnnotation: (id: string) => void;
+  onMoveAnnotation: (id: string, x: number, y: number) => void;
   titleText: string; onUpdateTitle: (t: string) => void;
   showSection: boolean; showBOM: boolean;
 }) {
