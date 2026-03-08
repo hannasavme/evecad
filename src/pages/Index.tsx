@@ -32,6 +32,7 @@ const stages = [
 let modelIdCounter = 0;
 
 export default function Index() {
+  const [showProperties, setShowProperties] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAssembling, setIsAssembling] = useState(false);
   const [progress, setProgress] = useState(0);
