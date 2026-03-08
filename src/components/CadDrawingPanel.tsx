@@ -1036,6 +1036,9 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
   const startIdx = page * partsPerPage;
   const pageModels = isAssemblyMode ? models : models.slice(startIdx, startIdx + partsPerPage);
   const totalPages = isAssemblyMode ? 1 : Math.ceil(models.length / partsPerPage);
+
+  // View position state for draggable views
+  const [viewPositions, setViewPositions] = useState<Record<string, { x: number; y: number }>>({});
   const margin = 20;
   const scl = 55;
   const svgWidth = 1190;
