@@ -14,6 +14,7 @@ export interface SceneModel {
 
 export interface ModelViewerHandle {
   getScene: () => THREE.Scene | null;
+  resetCamera: () => void;
 }
 
 interface ModelViewerProps {
