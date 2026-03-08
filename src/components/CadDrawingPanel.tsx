@@ -1813,6 +1813,9 @@ export default function CadDrawingPanel({ models, onClose }: CadDrawingPanelProp
             <button onClick={() => setShowSection(!showSection)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showSection ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
               <Crosshair className="w-3 h-3 inline mr-1" />Section
             </button>
+            <button onClick={() => setShowIsometric(!showIsometric)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showIsometric ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+              <Layers className="w-3 h-3 inline mr-1" />Isometric
+            </button>
             <button onClick={() => setShowBOM(!showBOM)} className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all ${showBOM ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
               <List className="w-3 h-3 inline mr-1" />BOM
             </button>
