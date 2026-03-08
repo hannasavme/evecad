@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { X, Download, Ruler, Type, List, Crosshair } from "lucide-react";
+import { X, Download, Ruler, Type, List, Crosshair, ChevronLeft, ChevronRight } from "lucide-react";
 import type { SceneModel, ModelParams } from "@/components/ModelViewer";
 import { toast } from "sonner";
 
