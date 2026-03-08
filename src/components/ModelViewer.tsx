@@ -540,7 +540,7 @@ function WheelMesh({ color, params }: { color: string; params?: ModelParams }) {
   }, [spokes, r, hubR, color, w]);
 
   return (
-    <group>
+    <group rotation={[0, Math.PI / 2, 0]}>
       {/* Outer tire */}
       <mesh><torusGeometry args={[r, w * 0.4, 16, seg]} /><meshStandardMaterial color="#555" metalness={0.4} roughness={0.6} /></mesh>
       {/* Inner rim */}
