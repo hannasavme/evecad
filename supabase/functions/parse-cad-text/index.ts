@@ -1213,6 +1213,10 @@ You MUST call the parse_cad function.`;
 
     if (toolCall?.function?.arguments) {
       const parsed = JSON.parse(toolCall.function.arguments);
+      // Post-process: fix floating parts
+      if (parsed.parts && Array.isArray(parsed.parts) && parsed.parts.length > 1) {
+        fixFloatingParts(parsed.parts);
+      }
       console.log("AI parsed result:", JSON.stringify(parsed));
       return new Response(JSON.stringify(parsed), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
