@@ -87,7 +87,7 @@ export default function SaveLoadMenu({ models, onLoad, currentProjectId, onProje
     const name = `Project ${projects.length + 1}`;
     const { data, error } = await supabase
       .from("saved_models")
-      .insert({ user_id: user.id, name, models_data: models as unknown as Record<string, unknown>[] })
+      .insert([{ user_id: user.id, name, models_data: JSON.parse(JSON.stringify(models)) }])
       .select("id")
       .single();
     setSaving(false);
