@@ -1,47 +1,44 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
+
+interface HistoryState<T> {
+  entries: T[];
+  index: number;
+}
 
 export function useUndoHistory<T>(initialState: T) {
-  const [history, setHistory] = useState<T[]>([initialState]);
-  const [index, setIndex] = useState(0);
-  const skipNextPush = useRef(false);
+  const [state, setState] = useState<HistoryState<T>>({
+    entries: [initialState],
+    index: 0,
+  });
 
-  const current = history[index];
+  const current = state.entries[state.index] ?? initialState;
 
-  const push = useCallback((state: T) => {
-    if (skipNextPush.current) {
-      skipNextPush.current = false;
-      return;
-    }
-    setHistory((prev) => {
-      const newHistory = prev.slice(0, index + 1);
-      newHistory.push(state);
-      // Keep max 50 entries
-      if (newHistory.length > 50) newHistory.shift();
-      return newHistory;
+  const push = useCallback((value: T) => {
+    setState((prev) => {
+      const newEntries = prev.entries.slice(0, prev.index + 1);
+      newEntries.push(value);
+      if (newEntries.length > 50) newEntries.shift();
+      return { entries: newEntries, index: newEntries.length - 1 };
     });
-    setIndex((prev) => Math.min(prev + 1, 50));
-  }, [index]);
+  }, []);
 
   const undo = useCallback(() => {
-    setIndex((prev) => {
-      if (prev <= 0) return prev;
-      skipNextPush.current = true;
-      return prev - 1;
+    setState((prev) => {
+      if (prev.index <= 0) return prev;
+      return { ...prev, index: prev.index - 1 };
     });
   }, []);
 
   const redo = useCallback(() => {
-    setIndex((prev) => {
-      if (prev >= history.length - 1) return prev;
-      skipNextPush.current = true;
-      return prev + 1;
+    setState((prev) => {
+      if (prev.index >= prev.entries.length - 1) return prev;
+      return { ...prev, index: prev.index + 1 };
     });
-  }, [history.length]);
+  }, []);
 
-  const canUndo = index > 0;
-  const canRedo = index < history.length - 1;
+  const canUndo = state.index > 0;
+  const canRedo = state.index < state.entries.length - 1;
 
-  // Keyboard shortcut
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "z") {
