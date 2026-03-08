@@ -1298,11 +1298,13 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const topRowH = drawH * 0.58;
         const bottomRowH = drawH * 0.38;
 
-        // Column widths (front gets more space for balloons)
-        const numCols = showSection ? 3 : 2;
-        const frontZoneW = drawAreaW * (showSection ? 0.40 : 0.55);
-        const sideZoneW = drawAreaW * (showSection ? 0.28 : 0.42);
-        const sectionZoneW = showSection ? drawAreaW * 0.28 : 0;
+        // Column widths
+        const numViewCols = 2 + (showSection ? 1 : 0) + (showIsometric ? 1 : 0);
+        const totalZoneW = drawAreaW;
+        const frontZoneW = totalZoneW * (showIsometric ? 0.30 : showSection ? 0.40 : 0.55);
+        const sideZoneW = totalZoneW * (showIsometric ? 0.22 : showSection ? 0.28 : 0.42);
+        const sectionZoneW = showSection ? totalZoneW * (showIsometric ? 0.22 : 0.28) : 0;
+        const isoZoneW = showIsometric ? totalZoneW * 0.26 : 0;
         const viewH = topRowH - gap;
         const topViewH = bottomRowH - gap;
 
@@ -1315,22 +1317,23 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const topScaleH = (topViewH - 50) / totalD;
         const asmScale = Math.min(frontScaleW, frontScaleH, sideScaleW, sideScaleH, topScaleW, topScaleH, 35);
 
-        // Default view positions — clamped inside the drawing border
+        // Default view positions
         const defaultPositions: Record<string, { x: number; y: number }> = {
           front: { x: margin + gap, y: viewsStartY },
           side: { x: margin + gap + frontZoneW + gap, y: viewsStartY },
           top: { x: margin + gap, y: viewsStartY + topRowH + gap },
           section: { x: margin + gap + frontZoneW + gap + sideZoneW + gap, y: viewsStartY },
+          isometric: { x: margin + gap + frontZoneW + gap + sideZoneW + gap + (showSection ? sectionZoneW + gap : 0), y: viewsStartY },
         };
 
-        // Use stored positions or defaults
         const getViewPos = (id: string) => viewPositions[id] || defaultPositions[id];
         const frontPos = getViewPos("front");
         const sidePos = getViewPos("side");
         const topPos = getViewPos("top");
         const sectionPos = getViewPos("section");
+        const isoPos = getViewPos("isometric");
 
-        // View dimensions for collision detection — sized to fit within zones
+        // View dimensions
         const frontVW = frontZoneW - gap * 2;
         const frontVH = viewH;
         const sideVW = sideZoneW - gap * 2;
@@ -1339,8 +1342,10 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const topVH = topViewH;
         const sectionVW = sectionZoneW > 0 ? sectionZoneW - gap * 2 : 0;
         const sectionVH = viewH;
+        const isoVW = isoZoneW > 0 ? isoZoneW - gap * 2 : 0;
+        const isoVH = viewH;
 
-        // View centers (computed from positions)
+        // View centers
         const frontCx = frontPos.x + frontVW / 2;
         const frontCy = frontPos.y + frontVH / 2 + 15;
         const sideCx = sidePos.x + sideVW / 2;
@@ -1349,6 +1354,8 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
         const topCy = topPos.y + topVH / 2 + 15;
         const sectionCx = sectionPos.x + sectionVW / 2;
         const sectionCy = sectionPos.y + sectionVH / 2 + 15;
+        const isoCx = isoPos.x + isoVW / 2;
+        const isoCy = isoPos.y + isoVH / 2 + 15;
 
         const overallWmm = (totalW * 25.4).toFixed(1);
         const overallHmm = (totalH * 25.4).toFixed(1);
@@ -1371,6 +1378,9 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
           if (showSection) {
             rects.push({ id: "section", x: sectionPos.x, y: sectionPos.y, w: sectionVW, h: sectionVH });
           }
+          if (showIsometric) {
+            rects.push({ id: "isometric", x: isoPos.x, y: isoPos.y, w: isoVW, h: isoVH });
+          }
           return rects;
         };
 
@@ -1380,6 +1390,7 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
             side: { w: sideVW, h: sideVH },
             top: { w: topVW, h: topVH },
             section: { w: sectionVW, h: sectionVH },
+            isometric: { w: isoVW, h: isoVH },
           };
           const movingRect: ViewRect = { id, x: newX, y: newY, w: viewSizes[id].w, h: viewSizes[id].h };
           const otherRects = buildViewRects().filter(r => r.id !== id);
@@ -1387,31 +1398,14 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
           setViewPositions(prev => ({ ...prev, [id]: { x: resolved.x, y: resolved.y } }));
         };
 
-        // Render parts into a specific view
-        const renderPartsInView = (
-          viewCx: number, viewCy: number,
-          projFn: (data: { px: number; py: number; pz: number }) => { x: number; y: number },
-          sizeFn: (dims: { w: number; h: number; d: number }) => { pw: number; ph: number },
-          profileFn: (profile: ShapeProfile) => ((pw: number, ph: number, cx: number, cy: number, params?: ModelParams) => JSX.Element),
-          opacity = 0.9
-        ) => partData.map(({ model, dims, px, py, pz }) => {
-          const profile = getProfile(model.type);
-          const fn = profileFn(profile);
-          const pos = projFn({ px, py, pz });
-          const size = sizeFn(dims);
-          return <g key={model.id} opacity={opacity}>{fn(size.pw, size.ph, pos.x, pos.y, model.params)}</g>;
-        });
-
         return (
           <g>
             {/* ─── FRONT VIEW (draggable) ─── */}
             <DraggableViewPanel id="front" x={frontPos.x} y={frontPos.y} w={frontVW} h={frontVH} onDragEnd={handleViewDragEnd} label="FRONT VIEW">
               <text x={frontCx} y={frontPos.y + 10} textAnchor="middle" fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">FRONT VIEW</text>
               <rect x={frontPos.x} y={frontPos.y + 12} width={frontVW} height={frontVH - 15} fill="none" stroke="#d0d0d0" strokeWidth={0.4} strokeDasharray="4 3" rx={2} />
-              {/* Center lines */}
               <line x1={frontCx - frontBBoxW / 2 - 12} y1={frontCy} x2={frontCx + frontBBoxW / 2 + 12} y2={frontCy} stroke={CENTER_COLOR} strokeWidth={0.3} strokeDasharray="10 3 2 3" />
               <line x1={frontCx} y1={frontCy - frontBBoxH / 2 - 12} x2={frontCx} y2={frontCy + frontBBoxH / 2 + 12} stroke={CENTER_COLOR} strokeWidth={0.3} strokeDasharray="10 3 2 3" />
-              {/* Section cut line */}
               {showSection && (
                 <>
                   <line x1={frontCx} y1={frontCy - frontBBoxH / 2 - 18} x2={frontCx} y2={frontCy + frontBBoxH / 2 + 18} stroke={LINE_COLOR} strokeWidth={0.7} strokeDasharray="10 3 2 3" />
@@ -1421,10 +1415,8 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
                   <polygon points={`${frontCx - 6},${frontCy + frontBBoxH / 2 + 15} ${frontCx + 6},${frontCy + frontBBoxH / 2 + 15} ${frontCx},${frontCy + frontBBoxH / 2 + 8}`} fill={LINE_COLOR} />
                 </>
               )}
-              {/* Dimensions */}
               <DimensionH x1={frontCx - frontBBoxW / 2} x2={frontCx + frontBBoxW / 2} y={frontCy + frontBBoxH / 2 + 30} value={`${overallWmm} mm`} />
               <DimensionV y1={frontCy - frontBBoxH / 2} y2={frontCy + frontBBoxH / 2} x={frontCx + frontBBoxW / 2 + 25} value={`${overallHmm} mm`} />
-              {/* Parts */}
               {partData.map(({ model, dims, px, py }, idx) => {
                 const profile = getProfile(model.type);
                 const fn = profile.frontProfile || defaultProfile.frontProfile;
@@ -1432,7 +1424,6 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
                 const fy = frontCy - (py - centerY) * asmScale;
                 const pw = dims.w * asmScale;
                 const ph = dims.h * asmScale;
-                // Balloon
                 const balloonAngle = (idx / models.length) * Math.PI * 2 - Math.PI / 2;
                 const balloonR = Math.max(frontBBoxW, frontBBoxH) / 2 + 30 + (idx % 3) * 18;
                 const bx = frontCx + Math.cos(balloonAngle) * balloonR;
@@ -1496,7 +1487,25 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
               </DraggableViewPanel>
             )}
 
-            {/* Projection lines between views (dynamic based on positions) */}
+            {/* ─── ISOMETRIC VIEW (draggable) ─── */}
+            {showIsometric && (
+              <DraggableViewPanel id="isometric" x={isoPos.x} y={isoPos.y} w={isoVW} h={isoVH} onDragEnd={handleViewDragEnd} label="ISOMETRIC VIEW">
+                <text x={isoCx} y={isoPos.y + 10} textAnchor="middle" fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">ISOMETRIC VIEW</text>
+                <rect x={isoPos.x} y={isoPos.y + 12} width={isoVW} height={isoVH - 15} fill="none" stroke="#d0d0d0" strokeWidth={0.4} strokeDasharray="4 3" rx={2} />
+                {partData.map(({ model, dims, px, py, pz }) => {
+                  const cos30 = Math.cos(Math.PI / 6);
+                  const sin30 = 0.5;
+                  const isoX = isoCx + ((px - centerX) - (pz - centerZ)) * cos30 * asmScale;
+                  const isoY = isoCy - (py - centerY) * asmScale + ((px - centerX) + (pz - centerZ)) * sin30 * asmScale;
+                  const pw = dims.w * asmScale;
+                  const ph = dims.h * asmScale;
+                  const pd = dims.d * asmScale;
+                  return <g key={model.id} opacity={0.85}>{getIsometricView(model.type, pw, ph, pd, isoX, isoY)}</g>;
+                })}
+              </DraggableViewPanel>
+            )}
+
+            {/* Projection lines between views */}
             <line x1={frontCx + frontBBoxW / 2 + 8} y1={frontCy} x2={sideCx - sideBBoxW / 2 - 8} y2={sideCy} stroke={HIDDEN_COLOR} strokeWidth={0.3} strokeDasharray="6 3" />
             <line x1={frontCx} y1={frontCy + frontBBoxH / 2 + 8} x2={topCx} y2={topCy - topBBoxH / 2 - 8} stroke={HIDDEN_COLOR} strokeWidth={0.3} strokeDasharray="6 3" />
 
