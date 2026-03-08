@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Scaling, Palette, X, Settings2, Ruler } from "lucide-react";
+import { Palette, X, Settings2, Ruler, Move3D } from "lucide-react";
 import type { SceneModel, ModelParams } from "@/components/ModelViewer";
 
 const KAWAII_COLORS = [
@@ -90,14 +90,10 @@ interface PropertiesPanelProps {
 export default function PropertiesPanel({ model, onUpdate, onClose }: PropertiesPanelProps) {
   const [unit, setUnit] = useState<Unit>("mm");
 
-  const handleScaleChange = (axis: 0 | 1 | 2, value: number) => {
-    const newScale: [number, number, number] = [...model.scale];
-    newScale[axis] = value;
-    onUpdate(model.id, { scale: newScale });
-  };
-
-  const handleUniformScale = (value: number) => {
-    onUpdate(model.id, { scale: [value, value, value] });
+  const handlePositionChange = (axis: 0 | 1 | 2, value: number) => {
+    const newPos: [number, number, number] = [...model.position];
+    newPos[axis] = toInternal(value, unit);
+    onUpdate(model.id, { position: newPos });
   };
 
   const handleParamChange = (key: keyof ModelParams, value: number) => {
@@ -183,39 +179,26 @@ export default function PropertiesPanel({ model, onUpdate, onClose }: Properties
           </div>
         )}
 
-        {/* Scale Controls */}
+        {/* Position Controls */}
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-            <Scaling className="w-3 h-3" /> Scale
+            <Move3D className="w-3 h-3" /> Position
           </label>
-
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-muted-foreground w-6">All</span>
-              <input
-                type="range"
-                min="0.2"
-                max="3"
-                step="0.1"
-                value={model.scale[0]}
-                onChange={(e) => handleUniformScale(parseFloat(e.target.value))}
-                className="flex-1 h-1.5 rounded-full appearance-none bg-muted accent-primary"
-              />
-              <span className="text-[10px] font-bold text-foreground w-8 text-right">{model.scale[0].toFixed(1)}x</span>
-            </div>
             {(["X", "Y", "Z"] as const).map((axis, i) => (
               <div key={axis} className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-muted-foreground w-6">{axis}</span>
                 <input
-                  type="range"
-                  min="0.2"
-                  max="3"
-                  step="0.1"
-                  value={model.scale[i]}
-                  onChange={(e) => handleScaleChange(i as 0 | 1 | 2, parseFloat(e.target.value))}
-                  className="flex-1 h-1.5 rounded-full appearance-none bg-muted accent-primary"
+                  type="number"
+                  step={unit === "mm" ? 1 : 0.1}
+                  value={parseFloat(toDisplay(model.position[i], unit).toFixed(3))}
+                  onChange={(e) => {
+                    const v = parseFloat(e.target.value);
+                    if (!isNaN(v)) handlePositionChange(i as 0 | 1 | 2, v);
+                  }}
+                  className="flex-1 h-7 rounded-lg bg-muted border border-border text-xs font-bold text-foreground text-center px-2 focus:border-primary focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
-                <span className="text-[10px] font-bold text-foreground w-8 text-right">{model.scale[i].toFixed(1)}x</span>
+                <span className="text-[10px] font-bold text-muted-foreground w-6 text-right">{unit}</span>
               </div>
             ))}
           </div>
