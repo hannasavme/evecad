@@ -82,6 +82,20 @@ function BoxModel() {
   );
 }
 
+function InfiniteGrid() {
+  const gridRef = useMemo(() => {
+    const geo = new THREE.PlaneGeometry(200, 200);
+    geo.rotateX(-Math.PI / 2);
+    return geo;
+  }, []);
+
+  return (
+    <mesh geometry={gridRef} position={[0, -0.1, 0]}>
+      <meshBasicMaterial color="#fce7f3" transparent opacity={0.3} />
+    </mesh>
+  );
+}
+
 function Scene({ modelType }: { modelType: string }) {
   const ModelComponent = { gear: GearModel, bracket: BracketModel, box: BoxModel, cylinder: CylinderModel, default: DefaultModel }[modelType] || DefaultModel;
   return (
@@ -94,7 +108,7 @@ function Scene({ modelType }: { modelType: string }) {
       <ContactShadows position={[0, -0.1, 0]} opacity={0.3} scale={10} blur={3} far={4} color="#f9a8d4" />
       <Environment preset="apartment" />
       <OrbitControls enablePan enableZoom enableRotate autoRotate autoRotateSpeed={1.5} />
-      <gridHelper args={[10, 10, "#f0abfc", "#fce7f3"]} position={[0, -0.1, 0]} />
+      <gridHelper args={[50, 50, "#f0abfc", "#fce7f3"]} position={[0, -0.1, 0]} />
     </>
   );
 }
