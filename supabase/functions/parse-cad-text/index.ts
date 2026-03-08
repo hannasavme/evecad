@@ -271,7 +271,7 @@ You MUST call the parse_cad function.`;
                     items: {
                       type: "object",
                       properties: {
-                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate", "wheel", "camera", "antenna", "drill", "track", "bolt", "nut", "screw", "bearing", "pulley", "shaft", "mug", "hammer", "handle"] },
+                        type: { type: "string", enum: ["gear", "bracket", "box", "cylinder", "sphere", "cone", "wedge", "torus", "tube", "plate", "wheel", "camera", "antenna", "drill", "track", "bolt", "nut", "screw", "bearing", "pulley", "shaft", "mug", "hammer", "handle", "chassis", "rocker", "bogie", "knuckle", "motor", "standoff"] },
                         label: { type: "string" },
                         position: { type: "array", items: { type: "number" }, description: "[x, y, z]" },
                         rotation: { type: "array", items: { type: "number" }, description: "[rx, ry, rz] in degrees" },
