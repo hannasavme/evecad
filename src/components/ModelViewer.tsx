@@ -99,11 +99,24 @@ function SceneModelComponent({ model, isSelected, onSelect }: { model: SceneMode
   );
 }
 
-function SceneCapture({ onSceneReady }: { onSceneReady: (scene: THREE.Scene) => void }) {
-  const { scene } = useThree();
+function SceneCapture({ onSceneReady, onControlsReady }: { onSceneReady: (scene: THREE.Scene) => void; onControlsReady: (reset: () => void) => void }) {
+  const { scene, camera } = useThree();
+  const controlsRef = useRef<any>(null);
+
   useEffect(() => {
     onSceneReady(scene);
   }, [scene, onSceneReady]);
+
+  useEffect(() => {
+    if (controlsRef.current) {
+      onControlsReady(() => {
+        camera.position.set(4, 3, 4);
+        controlsRef.current.target.set(0, 0, 0);
+        controlsRef.current.update();
+      });
+    }
+  }, [camera, onControlsReady]);
+
   return null;
 }
 
