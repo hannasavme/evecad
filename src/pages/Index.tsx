@@ -37,6 +37,7 @@ let modelIdCounter = 0;
 
 export default function Index() {
   const { user } = useAuth();
+  const { needsAuth, requireAuth } = useAuthGate();
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState("Untitled Project");
   const [showProperties, setShowProperties] = useState(false);
