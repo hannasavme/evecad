@@ -946,9 +946,9 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
       <rect x={margin + 4} y={margin + 4} width={svgWidth - margin * 2 - 8} height={svgHeight - margin * 2 - 8} fill="none" stroke={LINE_COLOR} strokeWidth={0.5} />
 
       {/* ─── Parts List / BOM ─── */}
-      {showBOM && (
+      {showBOMOnPage && (
         <g>
-          <rect x={bomX} y={bomY} width={bomW} height={bomH} fill="none" stroke={LINE_COLOR} strokeWidth={1} />
+          <rect x={bomX} y={bomY} width={bomW} height={bomDisplayH} fill="none" stroke={LINE_COLOR} strokeWidth={1} />
           {/* Header */}
           <rect x={bomX} y={bomY} width={bomW} height={bomRowH} fill="#f0f0f0" stroke={LINE_COLOR} strokeWidth={0.5} />
           {["ITEM", "QTY", "PART NAME", "TYPE", "MATERIAL"].map((h, i) => {
@@ -961,10 +961,10 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
           })}
           {/* Column lines */}
           {[35, 65, 165, 235].map((offset) => (
-            <line key={offset} x1={bomX + offset} y1={bomY} x2={bomX + offset} y2={bomY + bomH} stroke={LINE_COLOR} strokeWidth={0.3} />
+            <line key={offset} x1={bomX + offset} y1={bomY} x2={bomX + offset} y2={bomY + bomDisplayH} stroke={LINE_COLOR} strokeWidth={0.3} />
           ))}
           {/* Rows */}
-          {models.map((m, i) => {
+          {bomDisplayModels.map((m, i) => {
             const ry = bomY + (i + 1) * bomRowH;
             const colWidths = [35, 30, 100, 70, 65];
             return (
@@ -978,6 +978,9 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
               </g>
             );
           })}
+          {models.length > maxBomRows && (
+            <text x={bomX + bomW / 2} y={bomY + bomDisplayH + 10} textAnchor="middle" fontSize={7} fill={HIDDEN_COLOR} fontFamily="monospace">... +{models.length - maxBomRows} more items</text>
+          )}
           <text x={bomX + bomW / 2} y={bomY - 4} textAnchor="middle" fontSize={8} fontWeight="bold" fill={LINE_COLOR} fontFamily="monospace">PARTS LIST</text>
         </g>
       )}
