@@ -894,7 +894,7 @@ function dimStr(val: number) {
   return (val * 25.4).toFixed(1);
 }
 
-function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotation, onMoveAnnotation, titleText, onUpdateTitle, showSection, showBOM, page, partsPerPage }: {
+function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotation, onMoveAnnotation, titleText, onUpdateTitle, showSection, showBOM, page, partsPerPage, isAssemblyMode }: {
   models: SceneModel[];
   annotations: Annotation[];
   onUpdateAnnotation: (id: string, text: string) => void;
@@ -903,10 +903,11 @@ function DrawingSVG({ models, annotations, onUpdateAnnotation, onDeleteAnnotatio
   titleText: string; onUpdateTitle: (t: string) => void;
   showSection: boolean; showBOM: boolean;
   page: number; partsPerPage: number;
+  isAssemblyMode: boolean;
 }) {
   const startIdx = page * partsPerPage;
-  const pageModels = models.slice(startIdx, startIdx + partsPerPage);
-  const totalPages = Math.ceil(models.length / partsPerPage);
+  const pageModels = isAssemblyMode ? models : models.slice(startIdx, startIdx + partsPerPage);
+  const totalPages = isAssemblyMode ? 1 : Math.ceil(models.length / partsPerPage);
   const margin = 20;
   const scl = 55;
   const svgWidth = 1190;
