@@ -9,16 +9,18 @@ export default function GenerationProgress({ progress, stage }: GenerationProgre
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center">
-        <span className="text-xs font-mono text-primary">{stage}</span>
-        <span className="text-xs font-mono text-muted-foreground">{Math.round(progress)}%</span>
+        <span className="text-xs font-bold text-primary">{stage}</span>
+        <span className="text-xs font-bold text-muted-foreground">{Math.round(progress)}%</span>
       </div>
-      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+      <div className="h-3 rounded-full bg-muted overflow-hidden border-2 border-border">
         <motion.div
-          className="h-full rounded-full bg-primary"
+          className="h-full rounded-full"
+          style={{
+            background: "linear-gradient(90deg, hsl(330 80% 65%), hsl(270 60% 75%), hsl(190 70% 70%))",
+          }}
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.3 }}
-          style={{ boxShadow: "0 0 10px hsl(160 84% 44% / 0.5)" }}
         />
       </div>
     </div>
