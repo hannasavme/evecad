@@ -205,6 +205,12 @@ Params:
   - mug: mugRadius (0.2-1.5), mugHeight (0.3-2), handleSize (0.1-0.8), wallThickness (0.02-0.1)
   - hammer: handleLength (0.5-3), handleRadius (0.03-0.2), headWidth (0.2-1.5), headSize (0.08-0.5)
   - handle: knobRadius (0.05-0.5), stemRadius (0.02-0.2), stemHeight (0.1-1)
+  - chassis: chassisLength (1-10), chassisWidth (0.5-8), chassisThickness (0.05-0.5), mountHoles (0-16)
+  - rocker: rockerLength (0.5-6), rockerWidth (0.1-1), rockerThickness (0.05-0.5)
+  - bogie: bogieLength (0.3-4), bogieWidth (0.1-0.8), bogieThickness (0.03-0.3)
+  - knuckle: knuckleRadius (0.05-1), knuckleHeight (0.1-2), boreSize (0.02-0.5)
+  - motor: motorRadius (0.05-1), motorLength (0.2-3), shaftDiameter (0.01-0.3)
+  - standoff: standoffRadius (0.03-0.3), standoffHeight (0.1-2), threadRadius (0.01-0.15)
 
 CRITICAL RULES:
 1. ALWAYS use compound types when the object IS one of those things. NEVER substitute with basic primitives.
