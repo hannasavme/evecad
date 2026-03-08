@@ -82,9 +82,34 @@ export interface ModelParams {
   knobHeight?: number;
   stemRadius?: number;
   stemHeight?: number;
+  // Chassis
+  chassisLength?: number;
+  chassisWidth?: number;
+  chassisThickness?: number;
+  mountHoles?: number;
+  // Rocker
+  rockerLength?: number;
+  rockerWidth?: number;
+  rockerThickness?: number;
+  // Bogie
+  bogieLength?: number;
+  bogieWidth?: number;
+  bogieThickness?: number;
+  // Knuckle
+  knuckleRadius?: number;
+  knuckleHeight?: number;
+  boreSize?: number;
+  // Motor
+  motorRadius?: number;
+  motorLength?: number;
+  shaftDiameter?: number;
+  // Standoff
+  standoffRadius?: number;
+  standoffHeight?: number;
+  threadRadius?: number;
 }
 
-export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track" | "bolt" | "nut" | "screw" | "bearing" | "pulley" | "shaft" | "mug" | "hammer" | "handle";
+export type PrimitiveType = "gear" | "bracket" | "box" | "cylinder" | "sphere" | "cone" | "wedge" | "torus" | "tube" | "plate" | "wheel" | "camera" | "antenna" | "drill" | "track" | "bolt" | "nut" | "screw" | "bearing" | "pulley" | "shaft" | "mug" | "hammer" | "handle" | "chassis" | "rocker" | "bogie" | "knuckle" | "motor" | "standoff";
 
 export interface SceneModel {
   id: string;
