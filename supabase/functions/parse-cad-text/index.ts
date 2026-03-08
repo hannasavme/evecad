@@ -63,8 +63,8 @@ serve(async (req) => {
       userContent.push({
         type: "text",
         text: text
-          ? `Analyze this image AND description: "${text}". Break it down into CAD parts.`
-          : "Analyze this image. Break it down into CAD parts.",
+          ? `Analyze this image AND description: "${text}". Break it down into CAD parts. Study every visible component carefully: count wheels, identify antennas, cameras, panels, bays, structural features, and their EXACT spatial relationships. Match proportions from the image precisely.`
+          : "Analyze this image in extreme detail. Count every visible component: wheels, antennas, cameras, panels, bays, hatches, structural members. Study their proportions, spatial relationships, and relative sizes. Break it down into accurate CAD parts that reproduce this exact design.",
       });
     } else {
       userContent.push({ type: "text", text: text! });
