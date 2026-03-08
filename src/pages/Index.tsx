@@ -496,7 +496,7 @@ export default function Index() {
 
       {/* Models list — bottom left */}
       {models.length > 0 && (
-        <div className="absolute bottom-6 left-4 z-30 flex flex-col gap-1.5 max-h-[50vh] overflow-y-auto pr-1">
+        <div className="absolute bottom-6 left-4 z-30 flex flex-col gap-1.5 max-h-[50vh] overflow-y-auto p-3 rounded-2xl border-2 border-border bg-card/90 backdrop-blur-md">
           <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1 mb-1">
             <Layers className="w-3 h-3" /> Models ({models.length})
           </span>
