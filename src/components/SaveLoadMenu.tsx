@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Save, FolderOpen, Trash2, Loader2, Plus } from "lucide-react";
+import { Save, FolderOpen, Trash2, Loader2, Plus, Pencil } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +33,9 @@ export default function SaveLoadMenu({ models, onLoad, currentProjectId, onProje
   const [projects, setProjects] = useState<SavedProject[]>([]);
   const [saving, setSaving] = useState(false);
   const [loadingProjects, setLoadingProjects] = useState(false);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const renameInputRef = useRef<HTMLInputElement>(null);
 
   const fetchProjects = async () => {
     if (!user) return;
@@ -101,6 +104,7 @@ export default function SaveLoadMenu({ models, onLoad, currentProjectId, onProje
   };
 
   const handleLoad = (project: SavedProject) => {
+    if (renamingId) return;
     onLoad(project.models_data);
     onProjectChange(project.id, project.name);
     toast.success(`Loaded "${project.name}"`);
@@ -118,6 +122,35 @@ export default function SaveLoadMenu({ models, onLoad, currentProjectId, onProje
     }
   };
 
+  const startRename = (project: SavedProject, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setRenamingId(project.id);
+    setRenameValue(project.name);
+    setTimeout(() => renameInputRef.current?.focus(), 50);
+  };
+
+  const commitRename = async () => {
+    if (!renamingId || !renameValue.trim()) {
+      setRenamingId(null);
+      return;
+    }
+    const { error } = await supabase
+      .from("saved_models")
+      .update({ name: renameValue.trim() })
+      .eq("id", renamingId);
+    if (error) {
+      toast.error("Failed to rename");
+    } else {
+      toast.success("Project renamed");
+      if (currentProjectId === renamingId) {
+        onProjectChange(currentProjectId, renameValue.trim());
+      }
+      fetchProjects();
+    }
+    setRenamingId(null);
+  };
+
   if (!user) return null;
 
   return (
@@ -132,11 +165,11 @@ export default function SaveLoadMenu({ models, onLoad, currentProjectId, onProje
         <span className="hidden sm:inline">Save</span>
       </button>
 
-      <DropdownMenu onOpenChange={(open) => open && fetchProjects()}>
+      <DropdownMenu onOpenChange={(open) => { if (open) fetchProjects(); else setRenamingId(null); }}>
         <DropdownMenuTrigger asChild>
           <button className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors px-2 py-1.5 rounded-xl border-2 border-border hover:border-primary/40 bg-card/60 shrink-0">
             <FolderOpen className="w-3 h-3" />
-            <span className="hidden sm:inline">Load</span>
+            <span className="hidden sm:inline">Projects</span>
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
@@ -161,20 +194,49 @@ export default function SaveLoadMenu({ models, onLoad, currentProjectId, onProje
               <DropdownMenuItem
                 key={p.id}
                 onClick={() => handleLoad(p)}
+                onDoubleClick={(e) => startRename(p, e)}
                 className="text-xs flex items-center justify-between group"
+                onSelect={(e) => { if (renamingId === p.id) e.preventDefault(); }}
               >
-                <div className="flex flex-col min-w-0">
-                  <span className="font-bold truncate">{p.name}</span>
-                  <span className="text-muted-foreground text-[10px]">
-                    {new Date(p.updated_at).toLocaleDateString()}
-                  </span>
-                </div>
-                <button
-                  onClick={(e) => handleDelete(p.id, e)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-destructive hover:bg-destructive/10 rounded transition-all"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
+                {renamingId === p.id ? (
+                  <input
+                    ref={renameInputRef}
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onBlur={commitRename}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitRename();
+                      if (e.key === "Escape") setRenamingId(null);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full bg-background border border-border rounded px-1.5 py-0.5 text-xs font-bold outline-none focus:ring-1 focus:ring-ring"
+                  />
+                ) : (
+                  <>
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-bold truncate">{p.name}</span>
+                      <span className="text-muted-foreground text-[10px]">
+                        {new Date(p.updated_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        onClick={(e) => startRename(p, e)}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-primary hover:bg-accent rounded transition-all"
+                        title="Rename"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={(e) => handleDelete(p.id, e)}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-destructive hover:bg-destructive/10 rounded transition-all"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </>
+                )}
               </DropdownMenuItem>
             ))
           )}
